@@ -4,134 +4,118 @@ import getpass
 import socket
 import sys
 import PacketManager
-import Tkinter
+import time
 import threading
-from Tkinter import *
+import wx
+import wxPython
 
 sessionid = ""
 username = ""
+
+#Eclipse pyDev error fix
+wx = wx
+
+class Window(wx.Frame):
+    
+    def __init__(self, parent, title):
+        self.username = ""
+        self.sessionID = ""
+        self.LoggedIn = False
+            
+        super(Window, self).__init__(parent, title=title, 
+            size=(400, 100))
         
-class LoginWindow(Tkinter.Tk):
-    def __init__(self,parent):
-        Tkinter.Tk.__init__(self,parent)
-        self.parent = parent
-        self.initialize()
+        self.InitializeServerBrowser()
+        self.Show()
 
     def initialize(self):
-        self.f = Frame(self)
-        self.f.grid()
         
-        #Variable defintions
-        self.loginVariable = Tkinter.StringVar()
-        self.loginVariable.set("Username: ")
-        self.usernameEntry = Tkinter.StringVar()
-        self.passwordLabel = Tkinter.StringVar()
-        self.passwordLabel.set("Password: ")
-        self.passwordEntry = Tkinter.StringVar()
-        self.status = Tkinter.StringVar()
-        self.LoggedIn = Tkinter.BooleanVar()
-        self.LoggedIn.set(False)
-        self.sessionID = Tkinter.StringVar()
-        self.username = Tkinter.StringVar()
-        #Username label#
-        self.Usernamelabel = Tkinter.Label(self.f,textvariable=self.loginVariable,
-                              anchor="w")
-        self.Usernamelabel.grid(column=0,row=0,sticky='EW')
-        #Username label#
+        self.sizer = wx.GridBagSizer()
         
-        #Login text entry box
-        self.UsernameEntry = Tkinter.Entry(self.f,textvariable=self.usernameEntry)
-        self.UsernameEntry.grid(column=2,row=0,columnspan=2,sticky='EW')
-        self.UsernameEntry.bind("<Return>", self.onPressEnterOnFields)
-        #Login text entry box
+        self.label = wx.StaticText(self, -1, label=u'Username')
+        self.sizer.Add( self.label, (0,0),(1,1), wx.EXPAND )
         
-        #Password label#
-        self.Passwordlabel = Tkinter.Label(self.f,textvariable=self.passwordLabel,anchor="w")
-        self.Passwordlabel.grid(column=0,row=1,sticky='EW')
-        #Password label#
+        self.entry = wx.TextCtrl(self,-1)
+        self.sizer.Add(self.entry,(0,1),(1, 2),wx.EXPAND | wx.ALIGN_LEFT)
+        self.Bind(wx.EVT_TEXT_ENTER, self.onPressEnterOnFields, self.entry)
         
-        #Password entry box
-        self.PasswordEntry = Tkinter.Entry(self.f,textvariable=self.passwordEntry,show="*")
-        self.PasswordEntry.grid(column=2,row=1,columnspan=2,sticky='EW')
-        self.PasswordEntry.bind("<Return>", self.onPressEnterOnFields)
-        #Password entry box
+        self.label2 = wx.StaticText(self, -1, label=u'Password')
+        self.sizer.Add( self.label2, (2,0),(1,2), wx.EXPAND)
         
-        #Login button
-        self.button = Tkinter.Button(self.f,text=u"Login",command=self.OnButtonClick)
-        self.button.grid(column=0,row=3,sticky='W',columnspan=3)
-        #Login button
+        self.entry2 = wx.TextCtrl(self, -1, style = wx.TE_PASSWORD)
+        self.sizer.Add(self.entry2,(2,2),(2,2), wx.EXPAND | wx.ALIGN_LEFT)
+        self.Bind(wx.EVT_TEXT_ENTER, self.onPressEnterOnFields, self.entry2)
         
-        #Status label
-        self.Statuslabel = Tkinter.Label(self.f,textvariable=self.status,
-                              anchor="e")
-        self.Statuslabel.grid(column=0,row=4,columnspan=2)
-        #Status label
+        button = wx.Button(self,-1,label="Login")
+        self.sizer.Add(button, (5,0))
+        self.Bind(wx.EVT_BUTTON, self.OnButtonClick, button)
         
-        #Allow resizing
-        self.grid_columnconfigure(0,weight=1)
-        self.geometry("%dx%d%+d%+d" % (400, 100, 0, 0))
+        self.status = wx.StaticText(self, -1,)
+        self.sizer.Add(self.status,(5,1),(5,2), wx.EXPAND)
+        
+        self.sizer.AddGrowableCol(0)
+        self.SetSizerAndFit(self.sizer) 
         
     def InitializeServerBrowser(self):
         
-        self.f.grid()
-        
-        #Variable defintions
-        self.topLabelText = Tkinter.StringVar()
-        self.topLabelText.set("Logged in! (Your session ID is " + self.sessionID.get() + ")")
-        self.addressLabelText = Tkinter.StringVar()
-        self.addressLabelText.set("Server address:")
-        self.address = Tkinter.StringVar()
-        #Variable defintions
+        self.sizer = wx.GridBagSizer()
         
         #Top label
-        topLabel = Tkinter.Label(self.f,textvariable=self.topLabelText,anchor="w")
-        topLabel.grid(column=0,row=0,sticky='EW')
+        self.topLabel = wx.StaticText(self, -1, label=u'Logged in as ' + self.username + '! (Session id: ' + self.sessionID + ')')
+        self.sizer.Add(self.topLabel, (0,0),(1,1), wx.EXPAND)
         #Top label
         
         #Address label
-        addressLabel = Tkinter.Label(self.f,textvariable=self.addressLabelText,anchor="w")
-        addressLabel.grid(column=0,row=1,sticky='EW')
+        self.addressLabel = wx.StaticText(self, -1, label=u'Server address')
+        self.sizer.Add(self.addressLabel, (2,0), (1,2), wx.EXPAND)
         #Address lable
         
         #Address entry box
-        self.AddressEntry = Tkinter.Entry(self.f,textvariable=self.address)
-        self.AddressEntry.grid(column=1,row=1,columnspan=2,sticky='EW')
+        self.AddressEntry = wx.TextCtrl(self, -1)
+        self.sizer.Add(self.AddressEntry,(2,2),(2,2), wx.EXPAND)
         #Address entry box
         
-    def OnButtonClick(self):
-        if(self.usernameEntry.get() == ""):
+        self.connectbutton = wx.Button(self, -1, label="Connect")
+        self.sizer.Add(self.connectbutton,(4,0))
+        
+        self.sizer.AddGrowableCol(0)
+        self.SetSizerAndFit(self.sizer) 
+        
+    def OnButtonClick(self, event):
+        if(self.entry.GetValue() == ""):
             self.status.set("Enter a username sherlock")
             return
-        if(self.passwordEntry.get() == ""):
+        if(self.entry2.GetValue() == ""):
             self.status.set("Enter a password you derp")
             return
-        password = self.passwordEntry.get()
-        username = self.usernameEntry.get()
-        self.status.set("Logging in.....")
+        password = self.entry2.GetValue()
+        username = self.entry.GetValue()
+        self.status.SetForegroundColour(wx.BLUE)
+        self.status.SetLabel("Logging in...")
         thread = MinecraftLoginThread(self, username, password)
         thread.start()
-        thread.join()
-        if(self.LoggedIn.get() == True):
-            self.f.grid_forget()
-            self.InitializeServerBrowser()
+        while(thread.is_alive() == True):
+            pass
+        self.sizer.DeleteWindows()
+        self.InitializeServerBrowser()
     
     def onPressEnterOnFields(self, event):
-        if(self.usernameEntry.get() == ""):
+        if(self.entry.GetValue() == ""):
             self.status.set("Enter a username sherlock")
             return
-        if(self.passwordEntry.get() == ""):
+        if(self.entry2.GetValue() == ""):
             self.status.set("Enter a password you derp")
             return
-        password = self.passwordEntry.get()
-        username = self.usernameEntry.get()
-        self.status.set("Logging in...")
+        password = self.entry2.GetValue()
+        username = self.entry.GetValue()
+        self.status.SetForegroundColour(wx.BLUE)
+        self.status.SetLabel("Logging in...")
         thread = MinecraftLoginThread(self, username, password)
-        self.status.set("Logging in ....")
         thread.start()
-        thread.join()
-        if(self.LoggedIn.get() == True):
-            self.f.grid_forget()
-            self.InitializeServerBrowser()
+        while(thread.is_alive() == True):
+            pass
+        self.sizer.DeleteWindows()
+        self.InitializeServerBrowser()
         
 class MinecraftLoginThread(threading.Thread):
     
@@ -153,17 +137,39 @@ class MinecraftLoginThread(threading.Thread):
         response = opener.open(req)
         response = response.read()
         if(response == "Bad login"):
-            self.window.status.set("Incorrect username or password!")
+            self.window.status.SetForegroundColour(wx.RED)
+            self.window.status.SetLabel("Incorrect username or password!")
             return
         response = response.split(":")
-        self.window.username.set(response[2])
-        self.window.sessionID.set(response[3])
-        self.window.LoggedIn.set(True)
+        self.window.username = response[2]
+        self.window.sessionID = response[3]
+        self.window.LoggedIn = True
+        KeepConnectionAlive(self.username, self.password).start()
+        
+class KeepConnectionAlive(threading.Thread):
+    
+    def __init__(self, username, password):
+        threading.Thread.__init__(self)
+        self.username = username
+        self.password = password
+     
+    def run(self):
+        while True:   
+            url = 'https://login.minecraft.net'
+            header = {'Content-Type' : 'application/x-www-form-urlencoded'}
+            data = {'user' : self.username,
+                    'password' : self.password,
+                    'version' : '13'}
+            data = urllib.urlencode(data)
+            req = urllib2.Request(url, data, header)
+            opener = urllib2.build_opener()
+            opener.open(req)
+            time.sleep(300)
         
 if __name__ == "__main__":
-    login = LoginWindow(None)
-    login.title('pyCraft')
-    login.mainloop()
+    app = wx.App()
+    Window(None, title='pyCraft')
+    app.MainLoop()
 
 """
 url = 'https://login.minecraft.net'
