@@ -4,6 +4,7 @@ import getpass
 import socket
 import sys
 import PacketManager
+import NetworkManager
 import time
 import threading
 import wx
@@ -25,7 +26,7 @@ class Window(wx.Frame):
         super(Window, self).__init__(parent, title=title, 
             size=(400, 100))
         
-        self.InitializeServerBrowser()
+        self.initialize()
         self.Show()
 
     def initialize(self):
@@ -73,13 +74,24 @@ class Window(wx.Frame):
         #Address entry box
         self.AddressEntry = wx.TextCtrl(self, -1)
         self.sizer.Add(self.AddressEntry,(2,2),(2,2), wx.EXPAND)
+        self.Bind(wx.EVT_TEXT_ENTER, self.onConnectClick, self.AddressEntry)
         #Address entry box
         
         self.connectbutton = wx.Button(self, -1, label="Connect")
         self.sizer.Add(self.connectbutton,(4,0))
+        self.Bind(wx.EVT_BUTTON, self.onConnectClick, self.connectbutton)
         
         self.sizer.AddGrowableCol(0)
         self.SetSizerAndFit(self.sizer) 
+        
+    def onConnectClick(self, event):
+        self.sizer.DeleteWindows()
+        self.sizer = wx.GridBagSizer()
+        self.connectStatus = wx.StaticText(self, -1, label=u'Connecting ...')
+        self.connectStatus.SetForegroundColour(wx.BLUE)
+        self.sizer.Add(self.connectStatus, (0,0), (0,0))
+        self.connectStatus.Center()
+        
         
     def OnButtonClick(self, event):
         if(self.entry.GetValue() == ""):
@@ -131,11 +143,17 @@ class MinecraftLoginThread(threading.Thread):
         data = {'user' : self.username, 
                 'password' : self.password,
                 'version' : '13'}
-        data = urllib.urlencode(data)
-        req = urllib2.Request(url, data, header)
-        opener = urllib2.build_opener()
-        response = opener.open(req)
-        response = response.read()
+        try:
+            data = urllib.urlencode(data)
+            req = urllib2.Request(url, data, header)
+            opener = urllib2.build_opener()
+            response = opener.open(req)
+            response = response.read()
+        except urllib2.URLError:
+            popup = wx.MessageBox('Connection to minecraft.net failed', 'Warning', 
+                              wx.OK | wx.ICON_ERROR)
+            popup.ShowModal()
+            return
         if(response == "Bad login"):
             self.window.status.SetForegroundColour(wx.RED)
             self.window.status.SetLabel("Incorrect username or password!")
@@ -160,10 +178,15 @@ class KeepConnectionAlive(threading.Thread):
             data = {'user' : self.username,
                     'password' : self.password,
                     'version' : '13'}
-            data = urllib.urlencode(data)
-            req = urllib2.Request(url, data, header)
-            opener = urllib2.build_opener()
-            opener.open(req)
+            try:
+                data = urllib.urlencode(data)
+                req = urllib2.Request(url, data, header)
+                opener = urllib2.build_opener()
+                opener.open(req)
+            except urllib2.URLError:
+                popup = wx.MessageBox('Keep alive to minecraft.net failed', 'Warning', 
+                              wx.OK | wx.ICON_ERROR)
+                popup.ShowModal()
             time.sleep(300)
         
 if __name__ == "__main__":
