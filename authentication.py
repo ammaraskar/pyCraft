@@ -7,6 +7,7 @@ import PacketManager
 import NetworkManager
 import time
 import threading
+import thread
 import wx
 import wxPython
 
@@ -21,6 +22,7 @@ class Window(wx.Frame):
     def __init__(self, parent, title):
         self.username = ""
         self.sessionID = ""
+        self.password = ""
         self.LoggedIn = False
             
         super(Window, self).__init__(parent, title=title, 
@@ -36,15 +38,15 @@ class Window(wx.Frame):
         self.label = wx.StaticText(self, -1, label=u'Username')
         self.sizer.Add( self.label, (0,0),(1,1), wx.EXPAND )
         
-        self.entry = wx.TextCtrl(self,-1)
-        self.sizer.Add(self.entry,(0,1),(1, 2),wx.EXPAND | wx.ALIGN_LEFT)
+        self.entry = wx.TextCtrl(self,-1, size=(200,23))
+        self.sizer.Add(self.entry,(0,1),(1, 4),wx.EXPAND | wx.ALIGN_LEFT)
         self.Bind(wx.EVT_TEXT_ENTER, self.onPressEnterOnFields, self.entry)
         
         self.label2 = wx.StaticText(self, -1, label=u'Password')
         self.sizer.Add( self.label2, (2,0),(1,2), wx.EXPAND)
         
-        self.entry2 = wx.TextCtrl(self, -1, style = wx.TE_PASSWORD)
-        self.sizer.Add(self.entry2,(2,2),(2,2), wx.EXPAND | wx.ALIGN_LEFT)
+        self.entry2 = wx.TextCtrl(self, -1, size=(200,23), style = wx.TE_PASSWORD)
+        self.sizer.Add(self.entry2,(2,2),(2,4), wx.EXPAND | wx.ALIGN_LEFT)
         self.Bind(wx.EVT_TEXT_ENTER, self.onPressEnterOnFields, self.entry2)
         
         button = wx.Button(self,-1,label="Login")
@@ -52,7 +54,7 @@ class Window(wx.Frame):
         self.Bind(wx.EVT_BUTTON, self.OnButtonClick, button)
         
         self.status = wx.StaticText(self, -1,)
-        self.sizer.Add(self.status,(5,1),(5,2), wx.EXPAND)
+        self.sizer.Add(self.status,(5,2),(5,15), wx.EXPAND)
         
         self.sizer.AddGrowableCol(0)
         self.SetSizerAndFit(self.sizer) 
@@ -85,20 +87,29 @@ class Window(wx.Frame):
         self.SetSizerAndFit(self.sizer) 
         
     def onConnectClick(self, event):
+        StuffEnteredIntoBox = self.AddressEntry.GetValue()
         self.sizer.DeleteWindows()
         self.sizer = wx.GridBagSizer()
         self.connectStatus = wx.StaticText(self, -1, label=u'Connecting ...')
         self.connectStatus.SetForegroundColour(wx.BLUE)
         self.sizer.Add(self.connectStatus, (0,0), (0,0))
         self.connectStatus.Center()
-        
+        if ':' in StuffEnteredIntoBox:
+            StuffEnteredIntoBox = StuffEnteredIntoBox.split(":")
+            host = StuffEnteredIntoBox[0]
+            port = StuffEnteredIntoBox[1]
+        else:
+            host = StuffEnteredIntoBox
+            port = 25565
+        self.connection = NetworkManager.ServerConnection(self, self.username, self.password, self.sessionID, host, port)
+        thread.start_new_thread(self.connection.attemptConnection, ())
         
     def OnButtonClick(self, event):
         if(self.entry.GetValue() == ""):
-            self.status.set("Enter a username sherlock")
+            self.status.SetLabel("Enter a username sherlock")
             return
         if(self.entry2.GetValue() == ""):
-            self.status.set("Enter a password you derp")
+            self.status.SetLabel("Enter a password you derp")
             return
         password = self.entry2.GetValue()
         username = self.entry.GetValue()
@@ -113,10 +124,10 @@ class Window(wx.Frame):
     
     def onPressEnterOnFields(self, event):
         if(self.entry.GetValue() == ""):
-            self.status.set("Enter a username sherlock")
+            self.status.SetLabel("Enter a username sherlock")
             return
         if(self.entry2.GetValue() == ""):
-            self.status.set("Enter a password you derp")
+            self.status.SetLabel("Enter a password you derp")
             return
         password = self.entry2.GetValue()
         username = self.entry.GetValue()
@@ -160,6 +171,7 @@ class MinecraftLoginThread(threading.Thread):
             return
         response = response.split(":")
         self.window.username = response[2]
+        self.window.password = self.password
         self.window.sessionID = response[3]
         self.window.LoggedIn = True
         KeepConnectionAlive(self.username, self.password).start()
@@ -172,7 +184,8 @@ class KeepConnectionAlive(threading.Thread):
         self.password = password
      
     def run(self):
-        while True:   
+        while True:
+            time.sleep(300)   
             url = 'https://login.minecraft.net'
             header = {'Content-Type' : 'application/x-www-form-urlencoded'}
             data = {'user' : self.username,
@@ -187,7 +200,6 @@ class KeepConnectionAlive(threading.Thread):
                 popup = wx.MessageBox('Keep alive to minecraft.net failed', 'Warning', 
                               wx.OK | wx.ICON_ERROR)
                 popup.ShowModal()
-            time.sleep(300)
         
 if __name__ == "__main__":
     app = wx.App()
@@ -232,5 +244,4 @@ PacketManager.sendLoginRequest(mySocket, username)
 while True:
     PacketManager.handleIncomingPacket(mySocket)
 """
-
 
