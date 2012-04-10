@@ -35,17 +35,18 @@ def ReceiveLoginRequest(socket):
         return ""
     response = response[1:]
     
-def handle00(socket, message):
-    message = message[1:]
-    message = struct.unpack('!i')
+def handle00(socket):
+    print "Sending keep alive response"
     socket.send("\x00")
-    socket.send(struct.pack('!i'), message)
+    socket.send(struct.pack('!i', 0))
 
-def handleFF(socket, message):
-    message = message[3:]
-    message = message.decode("utf-16be")
-    print "Disconnected: " + message
-    sys.exit()
+def handleFF(socket, response):
+    response = response[3:]
+    print "Length: " + str(response.__len__())
+    print response
+    response = response.decode("utf-16be", 'strict')
+    print response
+    return response
     
 def handleIncomingPacket(socket):
     response = socket.recv(256)

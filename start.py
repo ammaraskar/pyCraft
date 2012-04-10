@@ -88,6 +88,8 @@ class Window(wx.Frame):
         
     def onConnectClick(self, event):
         StuffEnteredIntoBox = self.AddressEntry.GetValue()
+        if(StuffEnteredIntoBox == ""):
+            self.topLabel.SetLabel("Logged in as " + self.username + "! Enter a server address")
         self.sizer.DeleteWindows()
         self.sizer = wx.GridBagSizer()
         self.connectStatus = wx.StaticText(self, -1, label=u'Connecting ...')
@@ -202,7 +204,7 @@ class KeepConnectionAlive(threading.Thread):
                 popup.ShowModal()
         
 if __name__ == "__main__":
-    app = wx.App()
+    app = wx.App(0)
     Window(None, title='pyCraft')
     app.MainLoop()
 
