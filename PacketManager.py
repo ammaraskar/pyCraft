@@ -7,13 +7,6 @@ def sendString( packetid, string, socket):
     socket.send(packetid)
     socket.send(length)
     socket.send(string.encode('utf-16be','strict')) 
-    
-def readStringFromSocket(socket):
-    response = socket.recv(256)
-    packetid = response[0]
-    response = response[3:]
-    response = response.decode("utf-16be")
-    return {'packetid' : packetid, 'string' : response}
 
 def sendLoginRequest(socket, username):
     socket.send("\x01")
@@ -27,37 +20,53 @@ def sendLoginRequest(socket, username):
     socket.send(struct.pack('!b', 0))
     socket.send(struct.pack('!B', 1))
     socket.send(struct.pack('!B', 0))
-    
-def ReceiveLoginRequest(socket):
-    response = socket.recv(256)
-    packetid = response[0]
-    if(packetid != "\x01"):
-        return ""
-    response = response[1:]
-    
+
 def handle00(socket):
-    print "Sending keep alive response"
-    socket.send("\x00")
-    socket.send(struct.pack('!i', 0))
+    KAid = struct.unpack('!i', socket.recv(4))[0]
+    print "Sending keep alive response " + str(KAid)
+    socket.send("\x00" + struct.pack('!i', KAid))
+    
+def handle01(socket):
+    Eid = struct.unpack('!i', socket.recv(4))[0]
+    length = struct.unpack('!h', socket.recv(2))[0] * 2
+    socket.recv(length)
+    length = struct.unpack('!h', socket.recv(2))[0] * 2 
+    socket.recv(length)
+    mode = struct.unpack('!i', socket.recv(4))[0]
+    dimension = struct.unpack('!i', socket.recv(4))[0]
+    difficulty = struct.unpack('!b', socket.recv(1))[0]
+    socket.recv(1)
+    maxplayers = struct.unpack('!B', socket.recv(1))[0]
+    toReturn = {'EntityID' : Eid,
+            'Mode' : mode,
+            'Dimension' : dimension,
+            'Difficulty' : difficulty,
+            'MaxPlayers' : maxplayers
+            }
+    print toReturn
+    return toReturn
+
+def handle02(socket):
+    length = struct.unpack('!h', socket.recv(2))[0] * 2
+    message = socket.recv(length)
+    message = message.decode('utf-16be', 'strict')
+    return message
+
+def handle03(socket):
+    length = struct.unpack('!h', socket.recv(2))[0]
+    message = socket.recv(length)
+    message = message.decode('utf-16be','strict')
+    print message
+    return message
 
 def handleFF(socket, response):
-    response = response[3:]
-    print "Length: " + str(response.__len__())
-    print response
+    response = socket.recv(2)
+    length = struct.unpack('!h', response)[0] * 2
+    response = socket.recv(length)
     response = response.decode("utf-16be", 'strict')
     print response
     return response
-    
-def handleIncomingPacket(socket):
-    response = socket.recv(256)
-    if not response: 
-        handleIncomingPacket(socket)
-    packetid = response[0]
-    print str(ord(packetid))
-    if(packetid == "\x00"):
-        handle00(socket, response)
-    elif(packetid == "\xFF"):
-        handleFF(socket, response)
+
     
 
     

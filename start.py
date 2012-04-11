@@ -5,6 +5,7 @@ import socket
 import sys
 import PacketManager
 import NetworkManager
+import NoGUIstuff
 import time
 import threading
 import thread
@@ -104,7 +105,7 @@ class Window(wx.Frame):
             host = StuffEnteredIntoBox
             port = 25565
         self.connection = NetworkManager.ServerConnection(self, self.username, self.password, self.sessionID, host, port)
-        thread.start_new_thread(self.connection.attemptConnection, ())
+        self.connection.start()
         
     def OnButtonClick(self, event):
         if(self.entry.GetValue() == ""):
@@ -204,9 +205,30 @@ class KeepConnectionAlive(threading.Thread):
                 popup.ShowModal()
         
 if __name__ == "__main__":
-    app = wx.App(0)
-    Window(None, title='pyCraft')
-    app.MainLoop()
+    if (len(sys.argv) > 1):
+        if(sys.argv[1] == "nogui"):
+            user = raw_input("Enter your username: ")
+            passwd = getpass.getpass("Enter your password: ")
+            derp = NoGUIstuff.loginToMinecraft(user, passwd)
+            if(derp['Response'] == "Incorrect username/password" or derp['Response'] == "Can't connect to minecraft.net"):
+                print derp['Response']
+                sys.exit()                
+            sessionid = derp['SessionID']
+            print "Logged in as " + derp['Username'] + "! Your session id is: " + sessionid
+            stuff = raw_input("Enter host and port if any: ")
+            if ':' in stuff:
+                StuffEnteredIntoBox = stuff.split(":")
+                host = stuff[0]
+                port = stuff[1]
+            else:
+                host = stuff
+                port = 25565
+            connection = NetworkManager.ServerConnection(None, derp['Username'], passwd, sessionid, host, port)
+            connection.start()
+    else:
+        app = wx.App(0)
+        Window(None, title='pyCraft')
+        app.MainLoop()
 
 """
 url = 'https://login.minecraft.net'

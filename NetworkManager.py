@@ -9,34 +9,52 @@ import struct
 #Eclipse pyDev error fix
 wx=wx
 
-class ServerConnection:
+EntityID = 0
+
+class ServerConnection(threading.Thread):
     
     def __init__(self, window, username, password, sessionID, server, port):
+        threading.Thread.__init__(self)
         self.username = username
         self.password = password
         self.sessionID = sessionID
         self.server = server
         self.port = port
+        if(window == None):
+            self.NoGUI = True
         self.window = window
         
-    def attemptConnection(self):
+    def run(self):
         self.socket = socket.socket ( socket.AF_INET, socket.SOCK_STREAM )
         try:
             self.socket.connect ( ( self.server, self.port ) )
-            PacketManager.sendString("\x02", self.username + self.server + ":" + str(self.port), self.socket)
-            response = PacketManager.readStringFromSocket(self.socket)
-            serverid = response['string']
+            PacketManager.sendString("\x02", self.username + ";" + self.server + ":" + str(self.port), self.socket)
+            if(self.socket.recv(1) == "\x02"):
+                response = PacketManager.handle02(self.socket)
+            else:
+                print "Server responded with a malformed packet"
+                pass
+            serverid = response
             if(serverid != '-'):
                 url = "http://session.minecraft.net/game/joinserver.jsp?user=" + self.username + "&sessionId=" + self.sessionID + "&serverId=" + serverid
                 response = urllib2.urlopen(url).read()
                 if(response != "OK"):
-                    self.window.connectStatus.SetLabel("Response from sessions.minecraft.net wasn't OK")
+                    if(self.NoGUI == False):
+                        self.window.connectStatus.SetLabel("Response from sessions.minecraft.net wasn't OK")
+                    else:
+                        print "Response from sessions.minecraft.net wasn't OK, it was " + response
                     return False
                 PacketManager.sendLoginRequest(self.socket, self.username)
                 PacketListener(self.window, self.socket).start()
+            else:
+                print "Server is in offline mode"
+                PacketManager.sendLoginRequest(self.socket, self.username)
         except Exception, e:
-            self.window.connectStatus.SetForegroundColour(wx.RED)
-            self.window.connectStatus.SetLabel("Connection to server failed")
+            if(self.NoGUI == False):
+                self.window.connectStatus.SetForegroundColour(wx.RED)
+                self.window.connectStatus.SetLabel("Connection to server failed")
+            else:
+                print "Connection to server failed"
             traceback.print_exc()
             return False
         
@@ -51,15 +69,24 @@ class PacketListener(threading.Thread):
         self.socket.settimeout(60)
         while True:
             try:
-                response = self.socket.recv(256)
+                response = self.socket.recv(1)
             except socket.timeout, e:
-                self.window.connectStatus.SetLabel("Ping timeout")
+                if(self.NoGUI == False):
+                    self.window.connectStatus.SetLabel("Ping timeout")
+                else:
+                    print "Ping timeout"
                 break
             print hex(ord(response[0]))
             if(response[0] == "\x00"):
                 PacketManager.handle00(self.socket)
+            if(response[0] == "\x01"):
+                PacketManager.handle01(self.socket)
+            if(response[0] == "\x03"):
+                PacketManager.handle03(self.socket)
             if(response[0] == "\xFF"):
-                response = response[3:].decode("utf-16be", 'strict')
-                print response
-                #DisconMessage = PacketManager.handleFF(self.socket, response)
-                self.window.connectStatus.SetLabel("Disconnected: " + response)
+                DisconMessage = PacketManager.handleFF(self.socket, response)
+                if(self.NoGUI == False):
+                    "Disconnected: " + DisconMessage
+                else:
+                    self.window.connectStatus.SetLabel("Disconnected: " + DisconMessage)
+    
