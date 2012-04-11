@@ -83,6 +83,26 @@ class PacketListener(threading.Thread):
                 PacketManager.handle01(self.socket)
             if(response[0] == "\x03"):
                 PacketManager.handle03(self.socket)
+            if(response[0] == "\x04"):
+                PacketManager.handle04(self.socket)
+            if(response[0] == "\x05"):
+                PacketManager.handle05(self.socket)
+            if(response[0] == "\x06"):
+                PacketManager.handle06(self.socket)
+            if(response[0] == "\x07"):
+                PacketManager.handle07(self.socket)
+            if(response[0] == "\x08"):
+                PacketManager.handle08(self.socket)
+            if(response[0] == "\x09"):
+                PacketManager.handle09(self.socket)
+            if(response[0] == "\x0D"):
+                PacketManager.handle0D(self.socket)
+            if(response[0] == "\x11"):
+                PacketManager.handle11(self.socket)
+            if(response[0] == "\x12"):
+                PacketManager.handle12(self.socket)
+            if(response[0] == "\x14"):
+                PacketManager.handle14(self.socket)
             if(response[0] == "\xFF"):
                 DisconMessage = PacketManager.handleFF(self.socket, response)
                 if(self.NoGUI == False):
