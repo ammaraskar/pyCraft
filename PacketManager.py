@@ -2,6 +2,12 @@ import socket
 import struct
 import sys
 
+def sendHandshake(socket, username, host, port):
+    toSend = username + ";" + host + ":" + str(port)
+    socket.send("\x02")
+    socket.send(struct.pack('!h', toSend.__len__()))
+    socket.send(toSend.encode('utf-16be'))
+
 def sendLoginRequest(socket, username):
     socket.send("\x01")
     socket.send(struct.pack('!i', 29))
@@ -167,6 +173,174 @@ def handle14(socket):
                 }
     print toReturn
     return toReturn
+
+def handle15(socket):
+    EntityID = struct.unpack('!i', socket.recv(4))[0]
+    Item = struct.unpack('!h', socket.recv(2))[0]
+    Count = struct.unpack('!b', socket.recv(1))[0]
+    Damage = struct.unpack('!h', socket.recv(2))[0]
+    x = struct.unpack('!i', socket.recv(4))[0]
+    y = struct.unpack('!i', socket.recv(4))[0]
+    z = struct.unpack('!i', socket.recv(4))[0]
+    Rotation = struct.unpack('!b', socket.recv(1))[0]
+    Pitch = struct.unpack('!b', socket.recv(1))[0]
+    Roll = struct.unpack('!b', socket.recv(1))[0]
+    return {'EntityID' : EntityID,
+            'Item' : Item,
+            'Count' : Count,
+            'Damage' : Damage,
+            'x' : x,
+            'y' : y,
+            'z' : z,
+            'Rotation' : Rotation,
+            'Pitch' : Pitch,
+            'Roll' : Roll
+            }
+    
+def handle16(socket):
+    CollectedID = struct.unpack('!i', socket.recv(4))[0]
+    CollectorID = struct.unpack('!i', socket.recv(4))[0]
+    return {'CollectedID' : CollectedID,
+            'CollectorID' : CollectorID
+            }
+    
+def handle17(socket):
+    EntityID = struct.unpack('!i', socket.recv(4))[0]
+    Type = struct.unpack('!b', socket.recv(1))[0]
+    x = struct.unpack('!i', socket.recv(4))[0]
+    y = struct.unpack('!i', socket.recv(4))[0]
+    z = struct.unpack('!i', socket.recv(4))[0]
+    ThrowerEntityID = struct.unpack('!i', socket.recv(4))[0]
+    if(ThrowerEntityID > 0):
+        SpeedX = struct.unpack('!h', socket.recv(2))[0]
+        SpeedY = struct.unpack('!h', socket.recv(2))[0]
+        SpeedZ = struct.unpack('!h', socket.recv(2))[0]
+        return {'EntityID' : EntityID,
+                'Type' : Type,
+                'x' : x,
+                'y' : y,
+                'z' : z,
+                'ThrowerEntityID' : ThrowerEntityID,
+                'SpeedX' : SpeedX,
+                'SpeedY' : SpeedY,
+                'SpeedZ' : SpeedZ
+                }
+    else:
+        return {'EntityID' : EntityID,
+                'Type' : Type,
+                'x' : x,
+                'y' : y,
+                'z' : z,
+                }
+        
+def handle18(socket):
+    EntityID = struct.unpack('!i', socket.recv(4))[0]
+    Type = struct.unpack('!b', socket.recv(1))[0]
+    x = struct.unpack('!i', socket.recv(4))[0]
+    y = struct.unpack('!i', socket.recv(4))[0]
+    z = struct.unpack('!i', socket.recv(4))[0]
+    Yaw = struct.unpack('!b', socket.recv(1))[0]
+    Pitch = struct.unpack('!b', socket.recv(1))[0]
+    HeadYaw = struct.unpack('!b', socket.recv(1))[0]
+    metadata = {}
+    x = socket.unpack('byte')
+    while x != 127:
+        index = x & 0x1F # Lower 5 bits
+        ty    = x >> 5   # Upper 3 bits
+        if ty == 0: val = socket.unpack('byte') 
+        if ty == 1: val = socket.unpack('short') 
+        if ty == 2: val = socket.unpack('int') 
+        if ty == 3: val = socket.unpack('float') 
+        if ty == 4: val = socket.unpack('string16')
+        if ty == 5:
+            val = {}
+            val["id"]     = socket.unpack('short')
+            val["count"]  = socket.unpack('byte')
+            val["damage"] = socket.unpack('short')
+            if ty == 6:
+                val = []
+                for i in range(3):
+                    val.append(socket.unpack('int'))
+        metadata[index] = (ty, val)
+        x = socket.unpack('byte')
+    return {'EntityID' : EntityID,
+            'Type' : Type,
+            'x' : x,
+            'y' : y,
+            'z' : z,
+            'Yaw' : Yaw,
+            'Pitch' : Pitch,
+            'HeadYaw' : HeadYaw,
+            'Metadata' : metadata
+            }
+    
+def handle19(socket):
+    EntityID = struct.unpack('!i', socket.recv(4))[0]
+    length = struct.unpack('!h', socket.recv(2))[0] * 2 
+    Title = socket.recv(length).decode('utf-16be')
+    x = struct.unpack('!i', socket.recv(4))[0]
+    y = struct.unpack('!i', socket.recv(4))[0]
+    z = struct.unpack('!i', socket.recv(4))[0]
+    Direction = struct.unpack('!i', socket.recv(4))[0]
+    return {'EntityID' : EntityID,
+            'Title' : Title,
+            'x' : x,
+            'y' : y,
+            'z' : z,
+            'Direction' : Direction
+            }
+
+def handle1A(socket):
+    EntityID = struct.unpack('!i', socket.recv(4))[0]
+    x = struct.unpack('!i', socket.recv(4))[0]
+    y = struct.unpack('!i', socket.recv(4))[0]
+    z = struct.unpack('!i', socket.recv(4))[0]
+    Count = struct.unpack('!h', socket.recv(2))[0]
+    return {'EntityID' : EntityID,
+            'x' : x,
+            'y' : y,
+            'z' : z,
+            'Count' : Count
+            }   
+    
+def handle1C(socket):
+    EntityID = struct.unpack('!i', socket.recv(4))[0]
+    VelocityX = struct.unpack('!h', socket.recv(2))[0]
+    VelocityY = struct.unpack('!h', socket.recv(2))[0]
+    VelocityZ = struct.unpack('!h', socket.recv(2))[0]
+    return {'EntityID' : EntityID,
+            'VelocityX' : VelocityX,
+            'VelocityY' : VelocityY,
+            'VelocityZ' : VelocityZ
+            }
+    
+def handle1D(socket):
+    EntityID = struct.unpack('!i', socket.recv(4))[0]
+    return EntityID
+
+def handle1E(socket):
+    EntityID = struct.unpack('!i', socket.recv(4))[0]
+    return EntityID
+
+def handle1F(socket):
+    EntityID = struct.unpack('!i', socket.recv(4))[0]
+    x = struct.unpack('!b', socket.recv(1))[0]
+    y = struct.unpack('!b', socket.recv(1))[0]
+    z = struct.unpack('!b', socket.recv(1))[0]
+    return {'EntityID' : EntityID,
+            'x' : x,
+            'y' : y,
+            'z' : z
+            }
+    
+def handle20(socket):
+    EntityID = struct.unpack('!i', socket.recv(4))[0]
+    Yaw = struct.unpack('!b', socket.recv(1))[0]
+    Pitch = struct.unpack('!b', socket.recv(1))[0]
+    return {'EntityID' : EntityID,
+            'Yaw' : Yaw,
+            'Pitch' : Pitch
+            }
 
 def handleFF(socket, response):
     response = socket.recv(2)

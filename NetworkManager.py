@@ -28,7 +28,7 @@ class ServerConnection(threading.Thread):
         self.socket = socket.socket ( socket.AF_INET, socket.SOCK_STREAM )
         try:
             self.socket.connect ( ( self.server, self.port ) )
-            PacketManager.sendString("\x02", self.username + ";" + self.server + ":" + str(self.port), self.socket)
+            PacketManager.sendHandshake(self.socket, self.username, self.server, self.port)
             if(self.socket.recv(1) == "\x02"):
                 response = PacketManager.handle02(self.socket)
             else:
@@ -103,6 +103,22 @@ class PacketListener(threading.Thread):
                 PacketManager.handle12(self.socket)
             if(response[0] == "\x14"):
                 PacketManager.handle14(self.socket)
+            if(response[0] == "\x15"):
+                PacketManager.handle15(self.socket)
+            if(response[0] == "\x16"):
+                PacketManager.handle16(self.socket)
+            if(response[0] == "\x17"):
+                PacketManager.handle17(self.socket)
+            if(response[0] == "\x18"):
+                print PacketManager.handle18(self.socket)
+            if(response[0] == "\x1A"):
+                PacketManager.handle1A(self.socket)
+            if(response[0] == "\x1C"):
+                PacketManager.handle1C(self.socket)
+            if(response[0] == "\x1D"):
+                PacketManager.handle1D(self.socket)
+            if(response[0] == "\x1E"):
+                PacketManager.handle1E(self.socket)
             if(response[0] == "\xFF"):
                 DisconMessage = PacketManager.handleFF(self.socket, response)
                 if(self.NoGUI == False):
