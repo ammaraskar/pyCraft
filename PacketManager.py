@@ -61,7 +61,7 @@ def handle03(socket):
     return message
 
 def handle04(socket):
-    time = struct.unpack('!l', socket.recv(4))[0]
+    time = struct.unpack('!q', socket.recv(8))[0]
     return time
 
 def handle05(socket):
@@ -243,26 +243,28 @@ def handle18(socket):
     Pitch = struct.unpack('!b', socket.recv(1))[0]
     HeadYaw = struct.unpack('!b', socket.recv(1))[0]
     metadata = {}
-    x = socket.unpack('byte')
+    x = struct.unpack('!b', socket.recv(1))[0]
     while x != 127:
         index = x & 0x1F # Lower 5 bits
         ty    = x >> 5   # Upper 3 bits
-        if ty == 0: val = socket.unpack('byte') 
-        if ty == 1: val = socket.unpack('short') 
-        if ty == 2: val = socket.unpack('int') 
-        if ty == 3: val = socket.unpack('float') 
-        if ty == 4: val = socket.unpack('string16')
+        if ty == 0: val = struct.unpack('!b', socket.recv(1))[0]
+        if ty == 1: val = struct.unpack('!h', socket.recv(2))[0]
+        if ty == 2: val = struct.unpack('!i', socket.recv(4))[0]
+        if ty == 3: val = struct.unpack('!f', socket.recv(4))[0] 
+        if ty == 4: 
+            length = struct.unpack('!h', socket.recv(2))[0] * 2
+            val = socket.recv(length).decode('utf-16be')
         if ty == 5:
             val = {}
-            val["id"]     = socket.unpack('short')
-            val["count"]  = socket.unpack('byte')
-            val["damage"] = socket.unpack('short')
+            val["id"]     = struct.unpack('!h', socket.recv(2))[0]
+            val["count"]  = struct.unpack('!b', socket.recv(1))[0]
+            val["damage"] = struct.unpack('!h', socket.recv(2))[0]
             if ty == 6:
                 val = []
                 for i in range(3):
-                    val.append(socket.unpack('int'))
+                    val.append(struct.unpack('!i', socket.recv(4))[0])
         metadata[index] = (ty, val)
-        x = socket.unpack('byte')
+        x = struct.unpack('!b', socket.recv(1))[0]
     return {'EntityID' : EntityID,
             'Type' : Type,
             'x' : x,
@@ -341,14 +343,151 @@ def handle20(socket):
             'Yaw' : Yaw,
             'Pitch' : Pitch
             }
+    
+def handle21(socket):
+    EntityID = struct.unpack('!i', socket.recv(4))[0]
+    x = struct.unpack('!b', socket.recv(1))[0]
+    y = struct.unpack('!b', socket.recv(1))[0]
+    z = struct.unpack('!b', socket.recv(1))[0]
+    Yaw = struct.unpack('!b', socket.recv(1))[0]
+    Pitch = struct.unpack('!b', socket.recv(1))[0]
+    return {'EntityID' : EntityID,
+            'x' : x,
+            'y' : y,
+            'z' : z,
+            'Yaw' : Yaw,
+            'Pitch' : Pitch
+            }
+    
+def handle22(socket):
+    EntityID = struct.unpack('!i', socket.recv(4))[0]
+    x = struct.unpack('!i', socket.recv(4))[0]
+    y = struct.unpack('!i', socket.recv(4))[0]
+    z = struct.unpack('!i', socket.recv(4))[0]
+    Yaw = struct.unpack('!b', socket.recv(1))[0]
+    Pitch = struct.unpack('!b', socket.recv(1))[0]
+    return {'EntityID' : EntityID,
+            'x' : x,
+            'y' : y,
+            'z' : z,
+            'Yaw' : Yaw,
+            'Pitch' : Pitch
+            }
+    
+def handle23(socket):
+    EntityID = struct.unpack('!i', socket.recv(4))[0]
+    HeadYaw = struct.unpack('!b', socket.recv(1))[0]
+    return {'EntityID' : EntityID,
+            'HeadYaw' : HeadYaw
+            }
+    
+def handle26(socket):
+    EntityID = struct.unpack('!i', socket.recv(4))[0]
+    Status = struct.unpack('!b', socket.recv(1))[0]
+    return {'EntityID' : EntityID,
+            'Status' : Status
+            }
+    
+def handle27(socket):
+    EntityID = struct.unpack('!i', socket.recv(4))[0]
+    VehicleID = struct.unpack('!i', socket.recv(4))[0]
+    return {'EntityID' : EntityID,
+            'VehicleID' : VehicleID
+            }
+    
+def handle28(socket):
+    EntityID = struct.unpack('!i', socket.recv(4))[0]
+    metadata = {}
+    x = struct.unpack('!b', socket.recv(1))[0]
+    while x != 127:
+        index = x & 0x1F # Lower 5 bits
+        ty    = x >> 5   # Upper 3 bits
+        if ty == 0: val = struct.unpack('!b', socket.recv(1))[0]
+        if ty == 1: val = struct.unpack('!h', socket.recv(2))[0]
+        if ty == 2: val = struct.unpack('!i', socket.recv(4))[0]
+        if ty == 3: val = struct.unpack('!f', socket.recv(4))[0] 
+        if ty == 4: 
+            length = struct.unpack('!h', socket.recv(2))[0] * 2
+            val = socket.recv(length).decode('utf-16be')
+        if ty == 5:
+            val = {}
+            val["id"]     = struct.unpack('!h', socket.recv(2))[0]
+            val["count"]  = struct.unpack('!b', socket.recv(1))[0]
+            val["damage"] = struct.unpack('!h', socket.recv(2))[0]
+            if ty == 6:
+                val = []
+                for i in range(3):
+                    val.append(struct.unpack('!i', socket.recv(4))[0])
+        metadata[index] = (ty, val)
+        struct.unpack('!b', socket.recv(1))[0]
+    return {'EntityID' : EntityID,
+            'MetaData' : metadata
+            }
+    
+def handle29(socket):
+    EntityID = struct.unpack('!i', socket.recv(4))[0]
+    EffectID = struct.unpack('!b', socket.recv(1))[0]
+    Amplifier = struct.unpack('!b', socket.recv(1))[0]
+    Duration = struct.unpack('!h', socket.recv(2))[0]
+    return {'EntityID' : EntityID,
+            'EffectID' : EffectID,
+            'Amplifier' : Amplifier,
+            'Duration' : Duration
+            }
+    
+def handle2A(socket):
+    EntityID = struct.unpack('!i', socket.recv(4))[0]
+    EffectID = struct.unpack('!b', socket.recv(1))[0]
+    return {'EntityID' : EntityID,
+            'EffectID' : EffectID
+            }
+    
+def handle2B(socket):
+    ExperienceBar = struct.unpack('!f', socket.recv(4))[0]
+    Level = struct.unpack('!h', socket.recv(2))[0]
+    TotalExp = struct.unpack('!h', socket.recv(2))[0]
+    return {'ExpBar' : ExperienceBar,
+            'Level' : Level,
+            'TotalExp' : TotalExp
+            }
+    
+def handle32(socket):
+    X = struct.unpack('!i', socket.recv(4))[0]
+    Z = struct.unpack('!i', socket.recv(4))[0]
+    Mode = struct.unpack('?', socket.recv(1))[0]
+    return {'x' : X,
+            'z' : Z,
+            'Mode' : Mode
+            }
+    
+def handleCA(socket):
+    Invulnerable = struct.unpack('?', socket.recv(1))[0]
+    IsFlying = struct.unpack('?', socket.recv(1))[0]
+    CanFly = struct.unpack('?', socket.recv(1))[0]
+    InstantDestroy = struct.unpack('?', socket.recv(1))[0]
+    return {'Invulnerable' : Invulnerable,
+            'IsFlying' : IsFlying,
+            'CanFly' : CanFly,
+            'InstantDestroy' : InstantDestroy
+            }
+    
+def handleFA(socket):
+    length = struct.unpack('!h', socket.recv(2))[0] * 2
+    Channel = socket.recv(length)
+    length = struct.unpack('!h', socket.recv(2))[0]
+    raw = socket.recv(length)
+    print raw
+    message = struct.unpack(str(length) + 's', raw)
+    return {'Channel' : Channel,
+            'message' : message
+            }
 
-def handleFF(socket, response):
-    response = socket.recv(2)
-    length = struct.unpack('!h', response)[0] * 2
-    response = socket.recv(length)
-    response = response.decode("utf-16be", 'strict')
-    print response
-    return response
+def handleFF(socket):
+    length = struct.unpack('!h', socket.recv(2))[0] * 2
+    Reason = socket.recv(length)
+    Reason = Reason.decode("utf-16be", 'strict')
+    print Reason
+    return Reason
 
     
 

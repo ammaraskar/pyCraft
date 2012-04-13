@@ -12,7 +12,6 @@ def loginToMinecraft(username, password):
         opener = urllib2.build_opener()
         response = opener.open(req)
         response = response.read()
-        print response
     except urllib2.URLError:
         toReturn = {'Response' : "Can't connect to minecraft.net"}
         return toReturn

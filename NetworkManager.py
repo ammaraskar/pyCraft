@@ -84,7 +84,7 @@ class PacketListener(threading.Thread):
             if(response[0] == "\x03"):
                 PacketManager.handle03(self.socket)
             if(response[0] == "\x04"):
-                PacketManager.handle04(self.socket)
+                print PacketManager.handle04(self.socket)
             if(response[0] == "\x05"):
                 PacketManager.handle05(self.socket)
             if(response[0] == "\x06"):
@@ -119,8 +119,34 @@ class PacketListener(threading.Thread):
                 PacketManager.handle1D(self.socket)
             if(response[0] == "\x1E"):
                 PacketManager.handle1E(self.socket)
+            if(response[0] == "\x20"):
+                PacketManager.handle20(self.socket)
+            if(response[0] == "\x21"):
+                PacketManager.handle21(self.socket)
+            if(response[0] == "\x22"):
+                PacketManager.handle22(self.socket)
+            if(response[0] == "\x23"):
+                PacketManager.handle23(self.socket)
+            if(response[0] == "\x26"):
+                PacketManager.handle26(self.socket)
+            if(response[0] == "\x27"):
+                PacketManager.handle27(self.socket)
+            if(response[0] == "\x28"):
+                PacketManager.handle28(self.socket)
+            if(response[0] == "\x29"):
+                PacketManager.handle29(self.socket)
+            if(response[0] == "\x2A"):
+                PacketManager.handle2A(self.socket)
+            if(response[0] == "\x2B"): 
+                PacketManager.handle2B(self.socket)
+            if(response[0] == "\x32"):
+                PacketManager.handle32(self.socket)
+            if(response[0] == "\xCA"):
+                print PacketManager.handleCA(self.socket)
+            if(response[0] == "\xFA"):
+                print PacketManager.handleFA(self.socket)
             if(response[0] == "\xFF"):
-                DisconMessage = PacketManager.handleFF(self.socket, response)
+                DisconMessage = PacketManager.handleFF(self.socket)
                 if(self.NoGUI == False):
                     "Disconnected: " + DisconMessage
                 else:
