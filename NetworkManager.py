@@ -84,7 +84,7 @@ class PacketListener(threading.Thread):
             if(response[0] == "\x03"):
                 PacketManager.handle03(self.socket)
             if(response[0] == "\x04"):
-                print PacketManager.handle04(self.socket)
+                PacketManager.handle04(self.socket)
             if(response[0] == "\x05"):
                 PacketManager.handle05(self.socket)
             if(response[0] == "\x06"):
@@ -141,14 +141,55 @@ class PacketListener(threading.Thread):
                 PacketManager.handle2B(self.socket)
             if(response[0] == "\x32"):
                 PacketManager.handle32(self.socket)
+            if(response[0] == "\x33"):
+                PacketManager.handle33(self.socket)
+            if(response[0] == "\x34"):
+                PacketManager.handle34(self.socket)
+            if(response[0] == "\x35"):
+                PacketManager.handle35(self.socket)
+            if(response[0] == "\x36"):
+                PacketManager.handle36(self.socket)
+            if(response[0] == "\x3C"):
+                print PacketManager.handle3C(self.socket)
+            if(response[0] == "\x3D"):
+                PacketManager.handle3D(self.socket)
+            if(response[0] == "\x46"):
+                PacketManager.handle46(self.socket)
+            if(response[0] == "\x47"):
+                PacketManager.handle47(self.socket)
+            if(response[0] == "\x64"):
+                PacketManager.handle64(self.socket)
+            if(response[0] == "\x65"):
+                PacketManager.handle65(self.socket)
+            if(response[0] == "\x67"):
+                PacketManager.handle67(self.socket)
+            if(response[0] == "\x68"):
+                PacketManager.handle68(self.socket)
+            if(response[0] == "\x69"):
+                PacketManager.handle69(self.socket)
+            if(response[0] == "\x6A"):
+                PacketManager.handle6A(self.socket)
+            if(response[0] == "\x6B"):
+                PacketManager.handle6B(self.socket)
+            if(response[0] == "\x82"):
+                PacketManager.handle82(self.socket)
+            if(response[0] == "\x83"):
+                PacketManager.handle83(self.socket)
+            if(response[0] == "\x84"):
+                PacketManager.handle84(self.socket)
+            if(response[0] == "\xC8"):
+                PacketManager.handleC8(self.socket)
+            if(response[0] == "\xC9"):
+                print PacketManager.handleC9(self.socket)
             if(response[0] == "\xCA"):
                 print PacketManager.handleCA(self.socket)
             if(response[0] == "\xFA"):
                 print PacketManager.handleFA(self.socket)
             if(response[0] == "\xFF"):
                 DisconMessage = PacketManager.handleFF(self.socket)
-                if(self.NoGUI == False):
-                    "Disconnected: " + DisconMessage
+                if(self.window == None):
+                    print "Disconnected: " + DisconMessage
                 else:
                     self.window.connectStatus.SetLabel("Disconnected: " + DisconMessage)
+                break
     

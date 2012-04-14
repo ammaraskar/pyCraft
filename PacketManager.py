@@ -1,6 +1,7 @@
 import socket
 import struct
 import sys
+import zlib
 
 def sendHandshake(socket, username, host, port):
     toSend = username + ";" + host + ":" + str(port)
@@ -419,7 +420,7 @@ def handle28(socket):
                 for i in range(3):
                     val.append(struct.unpack('!i', socket.recv(4))[0])
         metadata[index] = (ty, val)
-        struct.unpack('!b', socket.recv(1))[0]
+        x = struct.unpack('!b', socket.recv(1))[0]
     return {'EntityID' : EntityID,
             'MetaData' : metadata
             }
@@ -453,11 +454,237 @@ def handle2B(socket):
     
 def handle32(socket):
     X = struct.unpack('!i', socket.recv(4))[0]
-    Z = struct.unpack('!i', socket.recv(4))[0]
+    raw = socket.recv(4)
+    Z = struct.unpack('!i', raw)[0]
     Mode = struct.unpack('?', socket.recv(1))[0]
     return {'x' : X,
             'z' : Z,
             'Mode' : Mode
+            }
+
+def handle33(socket):
+    X = struct.unpack('!i', socket.recv(4))[0]
+    Z = struct.unpack('!i', socket.recv(4))[0]
+    GroundUpContinous = struct.unpack('?', socket.recv(1))[0]
+    PrimaryBitMap = struct.unpack('!H', socket.recv(2))[0]
+    AddBitMap = struct.unpack('!H', socket.recv(2))[0]
+    CompressedSize = struct.unpack('!i', socket.recv(4))[0]
+    socket.recv(4) #unused int
+    socket.recv(CompressedSize) #not going to be deflating and using this data until I know how to :3
+    return {'x' : X,
+            'z' : Z
+            }
+    
+def handle34(socket):
+    ChunkX = struct.unpack('!i', socket.recv(4))[0]
+    ChunkZ = struct.unpack('!i', socket.recv(4))[0]
+    AffectedBlocks = struct.unpack('!h', socket.recv(2))[0]
+    DataSize = struct.unpack('!i', socket.recv(4))[0]
+    socket.recv(DataSize) #not going to be using this until I know how to.
+    return {'ChunkX' : ChunkX,
+            'ChunkZ' : ChunkZ,
+            'AffectedBlocks' : AffectedBlocks
+            }
+    
+def handle35(socket):
+    X = struct.unpack('!i', socket.recv(4))[0]
+    Y = struct.unpack('!b', socket.recv(1))[0]
+    Z = struct.unpack('!i', socket.recv(4))[0]
+    BlockType = struct.unpack('!b', socket.recv(1))[0]
+    BlockMetaData = struct.unpack('!b', socket.recv(1))[0]
+    return {'x' : X,
+            'y' : Y,
+            'z' : Z,
+            'BlockType' : BlockType,
+            'MetaData' : BlockMetaData
+            }
+    
+def handle36(socket):
+    X = struct.unpack('!i', socket.recv(4))[0]
+    Y = struct.unpack('!h', socket.recv(2))[0]
+    Z = struct.unpack('!i', socket.recv(4))[0]
+    Byte1 = struct.unpack('!b', socket.recv(1))[0]
+    Byte2 = struct.unpack('!b', socket.recv(1))[0]
+    return {'x' : X,
+            'y' : Y,
+            'z' : Z,
+            'Byte1' : Byte1,
+            'Byte2' : Byte2
+            }
+    
+def handle3C(socket):
+    X = struct.unpack('!d', socket.recv(8))[0]
+    Y = struct.unpack('!d', socket.recv(8))[0]
+    Z = struct.unpack('!d', socket.recv(8))[0]
+    socket.recv(4) #Unknown what this float does
+    RecordCount = struct.unpack('!i', socket.recv(4))[0]
+    AffectedBlocks = []
+    for i in range(1, (RecordCount * 3) + 1):
+        x = struct.unpack('!b', socket.recv(1))[0]
+        y = struct.unpack('!b', socket.recv(1))[0]
+        z = struct.unpack('!b', socket.recv(1))[0]
+        AffectedBlocks.append({'x' : x, 'y' : y, 'z' : z})
+    return {'X' : X,
+            'Y' : Y,
+            'Z' : Z,
+            'AffectedBlocks' : AffectedBlocks
+            }
+    
+def handle3D(socket):
+    EffectID = struct.unpack('!i', socket.recv(4))[0]
+    X = struct.unpack('!i', socket.recv(4))[0]
+    Y = struct.unpack('!b', socket.recv(1))[0]
+    Z = struct.unpack('!i', socket.recv(4))[0]
+    Data = struct.unpack('!i', socket.recv(4))[0]
+    return {'EffectID' : EffectID,
+            'X' : X,
+            'Y' : Y,
+            'Z' : Z,
+            'Data' : Data
+            }
+    
+def handle46(socket):
+    Reason = struct.unpack('!b', socket.recv(1))[0]
+    GameMode = struct.unpack('!b', socket.recv(1))[0]
+    return {'Reason' : Reason,
+            'GameMode' : GameMode
+            }
+    
+def handle47(socket):
+    EntityID = struct.unpack('!i', socket.recv(4))[0]
+    socket.recv(1) #Boolean don't do nothing
+    x = struct.unpack('!i', socket.recv(4))[0]
+    y = struct.unpack('!i', socket.recv(4))[0]
+    z = struct.unpack('!i', socket.recv(4))[0]
+    return {'EntityID' : EntityID,
+            'x' : x,
+            'y' : y,
+            'z' : z
+            }
+    
+def handle64(socket):
+    WindowID = struct.unpack('!b', socket.recv(1))[0]
+    InventoryType = struct.unpack('!b', socket.recv(1))[0]
+    length = struct.unpack('!h', socket.recv(2))[0] * 2
+    WindowTitle = socket.recv(length).decode("utf-16be")
+    NumberOfSlots = struct.unpack('!b', socket.recv(1))[0]
+    return {'WindowID' : WindowID,
+            'InventoryType' : InventoryType,
+            'WindowTitle' : WindowTitle,
+            'NumberOfSlots' : NumberOfSlots
+            }
+    
+def handle65(socket):
+    WindowID = struct.unpack('!b', socket.recv(1))[0]
+    return WindowID
+
+def handle67(socket):
+    WindowID = struct.unpack('!b', socket.recv(1))[0]
+    Slot = struct.unpack('!h', socket.recv(2))[0]
+    SlotData = decodeSlotData(socket)
+    return {'WindowID' : WindowID,
+            'Slot' : Slot,
+            'SlotData' : SlotData
+            }
+    
+def handle68(socket):
+    WindowID = struct.unpack('!b', socket.recv(1))[0]
+    Count = struct.unpack('!h', socket.recv(2))[0]
+    SlotData = []
+    for i in range(1, (Count + 1)):
+        SlotData.append(decodeSlotData(socket))
+    return {'WindowID' : WindowID,
+            'Count' : Count,
+            'SlotData' : SlotData
+            }
+    
+def handle69(socket):
+    WindowID = struct.unpack('!b', socket.recv(1))[0]
+    Property = struct.unpack('!h', socket.recv(2))[0]
+    Value = struct.unpack('!h', socket.recv(2))[0]
+    return {'WindowID' : WindowID,
+            'Property' : Property,
+            'Value' : Value
+            }
+    
+def handle6A(socket):
+    WindowID = struct.unpack('!b', socket.recv(1))[0]
+    ActionType = struct.unpack('!h', socket.recv(2))[0]
+    Accepted = struct.unpack('?', socket.recv(1))[0]
+    return {'WindowID' : WindowID,
+            'ActionType' : ActionType,
+            'Accepted' : Accepted
+            }
+    
+def handle6B(socket):
+    Slot = struct.unpack('!h', socket.recv(2))[0]
+    ClickedItem = decodeSlotData(socket)
+    return {'Slot' : Slot,
+            'ClickedItem' : ClickedItem
+            }
+    
+def handle82(socket):
+    X = struct.unpack('!i', socket.recv(4))[0]
+    Y = struct.unpack('!h', socket.recv(2))[0]
+    Z = struct.unpack('!i', socket.recv(4))[0]
+    length = struct.unpack('!i', socket.recv(2))[0] * 2
+    Line1 = socket.recv(length).decode("utf-16be")
+    length = struct.unpack('!i', socket.recv(2))[0] * 2
+    Line2 = socket.recv(length).decode("utf-16be")
+    length = struct.unpack('!i', socket.recv(2))[0] * 2
+    Line3 = socket.recv(length).decode("utf-16be")
+    length = struct.unpack('!i', socket.recv(2))[0] * 2
+    Line4 = socket.recv(length).decode("utf-16be")
+    return {'x' : X,
+            'y' : Y,
+            'z' : Z,
+            'Line1' : Line1,
+            'Line2' : Line2,
+            'Line3' : Line3,
+            'Line4' : Line4
+            }
+    
+def handle83(socket):
+    ItemType = struct.unpack('!h', socket.recv(2))[0]
+    ItemID = struct.unpack('!h', socket.recv(2))[0]
+    TextLength = struct.unpack('!B', socket.recv(1))[0]
+    Text = struct.unpack(str(TextLength) + 'p', socket.recv(TextLength))
+    return {'ItemType' : ItemType,
+            'ItemID' : ItemID,
+            'Text' : Text
+            }
+    
+def handle84(socket):
+    X = struct.unpack('!i', socket.recv(4))[0]
+    Y = struct.unpack('!h', socket.recv(2))[0]
+    Z = struct.unpack('!i', socket.recv(4))[0]
+    Action = struct.unpack('!b', socket.recv(1))[0]
+    Custom1 = struct.unpack('!i', socket.recv(4))[0]
+    Custom2 = struct.unpack('!i', socket.recv(4))[0]
+    Custom3 = struct.unpack('!i', socket.recv(4))[0]
+    return {'x' : X,
+            'y' : Y,
+            'z' : Z,
+            'Custom1' : Custom1,
+            'Custom2' : Custom2,
+            'Custom3': Custom3
+            }
+    
+def handleC8(socket):
+    StatID = struct.unpack('!i', socket.recv(4))[0]
+    Amount = struct.unpack('!b', socket.recv(1))[0]
+    return {'StatID' : StatID,
+            'Amount' : Amount
+            }    
+    
+def handleC9(socket):
+    length = struct.unpack('!h', socket.recv(2))[0] * 2
+    PlayerName = socket.recv(length).decode("utf-16be")
+    Online = struct.unpack('?', socket.recv(1))[0]
+    Ping = struct.unpack('!h', socket.recv(2))[0]
+    return {'PlayerName' : PlayerName,
+            'Online' : Online,
+            'Ping' : Ping
             }
     
 def handleCA(socket):
@@ -489,6 +716,35 @@ def handleFF(socket):
     print Reason
     return Reason
 
-    
-
-    
+def decodeSlotData(socket):
+    Enchantables = ["\x103", "\x105", "\x15A", "\x167" , 
+                    "\x10C", "\x10D", "\x10E", "\x10F", "\x122",
+                    "\x110", "\x111", "\x112", "\x113", "\x123",
+                    "\x10B", "\x100", "\x101", "\x102", "\x124",
+                    "\x114", "\x115", "\x116", "\x117", "\x125",
+                    "\x11B", "\x11C", "\x11D", "\x11E", "\x126"]
+    BlockID = struct.unpack('!h', socket.recv(2))[0]
+    if(BlockID != -1):
+        ItemCount = struct.unpack('!b', socket.recv(1))[0]
+        MetaData = struct.unpack('!h', socket.recv(2))[0]
+        if(BlockID in Enchantables):
+            IncomingDataLength = struct.unpack('!h', socket.recv(2))[0]
+            if(IncomingDataLength != -1):
+                ByteArray = struct.unpack(IncomingDataLength + "p", socket.recv(IncomingDataLength))
+                Data = zlib.decompress(ByteArray, 15+32)
+                return {'BlockID' : BlockID,
+                        'ItemCount' : ItemCount,
+                        'MetaData' : MetaData,
+                        'Data' : Data
+                        }
+            return {'BlockID' : BlockID,
+                    'ItemCount' : ItemCount,
+                    'MetaData' : MetaData
+                    }
+        return {'BlockID' : BlockID,
+                'ItemCount' : ItemCount,
+                'MetaData' : MetaData
+                }
+    return {'BlockID' : -1,
+            'ItemCount' : -1
+            }

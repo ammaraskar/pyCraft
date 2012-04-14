@@ -100,7 +100,7 @@ class Window(wx.Frame):
         if ':' in StuffEnteredIntoBox:
             StuffEnteredIntoBox = StuffEnteredIntoBox.split(":")
             host = StuffEnteredIntoBox[0]
-            port = StuffEnteredIntoBox[1]
+            port = int(StuffEnteredIntoBox[1])
         else:
             host = StuffEnteredIntoBox
             port = 25565
@@ -218,8 +218,8 @@ if __name__ == "__main__":
             stuff = raw_input("Enter host and port if any: ")
             if ':' in stuff:
                 StuffEnteredIntoBox = stuff.split(":")
-                host = stuff[0]
-                port = stuff[1]
+                host = StuffEnteredIntoBox[0]
+                port = int(StuffEnteredIntoBox[1])
             else:
                 host = stuff
                 port = 25565
