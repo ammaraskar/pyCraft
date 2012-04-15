@@ -28,9 +28,10 @@ class ServerConnection(threading.Thread):
         self.socket = socket.socket ( socket.AF_INET, socket.SOCK_STREAM )
         try:
             self.socket.connect ( ( self.server, self.port ) )
+            self.FileObject = self.socket.makefile()
             PacketManager.sendHandshake(self.socket, self.username, self.server, self.port)
             if(self.socket.recv(1) == "\x02"):
-                response = PacketManager.handle02(self.socket)
+                response = PacketManager.handle02(self.FileObject)
             else:
                 print "Server responded with a malformed packet"
                 pass
@@ -45,7 +46,7 @@ class ServerConnection(threading.Thread):
                         print "Response from sessions.minecraft.net wasn't OK, it was " + response
                     return False
                 PacketManager.sendLoginRequest(self.socket, self.username)
-                PacketListener(self.window, self.socket).start()
+                PacketListener(self.window, self.socket, self.FileObject).start()
             else:
                 print "Server is in offline mode"
                 PacketManager.sendLoginRequest(self.socket, self.username)
@@ -60,13 +61,14 @@ class ServerConnection(threading.Thread):
         
 class PacketListener(threading.Thread):
     
-    def __init__(self, window, socket):
+    def __init__(self, window, socket, FileObject):
         threading.Thread.__init__(self)
         self.socket = socket
         self.window = window
+        self.FileObject = FileObject
         
     def run(self):
-        self.socket.settimeout(60)
+        self.socket.setblocking(1)
         while True:
             try:
                 response = self.socket.recv(1)
@@ -78,115 +80,119 @@ class PacketListener(threading.Thread):
                 break
             print hex(ord(response[0]))
             if(response[0] == "\x00"):
-                PacketManager.handle00(self.socket)
+                print PacketManager.handle00(self.FileObject, self.socket)
             if(response[0] == "\x01"):
-                PacketManager.handle01(self.socket)
+                print PacketManager.handle01(self.FileObject)
             if(response[0] == "\x03"):
-                PacketManager.handle03(self.socket)
+                print PacketManager.handle03(self.FileObject)
             if(response[0] == "\x04"):
-                PacketManager.handle04(self.socket)
+                print PacketManager.handle04(self.FileObject)
             if(response[0] == "\x05"):
-                PacketManager.handle05(self.socket)
+                print PacketManager.handle05(self.FileObject)
             if(response[0] == "\x06"):
-                PacketManager.handle06(self.socket)
+                print PacketManager.handle06(self.FileObject)
             if(response[0] == "\x07"):
-                PacketManager.handle07(self.socket)
+                print PacketManager.handle07(self.FileObject)
             if(response[0] == "\x08"):
-                PacketManager.handle08(self.socket)
+                print PacketManager.handle08(self.FileObject)
             if(response[0] == "\x09"):
-                PacketManager.handle09(self.socket)
+                print PacketManager.handle09(self.FileObject)
             if(response[0] == "\x0D"):
-                PacketManager.handle0D(self.socket)
+                print PacketManager.handle0D(self.FileObject)
             if(response[0] == "\x11"):
-                PacketManager.handle11(self.socket)
+                print PacketManager.handle11(self.FileObject)
             if(response[0] == "\x12"):
-                PacketManager.handle12(self.socket)
+                print PacketManager.handle12(self.FileObject)
             if(response[0] == "\x14"):
-                PacketManager.handle14(self.socket)
+                print PacketManager.handle14(self.FileObject)
             if(response[0] == "\x15"):
-                PacketManager.handle15(self.socket)
+                print PacketManager.handle15(self.FileObject)
             if(response[0] == "\x16"):
-                PacketManager.handle16(self.socket)
+                print PacketManager.handle16(self.FileObject)
             if(response[0] == "\x17"):
-                PacketManager.handle17(self.socket)
+                print PacketManager.handle17(self.FileObject)
             if(response[0] == "\x18"):
-                print PacketManager.handle18(self.socket)
+                print PacketManager.handle18(self.FileObject)
+            if(response[0] == "\x19"):
+                print PacketManager.handle19(self.FileObject)
             if(response[0] == "\x1A"):
-                PacketManager.handle1A(self.socket)
+                print PacketManager.handle1A(self.FileObject)
             if(response[0] == "\x1C"):
-                PacketManager.handle1C(self.socket)
+                print PacketManager.handle1C(self.FileObject)
             if(response[0] == "\x1D"):
-                PacketManager.handle1D(self.socket)
+                print PacketManager.handle1D(self.FileObject)
             if(response[0] == "\x1E"):
-                PacketManager.handle1E(self.socket)
+                print PacketManager.handle1E(self.FileObject)
+            if(response[0] == "\x1F"):
+                print PacketManager.handle1F(self.FileObject)
             if(response[0] == "\x20"):
-                PacketManager.handle20(self.socket)
+                print PacketManager.handle20(self.FileObject)
             if(response[0] == "\x21"):
-                PacketManager.handle21(self.socket)
+                print PacketManager.handle21(self.FileObject)
             if(response[0] == "\x22"):
-                PacketManager.handle22(self.socket)
+                print PacketManager.handle22(self.FileObject)
             if(response[0] == "\x23"):
-                PacketManager.handle23(self.socket)
+                print PacketManager.handle23(self.FileObject)
             if(response[0] == "\x26"):
-                PacketManager.handle26(self.socket)
+                print PacketManager.handle26(self.FileObject)
             if(response[0] == "\x27"):
-                PacketManager.handle27(self.socket)
+                print PacketManager.handle27(self.FileObject)
             if(response[0] == "\x28"):
-                PacketManager.handle28(self.socket)
+                print PacketManager.handle28(self.FileObject)
             if(response[0] == "\x29"):
-                PacketManager.handle29(self.socket)
+                print PacketManager.handle29(self.FileObject)
             if(response[0] == "\x2A"):
-                PacketManager.handle2A(self.socket)
+                print PacketManager.handle2A(self.FileObject)
             if(response[0] == "\x2B"): 
-                PacketManager.handle2B(self.socket)
+                print PacketManager.handle2B(self.FileObject)
             if(response[0] == "\x32"):
-                PacketManager.handle32(self.socket)
+                print PacketManager.handle32(self.FileObject)
             if(response[0] == "\x33"):
-                PacketManager.handle33(self.socket)
+                print PacketManager.handle33(self.FileObject)
             if(response[0] == "\x34"):
-                PacketManager.handle34(self.socket)
+                print PacketManager.handle34(self.FileObject)
             if(response[0] == "\x35"):
-                PacketManager.handle35(self.socket)
+                print PacketManager.handle35(self.FileObject)
             if(response[0] == "\x36"):
-                PacketManager.handle36(self.socket)
+                print PacketManager.handle36(self.FileObject)
             if(response[0] == "\x3C"):
-                print PacketManager.handle3C(self.socket)
+                print PacketManager.handle3C(self.FileObject)
             if(response[0] == "\x3D"):
-                PacketManager.handle3D(self.socket)
+                print PacketManager.handle3D(self.FileObject)
             if(response[0] == "\x46"):
-                PacketManager.handle46(self.socket)
+                print PacketManager.handle46(self.FileObject)
             if(response[0] == "\x47"):
-                PacketManager.handle47(self.socket)
+                print PacketManager.handle47(self.FileObject)
             if(response[0] == "\x64"):
-                PacketManager.handle64(self.socket)
+                print PacketManager.handle64(self.FileObject)
             if(response[0] == "\x65"):
-                PacketManager.handle65(self.socket)
+                print PacketManager.handle65(self.FileObject)
             if(response[0] == "\x67"):
-                PacketManager.handle67(self.socket)
+                print PacketManager.handle67(self.FileObject)
             if(response[0] == "\x68"):
-                PacketManager.handle68(self.socket)
+                print PacketManager.handle68(self.FileObject)
             if(response[0] == "\x69"):
-                PacketManager.handle69(self.socket)
+                print PacketManager.handle69(self.FileObject)
             if(response[0] == "\x6A"):
-                PacketManager.handle6A(self.socket)
+                print PacketManager.handle6A(self.FileObject)
             if(response[0] == "\x6B"):
-                PacketManager.handle6B(self.socket)
+                print PacketManager.handle6B(self.FileObject)
             if(response[0] == "\x82"):
-                PacketManager.handle82(self.socket)
+                print PacketManager.handle82(self.FileObject)
             if(response[0] == "\x83"):
-                PacketManager.handle83(self.socket)
+                print PacketManager.handle83(self.FileObject)
             if(response[0] == "\x84"):
-                PacketManager.handle84(self.socket)
+                print PacketManager.handle84(self.FileObject)
             if(response[0] == "\xC8"):
-                PacketManager.handleC8(self.socket)
+                print PacketManager.handleC8(self.FileObject)
             if(response[0] == "\xC9"):
-                print PacketManager.handleC9(self.socket)
+                print PacketManager.handleC9(self.FileObject)
             if(response[0] == "\xCA"):
-                print PacketManager.handleCA(self.socket)
+                print PacketManager.handleCA(self.FileObject)
             if(response[0] == "\xFA"):
-                print PacketManager.handleFA(self.socket)
+                print PacketManager.handleFA(self.FileObject)
             if(response[0] == "\xFF"):
-                DisconMessage = PacketManager.handleFF(self.socket)
+                DisconMessage = PacketManager.handleFF(self.FileObject)
                 if(self.window == None):
                     print "Disconnected: " + DisconMessage
                 else:
