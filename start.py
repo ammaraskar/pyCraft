@@ -3,7 +3,8 @@ import urllib2
 import getpass
 import socket
 import sys
-import PacketManager
+import PacketListenerManager
+import PacketSenderManager
 import NetworkManager
 import NoGUIstuff
 import time
@@ -225,6 +226,8 @@ if __name__ == "__main__":
                 port = 25565
             connection = NetworkManager.ServerConnection(None, derp['Username'], passwd, sessionid, host, port)
             connection.start()
+            raw_input()
+            PacketSenderManager.send03(connection.grabSocket(), "/report Test report from pyCraft, hope this works :3")
     else:
         app = wx.App(0)
         Window(None, title='pyCraft')

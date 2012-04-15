@@ -23,7 +23,6 @@ def sendLoginRequest(FileObject, username):
 
 def handle00(FileObject, socket):
     KAid = struct.unpack('!i', FileObject.read(4))[0]
-    print "Sending keep alive response " + str(KAid)
     socket.send("\x00" + struct.pack('!i', KAid))
     
 def handle01(FileObject):
@@ -279,7 +278,6 @@ def handle19(FileObject):
     length = struct.unpack('!h', FileObject.read(2))[0] * 2 
     Title = FileObject.read(length).decode('utf-16be')
     raw = FileObject.read(4)
-    print raw.__len__()
     x = struct.unpack('!i', raw)[0]
     y = struct.unpack('!i', FileObject.read(4))[0]
     z = struct.unpack('!i', FileObject.read(4))[0]
@@ -454,7 +452,6 @@ def handle2B(FileObject):
 def handle32(FileObject):
     X = struct.unpack('!i', FileObject.read(4))[0]
     raw = FileObject.read(4)
-    print raw.__len__()
     Z = struct.unpack('!i', raw)[0]
     Mode = struct.unpack('?', FileObject.read(1))[0]
     return {'x' : X,
@@ -736,10 +733,6 @@ def decodeSlotData(FileObject):
             if(IncomingDataLength != -1):
                 raw = FileObject.read(IncomingDataLength)
                 ByteArray = struct.unpack(str(IncomingDataLength) + "s", raw)[0]
-                print "We've got an array worth " + str(IncomingDataLength)
-                print "Raw size: " + str(raw.__len__())
-                print "Actual size: " + str(ByteArray.__len__())
-                print "Byte Array: " + ByteArray
                 Data = zlib.decompress(ByteArray, 15+32)
                 return {'BlockID' : BlockID,
                         'ItemCount' : ItemCount,
