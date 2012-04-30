@@ -6,14 +6,32 @@ import time
 #pydev error fix
 wx=wx
 
-class LoginFrame(wx.Frame):
+class MainFrame(wx.Frame):
     
     def __init__(self, *args, **kwds):
-        self.loggedIn = False
-        
-        # begin wxGlade: LoginFrame.__init__
         kwds["style"] = wx.CAPTION | wx.CLOSE_BOX | wx.MINIMIZE_BOX | wx.SYSTEM_MENU | wx.TAB_TRAVERSAL | wx.CLIP_CHILDREN
         wx.Frame.__init__(self, *args, **kwds)
+        
+        self.LoginPanel = LoginFrame(self)
+        self.ConnectPanel = ServerPanel(self)
+        self.ConnectPanel.Hide()
+        
+        self.SetTitle("pyCraft")
+        
+    def showPanel(self):
+        self.LoginPanel.Hide()
+        self.SetSize((605, 405))
+        self.ConnectPanel.Show()
+        self.Layout()
+        self.ConnectPanel.Layout()
+
+class LoginFrame(wx.Panel):
+    
+    def __init__(self, parent):
+        
+        # begin wxGlade: LoginFrame.__init__
+        wx.Panel.__init__(self, parent)
+        self.parent = parent
         self.LoginStaticText = wx.StaticText(self, -1, "Login")
         self.static_line_1 = wx.StaticLine(self, -1)
         self.UsernameStaticText = wx.StaticText(self, -1, "Username")
@@ -23,19 +41,20 @@ class LoginFrame(wx.Frame):
         self.LoginButton = wx.Button(self, -1, "&Login")
         self.static_line_2 = wx.StaticLine(self, -1)
         self.Status = wx.StaticText(self, -1, "pyCraft, python based minecraft client by Ammar Askar")
-
+        
         self.__set_properties()
         self.__do_layout()
 
         self.Bind(wx.EVT_BUTTON, self.handleLogin, self.LoginButton)
+        self.UsernameEntry.Bind(wx.EVT_TEXT_ENTER, self.handleLogin)
+        self.PasswordEntry.Bind(wx.EVT_TEXT_ENTER, self.handleLogin)
         self.UsernameEntry.Bind(wx.EVT_KEY_DOWN, self.onKeyDown)
         self.PasswordEntry.Bind(wx.EVT_KEY_DOWN, self.onKeyDown)
         # end wxGlade
 
     def __set_properties(self):
         # begin wxGlade: LoginFrame.__set_properties
-        self.SetTitle("pyCraft")
-        self.SetSize((500, 300))
+        self.parent.SetSize((500, 300))
         self.SetBackgroundColour(wx.Colour(171, 171, 171))
         self.SetFont(wx.Font(20, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, ""))
         self.LoginStaticText.SetBackgroundColour(wx.Colour(171, 171, 171))
@@ -91,10 +110,7 @@ class LoginFrame(wx.Frame):
     def handlePostLogin(self, threadtokill):
         threadtokill.Kill = True
         self.Status.SetLabel("Logged in!") #For now just sets label to logged in, will call new frame in the future
-        pass
-    
-    def handleEnter(self):
-        print "mebbe this works"
+        self.parent.showPanel()
         
     def handleLogin(self, event):
         if(self.UsernameEntry.GetValue() == ""):
@@ -113,6 +129,62 @@ class LoginFrame(wx.Frame):
         RotationThread.start()
         LoginThread = start.MinecraftLoginThread(self, RotationThread, username, password)
         LoginThread.start()
+        
+class ServerPanel(wx.Panel):
+    
+    def __init__(self, parent):
+        # begin wxGlade: ServerConnectFrame.__init__
+        wx.Panel.__init__(self, parent=parent)
+        
+        self.parent = parent
+        
+        self.Status = wx.StaticText(self, -1, "")
+        self.ServerAddressStaticText = wx.StaticText(self, -1, "Server Address")
+        self.ServerAddressInput = wx.TextCtrl(self, -1, "")
+        self.ConnectButton = wx.Button(self, -1, "&Connect")
+        self.NoGraphicsCheck = wx.CheckBox(self, -1, "")
+        self.NoGraphicsStaticText = wx.StaticText(self, -1, "No Graphics (Stub until I implement graphics)")
+
+        self.__set_properties()
+        self.__do_layout()
+        # end wxGlade
+
+    def __set_properties(self):
+        # begin wxGlade: ServerConnectFrame.__set_properties
+        self.SetSize((605, 405))
+        self.SetBackgroundColour(wx.Colour(171, 171, 171))
+        self.Status.SetBackgroundColour(wx.Colour(171, 171, 171))
+        self.Status.SetFont(wx.Font(25, wx.MODERN, wx.NORMAL, wx.NORMAL, 0, "Minecraft"))
+        self.ServerAddressStaticText.SetBackgroundColour(wx.Colour(171, 171, 171))
+        self.ServerAddressStaticText.SetFont(wx.Font(12, wx.MODERN, wx.NORMAL, wx.NORMAL, 0, "Minecraft"))
+        self.ServerAddressInput.SetMinSize((200, 25))
+        self.ServerAddressInput.SetFont(wx.Font(11, wx.MODERN, wx.NORMAL, wx.NORMAL, 0, "Minecraft"))
+        self.ConnectButton.SetMinSize((125, 25))
+        self.ConnectButton.SetBackgroundColour(wx.SystemSettings_GetColour(wx.SYS_COLOUR_3DFACE))
+        self.NoGraphicsCheck.SetMinSize((13, 13))
+        self.NoGraphicsCheck.SetBackgroundColour(wx.Colour(171, 171, 171))
+        self.NoGraphicsCheck.Enable(False)
+        self.NoGraphicsCheck.SetValue(1)
+        self.NoGraphicsStaticText.SetBackgroundColour(wx.Colour(171, 171, 171))
+        self.NoGraphicsStaticText.SetFont(wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, ""))
+        # end wxGlade
+
+    def __do_layout(self):
+        # begin wxGlade: ServerConnectFrame.__do_layout
+        self.sizer_1 = wx.BoxSizer(wx.VERTICAL)
+        sizer_3 = wx.BoxSizer(wx.HORIZONTAL)
+        sizer_2 = wx.BoxSizer(wx.HORIZONTAL)
+        self.sizer_1.Add(self.Status, 0, wx.LEFT, 5)
+        self.sizer_1.Add((20, 45), 0, 0, 0)
+        sizer_2.Add(self.ServerAddressStaticText, 0, wx.LEFT, 5)
+        sizer_2.Add(self.ServerAddressInput, 0, wx.LEFT, 15)
+        sizer_2.Add(self.ConnectButton, 0, wx.LEFT, 15)
+        self.sizer_1.Add(sizer_2, 1, 0, 0)
+        sizer_3.Add(self.NoGraphicsCheck, 0, wx.LEFT | wx.TOP, 5)
+        sizer_3.Add(self.NoGraphicsStaticText, 0, wx.LEFT, 10)
+        self.sizer_1.Add(sizer_3, 1, wx.EXPAND, 0)
+        self.SetSizer(self.sizer_1)
+        # end wxGlade
         
 class ConnectingRotationThread(threading.Thread):
     

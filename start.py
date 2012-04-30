@@ -76,8 +76,8 @@ class KeepConnectionAlive(threading.Thread):
             except urllib2.URLError:
                 popup = wx.MessageBox('Keep alive to minecraft.net failed', 'Warning', 
                               wx.OK | wx.ICON_ERROR)
-                popup.ShowModal()
-        
+                popup.ShowModal()       
+
 if __name__ == "__main__":
     if (len(sys.argv) > 1):
         if(sys.argv[1] == "nogui"):
@@ -102,8 +102,9 @@ if __name__ == "__main__":
             raw_input()
             PacketSenderManager.send03(connection.grabSocket(), "/report Test report from pyCraft, hope this works :3")
     else:
-        app = wx.PySimpleApp(0)
-        Login = GUI.LoginFrame(None, -1, "")
+        app = wx.PySimpleApp()
+        Login = GUI.MainFrame(None, -1, "")
         app.SetTopWindow(Login)
         Login.Show()
         app.MainLoop()
+
