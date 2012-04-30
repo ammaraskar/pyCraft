@@ -7,11 +7,7 @@ import NetworkManager
 import NoGUIstuff
 import time
 import threading
-import wx
 import GUI
-
-#pyDev error fix
-wx=wx
         
 class MinecraftLoginThread(threading.Thread):
     
@@ -103,6 +99,10 @@ if __name__ == "__main__":
                 chat = raw_input()
                 PacketSenderManager.send03(connection.grabSocket(), chat)
     else:
+        import wx
+        #pydev error fix
+        wx=wx
+        
         app = wx.PySimpleApp()
         Login = GUI.MainFrame(None, -1, "")
         app.SetTopWindow(Login)
