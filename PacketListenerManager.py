@@ -709,9 +709,7 @@ def handleFA(FileObject):
             }
 
 def handleFF(FileObject):
-    print "Parsing disconnect packet"
     length = struct.unpack('!h', FileObject.read(2))[0] * 2
-    print "Length of string will be " + str(length)
     Reason = FileObject.read(length)
     Reason = Reason.decode("utf-16be", 'strict')
     print Reason

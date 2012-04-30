@@ -99,8 +99,9 @@ if __name__ == "__main__":
                 port = 25565
             connection = NetworkManager.ServerConnection(None, derp['Username'], passwd, sessionid, host, port)
             connection.start()
-            raw_input()
-            PacketSenderManager.send03(connection.grabSocket(), "/report Test report from pyCraft, hope this works :3")
+            while True:
+                chat = raw_input()
+                PacketSenderManager.send03(connection.grabSocket(), chat)
     else:
         app = wx.PySimpleApp()
         Login = GUI.MainFrame(None, -1, "")

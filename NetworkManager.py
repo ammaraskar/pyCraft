@@ -87,7 +87,7 @@ class PacketListener(threading.Thread):
             if(response[0] == "\x01"):
                 PacketListenerManager.handle01(self.FileObject)
             if(response[0] == "\x03"):
-                print PacketListenerManager.handle03(self.FileObject)
+                print PacketListenerManager.handle03(self.FileObject).replace(u'\xa7', '&')
             if(response[0] == "\x04"):
                 PacketListenerManager.handle04(self.FileObject)
             if(response[0] == "\x05"):
