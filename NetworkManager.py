@@ -22,6 +22,8 @@ class ServerConnection(threading.Thread):
         self.port = port
         if(window == None):
             self.NoGUI = True
+        else:
+            self.NoGUI = False
         self.window = window
         
     def grabSocket(self):
@@ -44,23 +46,27 @@ class ServerConnection(threading.Thread):
                 response = urllib2.urlopen(url).read()
                 if(response != "OK"):
                     if(self.NoGUI == False):
-                        self.window.connectStatus.SetLabel("Response from sessions.minecraft.net wasn't OK")
+                        self.window.ConnectPanel.Status.SetFont(wx.Font(15, wx.MODERN, wx.NORMAL, wx.NORMAL, 0, "Minecraft"))
+                        self.window.ConnectPanel.Status.SetLabel("Response from sessions.minecraft.net wasn't OK")
                     else:
                         print "Response from sessions.minecraft.net wasn't OK, it was " + response
                     return False
                 PacketListenerManager.sendLoginRequest(self.socket, self.username)
                 PacketListener(self, self.window, self.socket, self.FileObject).start()
             else:
-                print "Server is in offline mode"
+                if(self.NoGUI):
+                    print "Server is in offline mode"
                 PacketListenerManager.sendLoginRequest(self.socket, self.username)
         except Exception, e:
             if(self.NoGUI == False):
-                self.window.connectStatus.SetForegroundColour(wx.RED)
-                self.window.connectStatus.SetLabel("Connection to server failed")
+                self.window.ConnectPanel.Status.SetForegroundColour(wx.RED)
+                self.window.ConnectPanel.Status.SetLabel("Connection to server failed")
+                self.window.ConnectPanel.RotationThread.Kill = True
             else:
                 print "Connection to server failed"
             traceback.print_exc()
             return False
+        self.window.ConnectPanel.callbackAfterConnect()
                 
 class PacketListener(threading.Thread):
     
@@ -87,7 +93,9 @@ class PacketListener(threading.Thread):
             if(response[0] == "\x01"):
                 PacketListenerManager.handle01(self.FileObject)
             if(response[0] == "\x03"):
-                print PacketListenerManager.handle03(self.FileObject).replace(u'\xa7', '&')
+                message = PacketListenerManager.handle03(self.FileObject)
+                if(self.connection.NoGUI):
+                    print message.replace(u'\xa7', '&')
             if(response[0] == "\x04"):
                 PacketListenerManager.handle04(self.FileObject)
             if(response[0] == "\x05"):
@@ -199,6 +207,6 @@ class PacketListener(threading.Thread):
                 if(self.window == None):
                     print "Disconnected: " + DisconMessage
                 else:
-                    self.window.connectStatus.SetLabel("Disconnected: " + DisconMessage)
+                    self.window.ChatPanel.Status.SetLabel("Disconnected: " + DisconMessage)
                 break
     

@@ -1,7 +1,10 @@
 import wx
+import wx.lib.scrolledpanel as scrolled
+import wx.richtext as rt
 import start
 import threading
 import time
+import NetworkManager
 
 #pydev error fix
 wx=wx
@@ -9,21 +12,40 @@ wx=wx
 class MainFrame(wx.Frame):
     
     def __init__(self, *args, **kwds):
-        kwds["style"] = wx.CAPTION | wx.CLOSE_BOX | wx.MINIMIZE_BOX | wx.SYSTEM_MENU | wx.TAB_TRAVERSAL | wx.CLIP_CHILDREN
+        kwds["style"] = wx.DEFAULT_FRAME_STYLE
         wx.Frame.__init__(self, *args, **kwds)
         
+        self.Freeze()
         self.LoginPanel = LoginFrame(self)
         self.ConnectPanel = ServerPanel(self)
         self.ConnectPanel.Hide()
-        
+        self.ChatPanel = ServerChatPanel(self)
+        self.ChatPanel.Hide()
+        self.LoginPanel.Show()
+        self.SetSize((520, 310))
         self.SetTitle("pyCraft")
+        self.Thaw()
         
-    def showPanel(self):
+    def setOutGoingSocket(self, socket):
+        self.socket = socket
+        
+    def showConnectionPanel(self):
         self.LoginPanel.Hide()
-        self.SetSize((605, 405))
+        self.SetMinSize((600, 310))
+        self.SetSize((600, 310))
         self.ConnectPanel.Show()
         self.Layout()
         self.ConnectPanel.Layout()
+        
+    def showChatPanel(self):
+        self.ChatPanel.Hide()
+        self.ConnectPanel.Hide()
+        self.LoginPanel.Hide()
+        self.SetSize((600, 450))
+        self.SetMinSize((600, 450))
+        self.ChatPanel.Show()
+        self.Layout()
+        self.ChatPanel.Layout()
 
 class LoginFrame(wx.Panel):
     
@@ -54,7 +76,7 @@ class LoginFrame(wx.Panel):
 
     def __set_properties(self):
         # begin wxGlade: LoginFrame.__set_properties
-        self.parent.SetSize((500, 300))
+        self.parent.SetSize((520, 310))
         self.SetBackgroundColour(wx.Colour(171, 171, 171))
         self.SetFont(wx.Font(20, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, ""))
         self.LoginStaticText.SetBackgroundColour(wx.Colour(171, 171, 171))
@@ -109,8 +131,8 @@ class LoginFrame(wx.Panel):
 
     def handlePostLogin(self, threadtokill):
         threadtokill.Kill = True
-        self.Status.SetLabel("Logged in!") #For now just sets label to logged in, will call new frame in the future
-        self.parent.showPanel()
+        self.Status.SetLabel("Logged in!")
+        self.parent.showConnectionPanel()
         
     def handleLogin(self, event):
         if(self.UsernameEntry.GetValue() == ""):
@@ -140,13 +162,16 @@ class ServerPanel(wx.Panel):
         
         self.Status = wx.StaticText(self, -1, "")
         self.ServerAddressStaticText = wx.StaticText(self, -1, "Server Address")
-        self.ServerAddressInput = wx.TextCtrl(self, -1, "")
+        self.ServerAddressInput = wx.TextCtrl(self, -1, "", style=wx.TE_PROCESS_ENTER)
         self.ConnectButton = wx.Button(self, -1, "&Connect")
         self.NoGraphicsCheck = wx.CheckBox(self, -1, "")
         self.NoGraphicsStaticText = wx.StaticText(self, -1, "No Graphics (Stub until I implement graphics)")
 
         self.__set_properties()
         self.__do_layout()
+        
+        self.Bind(wx.EVT_BUTTON, self.onConnect, self.ConnectButton)
+        self.Bind(wx.EVT_TEXT_ENTER, self.onConnect, self.ServerAddressInput)
         # end wxGlade
 
     def __set_properties(self):
@@ -186,6 +211,108 @@ class ServerPanel(wx.Panel):
         self.SetSizer(self.sizer_1)
         # end wxGlade
         
+    def onConnect(self, event):
+        StuffEnteredIntoBox = self.ServerAddressInput.GetValue().split(":")
+        host = StuffEnteredIntoBox[0]
+        if(len(StuffEnteredIntoBox) > 1):
+            port = int(StuffEnteredIntoBox[1])
+        else:
+            port = 25565
+        connection = NetworkManager.ServerConnection(self.parent, self.parent.username, "", self.parent.sessionID, host, port)
+        connection.start() 
+        self.Status.SetLabel("Connecting.")
+        self.RotationThread = ConnectingRotationThread(self)
+        self.RotationThread.start()
+    
+    def callbackAfterConnect(self):
+        self.RotationThread.Kill = True
+        self.parent.showChatPanel()
+        
+class ServerChatPanel(wx.Panel):
+    
+    def __init__(self, parent):
+        # begin wxGlade: wxScrolledPanel.__init__
+        wx.Panel.__init__(self, parent=parent)
+        
+        self.parent = parent
+        
+        self.Status = wx.StaticText(self, -1, "HERP DERP TEST STUFF")
+        self.messageEntry = wx.TextCtrl(self, -1, "", style=wx.EXPAND|wx.TE_PROCESS_ENTER)
+        self.messageEntry.SetFont(wx.Font(10, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, ""))
+        self.sendButton = wx.Button(self, -1, "&Send", size=(100, wx.Button.GetDefaultSize()[1]))
+        self.sendButton.SetMinSize((100, wx.Button.GetDefaultSize()[1]))
+        self.sendButton.SetBackgroundColour(wx.SystemSettings_GetColour(wx.SYS_COLOUR_3DFACE))
+        """
+        self.ChatPanel = scrolled.ScrolledPanel(self, 1, size=(self.parent.GetSize()[0], self.parent.GetSize()[1] - 40),
+                                 style = wx.TAB_TRAVERSAL|wx.SUNKEN_BORDER|wx.EXPAND|wx.ALL, name="ChatPanel" )
+        self.ChatPanelSizer = wx.BoxSizer(wx.VERTICAL)
+        """
+        
+        self.__set_properties()
+        self.__do_layout()
+        
+        self.locked = True
+        self.Bind(wx.EVT_PAINT, self.OnPaint)
+        self.Bind(wx.EVT_ICONIZE, self.OnPaint)
+        self.text.Bind(wx.EVT_SCROLLWIN, self.OnScroll)
+        self.messageEntry.Bind(wx.EVT_TEXT_ENTER, self.sendMessage)
+        
+        self.SetAutoLayout(True)
+        self.text.BeginFontSize(12)
+        self.text.Scroll(0, self.text.GetScrollRange(wx.VERTICAL)) 
+        # end wxGlade
+
+    def __set_properties(self):
+        # begin wxGlade: ServerConnectionPanel.__set_properties
+        self.SetBackgroundColour(wx.Colour(171, 171, 171))
+        self.Status.SetBackgroundColour(wx.Colour(171, 171, 171))
+        self.Status.SetFont(wx.Font(14, wx.MODERN, wx.NORMAL, wx.BOLD, 0, "Minecraft"))
+        #self.ChatPanel.SetupScrolling()
+        # end wxGlade
+
+    def __do_layout(self):
+        # begin wxGlade: ServerConnectionPanel.__do_layout
+        self.SetSizeHints(-1,self.GetSize().y,-1,self.GetSize().y );
+        self.RootSizer = wx.BoxSizer(wx.VERTICAL)
+        #sizer_4 = wx.BoxSizer(wx.VERTICAL)
+        self.sizer_6 = wx.BoxSizer(wx.HORIZONTAL)
+        self.RootSizer.Add(self.Status, 0, wx.LEFT, 6)
+        #self.RootSizer.Add(self.ChatPanel, 1, wx.EXPAND|wx.ALL)
+        self.hbox5 = wx.BoxSizer(wx.HORIZONTAL) 
+        self.text = rt.RichTextCtrl(self, 1, style=wx.VSCROLL|wx.EXPAND|wx.SUNKEN_BORDER|wx.ALL, size=(self.parent.GetSize()[0] - 20, self.parent.GetSize()[1] - 100)) 
+        self.RootSizer.Add(self.text, 1, wx.ALL|wx.EXPAND, 3)
+        self.RootSizer.Fit(self)
+        self.RootSizer.Add(self.sizer_6, 0, wx.EXPAND, 0)
+        self.sizer_6.Add(self.messageEntry, 1, wx.EXPAND|wx.ALL, 3)
+        self.sizer_6.Add(self.sendButton, 0, wx.EXPAND|wx.ALL, 3)
+        #self.RootSizer.Add(sizer_4, 1, wx.EXPAND, 0)
+        self.SetSizer(self.RootSizer)
+        self.RootSizer.Fit(self)
+        self.Layout()
+        # end wxGlade
+        
+    def OnScroll(self, event):
+        event.Skip()
+        if(self.text.GetScrollRange(wx.VERTICAL) - self.text.GetScrollPos(wx.VERTICAL) == 81):
+            self.locked = True
+        else:
+            self.locked = False
+            
+    def OnPaint(self, event):
+        self.text.SetSize((self.parent.GetSize()[0] - 20, self.parent.GetSize()[1] - 100))
+        if(self.locked):
+            self.text.Scroll(0, self.text.GetScrollRange(wx.VERTICAL))
+        wx.PaintDC(self)          
+    
+    def sendMessage(self, event):
+        if(self.messageEntry.GetValue() == ""):
+            self.Status.SetLabel("No message entered QQ")
+        
+    def handleChat(self, message):
+        pass
+    
+# end of class wxScrolledPanel
+
 class ConnectingRotationThread(threading.Thread):
     
     def __init__(self, window):
@@ -198,17 +325,19 @@ class ConnectingRotationThread(threading.Thread):
         while True:
             if(self.Kill == True):
                 break
-            if(i == 0):
+            if(i == 0 and self.window):
                 self.window.Status.SetLabel("Connecting.")
-            if(i == 1):
+            elif(i == 1 and self.window):
                 self.window.Status.SetLabel("Connecting..")
-            if(i == 2):
+            elif(i == 2 and self.window):
                 self.window.Status.SetLabel("Connecting...")
-            if(i == 3):
+            elif(i == 3 and self.window):
                 self.window.Status.SetLabel("Connecting....")
-            if(i == 4):
+            elif(i == 4 and self.window):
                 self.window.Status.SetLabel("Connecting.....")
                 i = -1
+            elif(self.window == None):
+                self.Kill = True
             i = i + 1
             time.sleep(1)
         

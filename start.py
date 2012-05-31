@@ -8,6 +8,14 @@ import NoGUIstuff
 import time
 import threading
 import GUI
+noGoooeees = False
+try:
+    import wx
+except ImportError:
+    print "wxPython not found, falling back to no gui version"
+    noGoooeees = True
+#pydev error fix
+wx = wx
         
 class MinecraftLoginThread(threading.Thread):
     
@@ -43,18 +51,19 @@ class MinecraftLoginThread(threading.Thread):
         response = response.split(":")
         username = response[2]
         sessionID = response[3]
-        KeepConnectionAlive(self.username, self.password).start()
-        self.window.username = username
-        self.window.sessionID = sessionID
+        #KeepConnectionAlive(self.username, self.password, self.window).start()
+        self.window.parent.username = username
+        self.window.parent.sessionID = sessionID
         self.window.loggedIn = True
         self.window.handlePostLogin(self.rotationthread)
         
 class KeepConnectionAlive(threading.Thread):
     
-    def __init__(self, username, password):
+    def __init__(self, username, password, window):
         threading.Thread.__init__(self)
         self.username = username
         self.password = password
+        self.window = window
      
     def run(self):
         while True:
@@ -68,15 +77,26 @@ class KeepConnectionAlive(threading.Thread):
                 data = urllib.urlencode(data)
                 req = urllib2.Request(url, data, header)
                 opener = urllib2.build_opener()
-                opener.open(req)
+                response = opener.open(req)
+                response = response.read()
             except urllib2.URLError:
                 popup = wx.MessageBox('Keep alive to minecraft.net failed', 'Warning', 
                               wx.OK | wx.ICON_ERROR)
-                popup.ShowModal()       
+                popup.ShowModal()
+            if(response == "Bad login"):
+                popup = wx.MessageBox('Keep alive to minecraft.net failed (Incorrect username/password)', 'Warning', 
+                              wx.OK | wx.ICON_ERROR)
+                popup.ShowModal()
+                return
+            response = response.split(":")
+            sessionID = response[3]
+            if(self.window != None):
+                self.window.parent.sessionID = sessionID
+                self.window.parent.loggedIn = True            
 
 if __name__ == "__main__":
     if (len(sys.argv) > 1):
-        if(sys.argv[1] == "nogui"):
+        if(sys.argv[1] == "nogui" or noGoooeees == True):
             user = raw_input("Enter your username: ")
             passwd = getpass.getpass("Enter your password: ")
             derp = NoGUIstuff.loginToMinecraft(user, passwd)
@@ -99,10 +119,6 @@ if __name__ == "__main__":
                 chat = raw_input()
                 PacketSenderManager.send03(connection.grabSocket(), chat)
     else:
-        import wx
-        #pydev error fix
-        wx=wx
-        
         app = wx.PySimpleApp()
         Login = GUI.MainFrame(None, -1, "")
         app.SetTopWindow(Login)
