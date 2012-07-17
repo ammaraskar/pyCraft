@@ -256,10 +256,10 @@ def handle18(FileObject):
             val["id"]     = struct.unpack('!h', FileObject.read(2))[0]
             val["count"]  = struct.unpack('!b', FileObject.read(1))[0]
             val["damage"] = struct.unpack('!h', FileObject.read(2))[0]
-            if ty == 6:
-                val = []
-                for i in range(3):
-                    val.append(struct.unpack('!i', FileObject.read(4))[0])
+        if ty == 6:
+            val = []
+            for i in range(3):
+                val.append(struct.unpack('!i', FileObject.read(4))[0])
         metadata[index] = (ty, val)
         x = struct.unpack('!b', FileObject.read(1))[0]
     return {'EntityID' : EntityID,
@@ -412,10 +412,10 @@ def handle28(FileObject):
             val["id"]     = struct.unpack('!h', FileObject.read(2))[0]
             val["count"]  = struct.unpack('!b', FileObject.read(1))[0]
             val["damage"] = struct.unpack('!h', FileObject.read(2))[0]
-            if ty == 6:
-                val = []
-                for i in range(3):
-                    val.append(struct.unpack('!i', FileObject.read(4))[0])
+        if ty == 6:
+            val = []
+            for i in range(3):
+                val.append(struct.unpack('!i', FileObject.read(4))[0])
         metadata[index] = (ty, val)
         x = struct.unpack('!b', FileObject.read(1))[0]
     return {'EntityID' : EntityID,

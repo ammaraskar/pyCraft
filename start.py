@@ -11,12 +11,11 @@ import GUI
 noGoooeees = False
 try:
     import wx
+    wx = wx
 except ImportError:
     print "wxPython not found, falling back to no gui version"
     noGoooeees = True
-#pydev error fix
-wx = wx
-        
+      
 class MinecraftLoginThread(threading.Thread):
     
     def __init__(self, window, rotationthread, username, password):
@@ -124,4 +123,8 @@ if __name__ == "__main__":
         app.SetTopWindow(Login)
         Login.Show()
         app.MainLoop()
-
+        app2 = wx.PySimpleApp()
+        ChatPanel = GUI.ServerChatPanel(None, -1, "pyCraft")
+        app2.SetTopWindow(ChatPanel)
+        ChatPanel.Show()
+        app2.MainLoop()

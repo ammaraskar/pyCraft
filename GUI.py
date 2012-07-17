@@ -5,9 +5,14 @@ import start
 import threading
 import time
 import NetworkManager
+import PacketSenderManager
+import thread
+from threading import Lock
 
 #pydev error fix
 wx=wx
+
+connection = None
 
 class MainFrame(wx.Frame):
     
@@ -17,11 +22,9 @@ class MainFrame(wx.Frame):
         
         self.Freeze()
         self.LoginPanel = LoginFrame(self)
+        self.LoginPanel.Show()
         self.ConnectPanel = ServerPanel(self)
         self.ConnectPanel.Hide()
-        self.ChatPanel = ServerChatPanel(self)
-        self.ChatPanel.Hide()
-        self.LoginPanel.Show()
         self.SetSize((520, 310))
         self.SetTitle("pyCraft")
         self.Thaw()
@@ -30,6 +33,7 @@ class MainFrame(wx.Frame):
         self.socket = socket
         
     def showConnectionPanel(self):
+        #self.LoginPanel.Destroy()
         self.LoginPanel.Hide()
         self.SetMinSize((600, 310))
         self.SetSize((600, 310))
@@ -38,14 +42,22 @@ class MainFrame(wx.Frame):
         self.ConnectPanel.Layout()
         
     def showChatPanel(self):
-        self.ChatPanel.Hide()
+        self.Hide()
+        #self.app = wx.PySimpleApp()
+        #self.ChatPanel = ServerChatPanel(None, -1, "pyCraft")
+        #self.ConnectPanel.connection.setWindow(ChatPanel)
+        #self.app.SetTopWindow(self.ChatPanel)
+        #self.ChatPanel.Show()
+        #self.app.MainLoop()
+        self.Destroy()
+        """
         self.ConnectPanel.Hide()
-        self.LoginPanel.Hide()
-        self.SetSize((600, 450))
         self.SetMinSize((600, 450))
+        self.SetSize((600, 450))
         self.ChatPanel.Show()
         self.Layout()
         self.ChatPanel.Layout()
+        """
 
 class LoginFrame(wx.Panel):
     
@@ -82,12 +94,12 @@ class LoginFrame(wx.Panel):
         self.LoginStaticText.SetBackgroundColour(wx.Colour(171, 171, 171))
         self.LoginStaticText.SetFont(wx.Font(65, wx.MODERN, wx.NORMAL, wx.NORMAL, 0, "Minecraft"))
         self.UsernameStaticText.SetBackgroundColour(wx.Colour(171, 171, 171))
-        self.UsernameStaticText.SetFont(wx.Font(14, wx.MODERN, wx.NORMAL, wx.NORMAL, 0, "Lucida Sans"))
+        self.UsernameStaticText.SetFont(wx.Font(10, wx.MODERN, wx.NORMAL, wx.NORMAL, 0, "Lucida Sans"))
         self.UsernameEntry.SetMinSize((150, 25))
         self.UsernameEntry.SetFont(wx.Font(12, wx.MODERN, wx.NORMAL, wx.NORMAL, 0, ""))
         self.PasswordStaticText.SetMinSize((87, 35))
         self.PasswordStaticText.SetBackgroundColour(wx.Colour(171, 171, 171))
-        self.PasswordStaticText.SetFont(wx.Font(14, wx.MODERN, wx.NORMAL, wx.NORMAL, 0, "Lucida Sans"))
+        self.PasswordStaticText.SetFont(wx.Font(10, wx.MODERN, wx.NORMAL, wx.NORMAL, 0, "Lucida Sans"))
         self.PasswordEntry.SetMinSize((150, 25))
         self.PasswordEntry.SetFont(wx.Font(12, wx.MODERN, wx.NORMAL, wx.NORMAL, 0, ""))
         self.LoginButton.SetMinSize((80, 32))
@@ -218,6 +230,7 @@ class ServerPanel(wx.Panel):
             port = int(StuffEnteredIntoBox[1])
         else:
             port = 25565
+        global connection
         connection = NetworkManager.ServerConnection(self.parent, self.parent.username, "", self.parent.sessionID, host, port)
         connection.start() 
         self.Status.SetLabel("Connecting.")
@@ -228,58 +241,68 @@ class ServerPanel(wx.Panel):
         self.RotationThread.Kill = True
         self.parent.showChatPanel()
         
-class ServerChatPanel(wx.Panel):
+        
+class ServerChatPanel(wx.Frame):
     
-    def __init__(self, parent):
-        # begin wxGlade: wxScrolledPanel.__init__
-        wx.Panel.__init__(self, parent=parent)
+    def __init__(self, *args, **kwds):
+        self.lock = Lock()
+        self.lock.acquire()
+        kwds["style"] = wx.DEFAULT_FRAME_STYLE
+        wx.Frame.__init__(self, *args, **kwds)
         
-        self.parent = parent
-        
+        self.SetMinSize((600, 450))
+        self.SetSize((600, 450))
+                
         self.Status = wx.StaticText(self, -1, "HERP DERP TEST STUFF")
         self.messageEntry = wx.TextCtrl(self, -1, "", style=wx.EXPAND|wx.TE_PROCESS_ENTER)
-        self.messageEntry.SetFont(wx.Font(10, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, ""))
         self.sendButton = wx.Button(self, -1, "&Send", size=(100, wx.Button.GetDefaultSize()[1]))
-        self.sendButton.SetMinSize((100, wx.Button.GetDefaultSize()[1]))
-        self.sendButton.SetBackgroundColour(wx.SystemSettings_GetColour(wx.SYS_COLOUR_3DFACE))
+        
         """
         self.ChatPanel = scrolled.ScrolledPanel(self, 1, size=(self.parent.GetSize()[0], self.parent.GetSize()[1] - 40),
                                  style = wx.TAB_TRAVERSAL|wx.SUNKEN_BORDER|wx.EXPAND|wx.ALL, name="ChatPanel" )
         self.ChatPanelSizer = wx.BoxSizer(wx.VERTICAL)
         """
         
-        self.__set_properties()
-        self.__do_layout()
+        self.set_properties()
+        self.do_layout()
         
         self.locked = True
-        self.Bind(wx.EVT_PAINT, self.OnPaint)
-        self.Bind(wx.EVT_ICONIZE, self.OnPaint)
-        self.text.Bind(wx.EVT_SCROLLWIN, self.OnScroll)
-        self.messageEntry.Bind(wx.EVT_TEXT_ENTER, self.sendMessage)
         
-        self.SetAutoLayout(True)
-        self.text.BeginFontSize(12)
+        #self.Bind(wx.EVT_PAINT, self.OnPaint)
+        #self.Bind(wx.EVT_ICONIZE, self.iconize)
+        #self.text.Bind(wx.EVT_SCROLLWIN, self.OnScroll)
+        self.sendButton.Bind(wx.EVT_BUTTON, self.sendMessage)
+        self.messageEntry.Bind(wx.EVT_TEXT_ENTER, self.sendMessage)
+        #self.text.Bind(wx.EVT_LEFT_DOWN, self.clickCanceller)
+        
+        self.text.BeginFontSize(10)
         self.text.Scroll(0, self.text.GetScrollRange(wx.VERTICAL)) 
+        global connection
+        connection.setWindow(self)
+        self.lock.release()
         # end wxGlade
 
-    def __set_properties(self):
+    def set_properties(self):
         # begin wxGlade: ServerConnectionPanel.__set_properties
         self.SetBackgroundColour(wx.Colour(171, 171, 171))
         self.Status.SetBackgroundColour(wx.Colour(171, 171, 171))
         self.Status.SetFont(wx.Font(14, wx.MODERN, wx.NORMAL, wx.BOLD, 0, "Minecraft"))
+        self.messageEntry.SetFont(wx.Font(10, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, ""))
+        self.sendButton.SetMinSize((100, wx.Button.GetDefaultSize()[1]))
+        self.sendButton.SetBackgroundColour(wx.SystemSettings_GetColour(wx.SYS_COLOUR_3DFACE))
         #self.ChatPanel.SetupScrolling()
         # end wxGlade
 
-    def __do_layout(self):
+    def do_layout(self):
         # begin wxGlade: ServerConnectionPanel.__do_layout
-        self.SetSizeHints(-1,self.GetSize().y,-1,self.GetSize().y );
+        #self.SetSizeHints(-1,self.GetSize().y,-1,self.GetSize().y );
         self.RootSizer = wx.BoxSizer(wx.VERTICAL)
         #sizer_4 = wx.BoxSizer(wx.VERTICAL)
         self.sizer_6 = wx.BoxSizer(wx.HORIZONTAL)
         self.RootSizer.Add(self.Status, 0, wx.LEFT, 6)
         #self.RootSizer.Add(self.ChatPanel, 1, wx.EXPAND|wx.ALL)
         self.hbox5 = wx.BoxSizer(wx.HORIZONTAL) 
-        self.text = rt.RichTextCtrl(self, 1, style=wx.VSCROLL|wx.EXPAND|wx.SUNKEN_BORDER|wx.ALL, size=(self.parent.GetSize()[0] - 20, self.parent.GetSize()[1] - 100)) 
+        self.text = rt.RichTextCtrl(self, 1, style=wx.VSCROLL|wx.EXPAND|wx.SUNKEN_BORDER|wx.ALL, size=(self.GetSize()[0] - 20, self.GetSize()[1] - 100)) 
         self.RootSizer.Add(self.text, 1, wx.ALL|wx.EXPAND, 3)
         self.RootSizer.Fit(self)
         self.RootSizer.Add(self.sizer_6, 0, wx.EXPAND, 0)
@@ -291,6 +314,9 @@ class ServerChatPanel(wx.Panel):
         self.Layout()
         # end wxGlade
         
+    def clickCanceller(self, event):
+        pass
+        
     def OnScroll(self, event):
         event.Skip()
         if(self.text.GetScrollRange(wx.VERTICAL) - self.text.GetScrollPos(wx.VERTICAL) == 81):
@@ -299,17 +325,110 @@ class ServerChatPanel(wx.Panel):
             self.locked = False
             
     def OnPaint(self, event):
-        self.text.SetSize((self.parent.GetSize()[0] - 20, self.parent.GetSize()[1] - 100))
+        self.text.SetSize((self.GetSize()[0] - 20, self.GetSize()[1] - 100))
         if(self.locked):
             self.text.Scroll(0, self.text.GetScrollRange(wx.VERTICAL))
-        wx.PaintDC(self)          
-    
+        wx.PaintDC(self)    
+            
+    def iconize(self, event):
+        self.text.SetSize((self.GetSize()[0] - 20, self.GetSize()[1] - 100))
+        if(self.locked):
+            self.text.Scroll(0, self.text.GetScrollRange(wx.VERTICAL))
+                
     def sendMessage(self, event):
         if(self.messageEntry.GetValue() == ""):
             self.Status.SetLabel("No message entered QQ")
+            return False
+        thread.start_new_thread(PacketSenderManager.send03, (connection.grabSocket(), self.messageEntry.GetValue()))
+        self.messageEntry.SetValue("")
+        
         
     def handleChat(self, message):
-        pass
+        self.lock.acquire()
+        self.text.BeginFontSize(10)
+        """
+        if(u'\xa7' not in message):
+            self.text.WriteText(message)
+            self.text.Newline()
+            self.text.BeginTextColour('#000000')
+            self.lock.release()
+            return 
+        """
+        message2 = message
+        message2 = message2.split(u'\xa7')
+        first = True
+        for part in message2:
+            if(first == True):
+                first = False
+                self.text.WriteText(part)
+                continue
+            if(part.__len__() == 0):
+                continue
+            if(message2.__len__() == 1):
+                self.text.WriteText(message)
+                continue
+            colourcode = part[0]
+            stringpart = part[1:]
+            if(colourcode == "0"):
+                self.text.BeginTextColour('#e3dde1')
+            elif(colourcode == "1"):
+                self.text.BeginTextColour('#0000aa')
+            elif(colourcode == "2"):
+                self.text.BeginTextColour('#00aa00')
+            elif(colourcode == "3"):
+                self.text.BeginTextColour('#00aaaa')
+            elif(colourcode == "4"):
+                self.text.BeginTextColour('#aa0000')
+            elif(colourcode == "5"):
+                self.text.BeginTextColour('#aa00aa')
+            elif(colourcode == "6"):
+                self.text.BeginTextColour('#ffaa00')
+            elif(colourcode == "7"):
+                self.text.BeginTextColour('#aaaaaa')
+            elif(colourcode == "8"):
+                self.text.BeginTextColour('#555555')
+            elif(colourcode == "9"):
+                self.text.BeginTextColour('#5555ff')
+            elif(colourcode == "a"):
+                self.text.BeginTextColour('#55ff55')
+            elif(colourcode == "b"):
+                self.text.BeginTextColour('#55ffff')
+            elif(colourcode == "c"):
+                self.text.BeginTextColour('#ff5555')
+            elif(colourcode == "d"):
+                self.text.BeginTextColour('#ff55ff')
+            elif(colourcode == "e"):
+                self.text.BeginTextColour('#E6E222')
+            elif(colourcode == "f"):
+                self.text.BeginTextColour('#000000')
+            elif(colourcode == "k"):
+                self.text.BeginUnderline()
+            elif(colourcode == "l"):
+                self.text.BeginBold()
+            elif(colourcode == "m"):
+                self.text.BeginUnderline()
+            elif(colourcode == "n"):
+                self.text.BeginUnderline()
+            elif(colourcode == "o"):
+                self.text.BeginItalic()
+            elif(colourcode == "r"):
+                self.text.EndItalic()
+                self.text.EndUnderline()
+                self.text.EndBold()
+            """
+            else:
+                self.text.WriteText(u'\xa7')
+                self.text.WriteText(colourcode)
+            """
+            self.text.WriteText(stringpart)
+        self.text.EndItalic()
+        self.text.EndUnderline()
+        self.text.EndBold()
+        self.text.BeginTextColour('#000000')
+        #if(self.locked):
+        self.text.Scroll(0, self.text.GetScrollRange(wx.VERTICAL))
+        self.text.Newline()
+        self.lock.release()
     
 # end of class wxScrolledPanel
 
