@@ -1,1 +1,1 @@
-wxPython
+-e git+git://github.com/resba/wxPython-mirror.git@fix-duplicate-parameters#egg=wx

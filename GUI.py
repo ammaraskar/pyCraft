@@ -252,7 +252,7 @@ class ServerChatPanel(wx.Frame):
         self.SetMinSize((600, 450))
         self.SetSize((600, 450))
                 
-        self.Status = wx.StaticText(self, -1, "HERP DERP TEST STUFF")
+        self.Status = wx.StaticText(self, -1, "Server Chat")
         self.messageEntry = wx.TextCtrl(self, -1, "", style=wx.EXPAND|wx.TE_PROCESS_ENTER)
         self.sendButton = wx.Button(self, -1, "&Send", size=(100, wx.Button.GetDefaultSize()[1]))
         

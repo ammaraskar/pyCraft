@@ -2,11 +2,10 @@ import urllib
 import urllib2
 import getpass
 import sys
-from networking import NetworkManager, PacketSenderManager
-import NoGUIstuff
+from network import PacketSenderManager, NetworkManager
+from interface import NoGUIstuff, GUI
 import time
 import threading
-import GUI
 noGoooeees = False
 try:
     import wx
@@ -46,6 +45,10 @@ class MinecraftLoginThread(threading.Thread):
             self.window.Status.SetForegroundColour(wx.RED)
             self.window.Status.SetLabel('Incorrect username or password')
             return
+        if(response == "Account migrated, use e-mail as username."):
+            self.rotationthread.Kill = True
+            self.window.Status.SetForegroundColour(wx.RED)
+            self.window.Status.SetLabel('Account migrated, use e-mail as username.')
         response = response.split(":")
         username = response[2]
         sessionID = response[3]
