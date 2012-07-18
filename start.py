@@ -2,8 +2,9 @@ import urllib
 import urllib2
 import getpass
 import sys
-from network import PacketSenderManager, NetworkManager
-from interface import NoGUIstuff, GUI
+from networking import PacketSenderManager, NetworkManager
+import NoGUIstuff
+import GUI
 import time
 import threading
 noGoooeees = False
