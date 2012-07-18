@@ -2,8 +2,7 @@ import urllib
 import urllib2
 import getpass
 import sys
-import PacketSenderManager
-import NetworkManager
+from networking import NetworkManager, PacketSenderManager
 import NoGUIstuff
 import time
 import threading

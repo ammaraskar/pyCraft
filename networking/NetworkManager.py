@@ -113,7 +113,6 @@ class PacketListener(threading.Thread):
                     print message.replace(u'\xa7', '&')
                 elif(self.window):
                     self.window.handleChat(message)
-                print message
             if(response[0] == "\x04"):
                 PacketListenerManager.handle04(self.FileObject)
             if(response[0] == "\x05"):

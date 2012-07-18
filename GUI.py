@@ -4,8 +4,7 @@ import wx.richtext as rt
 import start
 import threading
 import time
-import NetworkManager
-import PacketSenderManager
+from networking import NetworkManager, PacketSenderManager
 import thread
 from threading import Lock
 
