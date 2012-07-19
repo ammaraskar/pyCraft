@@ -628,11 +628,11 @@ def handle82(FileObject):
     Z = struct.unpack('!i', FileObject.read(4))[0]
     length = struct.unpack('!i', FileObject.read(2))[0] * 2
     Line1 = FileObject.read(length).decode("utf-16be")
-    length = struct.unpack('!i', FileObject.read(2))[0] * 2
+    length = struct.unpack('!h', FileObject.read(2))[0] * 2
     Line2 = FileObject.read(length).decode("utf-16be")
-    length = struct.unpack('!i', FileObject.read(2))[0] * 2
+    length = struct.unpack('!h', FileObject.read(2))[0] * 2
     Line3 = FileObject.read(length).decode("utf-16be")
-    length = struct.unpack('!i', FileObject.read(2))[0] * 2
+    length = struct.unpack('!h', FileObject.read(2))[0] * 2
     Line4 = FileObject.read(length).decode("utf-16be")
     return {'x' : X,
             'y' : Y,
