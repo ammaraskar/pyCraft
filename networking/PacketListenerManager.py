@@ -240,10 +240,10 @@ def handle18(FileObject):
     Pitch = struct.unpack('!b', FileObject.read(1))[0]
     HeadYaw = struct.unpack('!b', FileObject.read(1))[0]
     metadata = {}
-    x = struct.unpack('!b', FileObject.read(1))[0]
-    while x != 127:
-        index = x & 0x1F # Lower 5 bits
-        ty    = x >> 5   # Upper 3 bits
+    byte = struct.unpack('!b', FileObject.read(1))[0]
+    while byte != 127:
+        index = byte & 0x1F # Lower 5 bits
+        ty    = byte >> 5   # Upper 3 bits
         if ty == 0: val = struct.unpack('!b', FileObject.read(1))[0]
         if ty == 1: val = struct.unpack('!h', FileObject.read(2))[0]
         if ty == 2: val = struct.unpack('!i', FileObject.read(4))[0]
@@ -261,7 +261,7 @@ def handle18(FileObject):
             for i in range(3):
                 val.append(struct.unpack('!i', FileObject.read(4))[0])
         metadata[index] = (ty, val)
-        x = struct.unpack('!b', FileObject.read(1))[0]
+        byte = struct.unpack('!b', FileObject.read(1))[0]
     return {'EntityID' : EntityID,
             'Type' : Type,
             'x' : x,
@@ -396,10 +396,10 @@ def handle27(FileObject):
 def handle28(FileObject):
     EntityID = struct.unpack('!i', FileObject.read(4))[0]
     metadata = {}
-    x = struct.unpack('!b', FileObject.read(1))[0]
-    while x != 127:
-        index = x & 0x1F # Lower 5 bits
-        ty    = x >> 5   # Upper 3 bits
+    byte = struct.unpack('!b', FileObject.read(1))[0]
+    while byte != 127:
+        index = byte & 0x1F # Lower 5 bits
+        ty    = byte >> 5   # Upper 3 bits
         if ty == 0: val = struct.unpack('!b', FileObject.read(1))[0]
         if ty == 1: val = struct.unpack('!h', FileObject.read(2))[0]
         if ty == 2: val = struct.unpack('!i', FileObject.read(4))[0]
@@ -417,7 +417,7 @@ def handle28(FileObject):
             for i in range(3):
                 val.append(struct.unpack('!i', FileObject.read(4))[0])
         metadata[index] = (ty, val)
-        x = struct.unpack('!b', FileObject.read(1))[0]
+        byte = struct.unpack('!b', FileObject.read(1))[0]
     return {'EntityID' : EntityID,
             'MetaData' : metadata
             }
