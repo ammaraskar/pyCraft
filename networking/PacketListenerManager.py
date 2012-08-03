@@ -240,7 +240,7 @@ def handle18(FileObject):
     Pitch = struct.unpack('!b', FileObject.read(1))[0]
     HeadYaw = struct.unpack('!b', FileObject.read(1))[0]
     metadata = {}
-    byte = struct.unpack('!b', FileObject.read(1))[0]
+    byte = struct.unpack('!B', FileObject.read(1))[0]
     while byte != 127:
         index = byte & 0x1F # Lower 5 bits
         ty    = byte >> 5   # Upper 3 bits
@@ -261,7 +261,7 @@ def handle18(FileObject):
             for i in range(3):
                 val.append(struct.unpack('!i', FileObject.read(4))[0])
         metadata[index] = (ty, val)
-        byte = struct.unpack('!b', FileObject.read(1))[0]
+        byte = struct.unpack('!B', FileObject.read(1))[0]
     return {'EntityID' : EntityID,
             'Type' : Type,
             'x' : x,
@@ -396,7 +396,7 @@ def handle27(FileObject):
 def handle28(FileObject):
     EntityID = struct.unpack('!i', FileObject.read(4))[0]
     metadata = {}
-    byte = struct.unpack('!b', FileObject.read(1))[0]
+    byte = struct.unpack('!B', FileObject.read(1))[0]
     while byte != 127:
         index = byte & 0x1F # Lower 5 bits
         ty    = byte >> 5   # Upper 3 bits
@@ -417,7 +417,7 @@ def handle28(FileObject):
             for i in range(3):
                 val.append(struct.unpack('!i', FileObject.read(4))[0])
         metadata[index] = (ty, val)
-        byte = struct.unpack('!b', FileObject.read(1))[0]
+        byte = struct.unpack('!B', FileObject.read(1))[0]
     return {'EntityID' : EntityID,
             'MetaData' : metadata
             }
