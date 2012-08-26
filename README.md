@@ -15,3 +15,7 @@ Basically, run `pip install -r requirements.txt`, which should pull everything i
 Eventually we'll put some run instructions here.
 
 Have fun!
+
+#TODO
+- Overhaul GUI
+(in case you haven't figured out already, I suck at GUIs in python. If you know what you're doing and wanna contribute, I'd appreciate some help :3)
