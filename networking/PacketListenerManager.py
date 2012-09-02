@@ -1,25 +1,5 @@
 import struct
-import sys
 import zlib
-
-def sendHandshake(FileObject, username, host, port):
-    toSend = username + ";" + host + ":" + str(port)
-    FileObject.send("\x02")
-    FileObject.send(struct.pack('!h', toSend.__len__()))
-    FileObject.send(toSend.encode('utf-16be'))
-
-def sendLoginRequest(FileObject, username):
-    FileObject.send("\x01")
-    FileObject.send(struct.pack('!i', 29))
-    FileObject.send(struct.pack('!h', username.__len__()))
-    FileObject.send(username.encode('utf-16be','strict'))
-    FileObject.send(struct.pack('!h', "hello".__len__()))
-    FileObject.send("hello".encode('utf-16be','strict'))
-    FileObject.send(struct.pack('!i', 0))
-    FileObject.send(struct.pack('!i', 1))
-    FileObject.send(struct.pack('!b', 0))
-    FileObject.send(struct.pack('!B', 1))
-    FileObject.send(struct.pack('!B', 0))
 
 def handle00(FileObject, socket):
     KAid = struct.unpack('!i', FileObject.read(4))[0]
@@ -27,8 +7,6 @@ def handle00(FileObject, socket):
     
 def handle01(FileObject):
     Eid = struct.unpack('!i', FileObject.read(4))[0]
-    length = struct.unpack('!h', FileObject.read(2))[0] * 2
-    FileObject.read(length)
     length = struct.unpack('!h', FileObject.read(2))[0] * 2 
     world = FileObject.read(length).decode('utf-16be')
     mode = struct.unpack('!i', FileObject.read(4))[0]
@@ -51,12 +29,6 @@ def handle02(FileObject):
     message = message.decode('utf-16be', 'strict')
     return message
 
-def handle03(FileObject):
-    length = struct.unpack('!h', FileObject.read(2))[0] * 2
-    message = FileObject.read(length)
-    message = message.decode('utf-16be','strict')
-    return message
-
 def handle04(FileObject):
     time = struct.unpack('!q', FileObject.read(8))[0]
     return time
@@ -64,12 +36,10 @@ def handle04(FileObject):
 def handle05(FileObject):
     EntityID = struct.unpack('!i', FileObject.read(4))[0]
     Slot = struct.unpack('!h', FileObject.read(2))[0]
-    ItemID = struct.unpack('!h', FileObject.read(2))[0]
-    Damage = struct.unpack('!h', FileObject.read(2))[0]
+    Item = decodeSlotData(FileObject)
     return {'EntityID' : EntityID,
             'Slot' : Slot,
-            'ItemID' : ItemID,
-            'Damage' : Damage
+            'Item' : Item
             }
 
 def handle06(FileObject):
@@ -159,6 +129,7 @@ def handle14(FileObject):
     yaw = struct.unpack('!f', FileObject.read(4))[0]
     pitch = struct.unpack('!f', FileObject.read(4))[0]
     curItem = struct.unpack('!h', FileObject.read(2))[0]
+    metadata = readEntityMetadata(FileObject)
     toReturn = {'EntityID' : EntityID,
                 'Player Name' : PlayerName,
                 'x' : x,
@@ -166,7 +137,8 @@ def handle14(FileObject):
                 'z' : z,
                 'yaw' : yaw,
                 'pitch' : pitch,
-                'curItem' : curItem
+                'curItem' : curItem,
+                'Metadata' : metadata
                 }
     print toReturn
     return toReturn
@@ -239,29 +211,8 @@ def handle18(FileObject):
     Yaw = struct.unpack('!b', FileObject.read(1))[0]
     Pitch = struct.unpack('!b', FileObject.read(1))[0]
     HeadYaw = struct.unpack('!b', FileObject.read(1))[0]
-    metadata = {}
-    byte = struct.unpack('!B', FileObject.read(1))[0]
-    while byte != 127:
-        index = byte & 0x1F # Lower 5 bits
-        ty    = byte >> 5   # Upper 3 bits
-        if ty == 0: val = struct.unpack('!b', FileObject.read(1))[0]
-        if ty == 1: val = struct.unpack('!h', FileObject.read(2))[0]
-        if ty == 2: val = struct.unpack('!i', FileObject.read(4))[0]
-        if ty == 3: val = struct.unpack('!f', FileObject.read(4))[0] 
-        if ty == 4: 
-            length = struct.unpack('!h', FileObject.read(2))[0] * 2
-            val = FileObject.read(length).decode('utf-16be')
-        if ty == 5:
-            val = {}
-            val["id"]     = struct.unpack('!h', FileObject.read(2))[0]
-            val["count"]  = struct.unpack('!b', FileObject.read(1))[0]
-            val["damage"] = struct.unpack('!h', FileObject.read(2))[0]
-        if ty == 6:
-            val = []
-            for i in range(3):
-                val.append(struct.unpack('!i', FileObject.read(4))[0])
-        metadata[index] = (ty, val)
-        byte = struct.unpack('!B', FileObject.read(1))[0]
+    metadata = readEntityMetadata(FileObject)
+
     return {'EntityID' : EntityID,
             'Type' : Type,
             'x' : x,
@@ -395,29 +346,7 @@ def handle27(FileObject):
     
 def handle28(FileObject):
     EntityID = struct.unpack('!i', FileObject.read(4))[0]
-    metadata = {}
-    byte = struct.unpack('!B', FileObject.read(1))[0]
-    while byte != 127:
-        index = byte & 0x1F # Lower 5 bits
-        ty    = byte >> 5   # Upper 3 bits
-        if ty == 0: val = struct.unpack('!b', FileObject.read(1))[0]
-        if ty == 1: val = struct.unpack('!h', FileObject.read(2))[0]
-        if ty == 2: val = struct.unpack('!i', FileObject.read(4))[0]
-        if ty == 3: val = struct.unpack('!f', FileObject.read(4))[0] 
-        if ty == 4: 
-            length = struct.unpack('!h', FileObject.read(2))[0] * 2
-            val = FileObject.read(length).decode('utf-16be')
-        if ty == 5:
-            val = {}
-            val["id"]     = struct.unpack('!h', FileObject.read(2))[0]
-            val["count"]  = struct.unpack('!b', FileObject.read(1))[0]
-            val["damage"] = struct.unpack('!h', FileObject.read(2))[0]
-        if ty == 6:
-            val = []
-            for i in range(3):
-                val.append(struct.unpack('!i', FileObject.read(4))[0])
-        metadata[index] = (ty, val)
-        byte = struct.unpack('!B', FileObject.read(1))[0]
+    metadata = readEntityMetadata(FileObject)
     return {'EntityID' : EntityID,
             'MetaData' : metadata
             }
@@ -707,7 +636,49 @@ def handleFA(FileObject):
     return {'Channel' : Channel,
             'message' : message
             }
-
+    
+def handleFC(FileObject):
+    
+    #short - shared secret length
+    secretLength = struct.unpack('!h', FileObject.read(2))[0]
+    
+    sharedSecret = struct.unpack(str(secretLength) + "s", FileObject.read(secretLength))[0] #ignore this data, it doesn't matter
+    
+    #short - token length
+    length = struct.unpack('!h', FileObject.read(2))[0]
+    
+    token = struct.unpack(str(length) + "s", FileObject.read(length))[0] #ignore this data, it doesn't matter
+    
+    return {'Secret Length' : secretLength,
+            'Shared Secret' : sharedSecret,
+            'Token Length' : length,
+            'Token' : token
+            }
+    
+    
+def handleFD(FileObject):
+    
+    #string - server id
+    length = struct.unpack('!h', FileObject.read(2))[0] * 2
+    serverid = FileObject.read(length).decode("utf-16be")
+    
+    #short - pub key length
+    length = struct.unpack('!h', FileObject.read(2))[0]
+    
+    #byte array - pub key
+    pubkey = struct.unpack(str(length) + "s", FileObject.read(length))[0]
+    
+    #short - token length
+    length = struct.unpack('!h', FileObject.read(2))[0]
+    
+    #byte array - token
+    token = struct.unpack(str(length) + "s", FileObject.read(length))[0]
+    
+    return {'ServerID' : serverid,
+            'Public Key' : pubkey,
+            'Token' : token
+            }
+    
 def handleFF(FileObject):
     length = struct.unpack('!h', FileObject.read(2))[0] * 2
     Reason = FileObject.read(length)
@@ -715,13 +686,33 @@ def handleFF(FileObject):
     print Reason
     return Reason
 
+def readEntityMetadata(FileObject):
+    metadata = {}
+    byte = struct.unpack('!B', FileObject.read(1))[0]
+    while byte != 127:
+        index = byte & 0x1F # Lower 5 bits
+        ty    = byte >> 5   # Upper 3 bits
+        if ty == 0: val = struct.unpack('!b', FileObject.read(1))[0]
+        if ty == 1: val = struct.unpack('!h', FileObject.read(2))[0]
+        if ty == 2: val = struct.unpack('!i', FileObject.read(4))[0]
+        if ty == 3: val = struct.unpack('!f', FileObject.read(4))[0] 
+        if ty == 4: 
+            length = struct.unpack('!h', FileObject.read(2))[0] * 2
+            val = FileObject.read(length).decode('utf-16be')
+        if ty == 5:
+            val = {}
+            val["id"]     = struct.unpack('!h', FileObject.read(2))[0]
+            val["count"]  = struct.unpack('!b', FileObject.read(1))[0]
+            val["damage"] = struct.unpack('!h', FileObject.read(2))[0]
+        if ty == 6:
+            val = []
+            for i in range(3):
+                val.append(struct.unpack('!i', FileObject.read(4))[0])
+        metadata[index] = (ty, val)
+        byte = struct.unpack('!B', FileObject.read(1))[0]
+    return metadata
+
 def decodeSlotData(FileObject):
-    Enchantables = ["\x103", "\x105", "\x15A", "\x167" , 
-                    "\x10C", "\x10D", "\x10E", "\x10F", "\x122",
-                    "\x110", "\x111", "\x112", "\x113", "\x123",
-                    "\x10B", "\x100", "\x101", "\x102", "\x124",
-                    "\x114", "\x115", "\x116", "\x117", "\x125",
-                    "\x11B", "\x11C", "\x11D", "\x11E", "\x126"]
     BlockID = struct.unpack('!h', FileObject.read(2))[0]
     if(BlockID != -1):
         ItemCount = struct.unpack('!b', FileObject.read(1))[0]

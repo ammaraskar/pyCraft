@@ -102,7 +102,7 @@ if __name__ == "__main__":
             user = raw_input("Enter your username: ")
             passwd = getpass.getpass("Enter your password: ")
             derp = NoGUIstuff.loginToMinecraft(user, passwd)
-            if(derp['Response'] == "Incorrect username/password" or derp['Response'] == "Can't connect to minecraft.net"):
+            if(derp['Response'] == "Incorrect username/password" or derp['Response'] == "Can't connect to minecraft.net" or derp['Response'] == "Account migrated, use e-mail as username."):
                 print derp['Response']
                 sys.exit()                
             sessionid = derp['SessionID']

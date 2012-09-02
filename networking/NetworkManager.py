@@ -4,8 +4,14 @@ import PacketListenerManager
 import urllib2
 import traceback
 import threading
-import struct
-from sys import stdout
+import hashlib
+import string
+from networking import PacketSenderManager
+from Crypto.Random import _UserFriendlyRNG
+from Crypto.Util import asn1
+from Crypto.PublicKey import RSA
+from Crypto.Cipher import AES
+from Crypto.Cipher import PKCS1_v1_5
 
 #Eclipse pyDev error fix
 wx=wx
@@ -34,43 +40,99 @@ class ServerConnection(threading.Thread):
         return self.socket 
                 
     def run(self):
-        self.socket = socket.socket ( socket.AF_INET, socket.SOCK_STREAM )
         try:
+            #Create the socket and fileobject
+            self.socket = socket.socket ( socket.AF_INET, socket.SOCK_STREAM )
             self.socket.connect ( ( self.server, self.port ) )
             self.FileObject = self.socket.makefile()
-            PacketListenerManager.sendHandshake(self.socket, self.username, self.server, self.port)
-            if(self.socket.recv(1) == "\x02"):
-                response = PacketListenerManager.handle02(self.FileObject)
-            else:
-                print "Server responded with a malformed packet"
-                return False
-            serverid = response
+            
+            #Send out the handshake packet
+            PacketSenderManager.sendHandshake(self.socket, self.username, self.server, self.port)
+            
+            #Receive the encryption packet id
+            packetid = self.socket.recv(1)
+            
+            #Sanity check the packet id
+            if (packetid != "\xFD"):
+                if(self.NoGUI == False):
+                    self.window.ConnectPanel.Status.SetFont(wx.Font(15, wx.MODERN, wx.NORMAL, wx.NORMAL, 0, "Minecraft"))
+                    self.window.ConnectPanel.Status.SetLabel("Server responded with malformed packet")
+                else:
+                    print "Server responded with malformed packet"
+                    return False
+                
+            #Parse the packet
+            packetFD = PacketListenerManager.handleFD(self.FileObject)
+            
+            #Import the server's public key
+            print "#Import the server's public key"
+            self.pubkey = RSA.importKey(packetFD['Public Key'])
+            
+            #Generate a 16 byte (128 bit) shared secret
+            print "#Generate a 16 byte (128 bit) shared secret"
+            self.sharedSecret = _UserFriendlyRNG.get_random_bytes(16)
+            
+            #Grab the server id
+            print "#Grab the server id"
+            serverid = packetFD['ServerID']
+            sha1 = hashlib.sha1()
+            sha1.update(serverid)
+            sha1.update(str(self.sharedSecret))
+            sha1.update(str(self.pubkey))
+            serverid = sha1.hexdigest()
+            
+            #Authenticate the server from sessions.minecraft.net
+            print "#Authenticate the server from sessions.minecraft.net"
             if(serverid != '-'):
                 try:
+                    #Open up the url with the appropriate get parameters
                     url = "http://session.minecraft.net/game/joinserver.jsp?user=" + self.username + "&sessionId=" + self.sessionID + "&serverId=" + serverid
                     response = urllib2.urlopen(url).read()
+                    
                     if(response != "OK"):
+                        #handle gui errors
                         if(self.NoGUI == False):
                             self.window.ConnectPanel.Status.SetFont(wx.Font(15, wx.MODERN, wx.NORMAL, wx.NORMAL, 0, "Minecraft"))
                             self.window.ConnectPanel.Status.SetLabel("Response from sessions.minecraft.net wasn't OK")
                         else:
                             print "Response from sessions.minecraft.net wasn't OK, it was " + response
                             return False
-                    PacketListenerManager.sendLoginRequest(self.socket, self.username)
+                        
+                    #Success \o/ We can now begin sending our stuff to the server
+                    print "#Success \o/ We can now begin sending our stuff to the server"
+                    
+                    #Instantiate our main packet listener
+                    print "#Instantiate our main packet listener"
+                    PacketListener(self, self.window, self.socket, self.FileObject).start()
+                    
+                    #Encrypt the verification token from earlier along with our shared secret with the server's rsa key
+                    print "#Encrypt the verification token from earlier along with our shared secret"
+                    self.RSACipher = PKCS1_v1_5.new(self.pubkey)
+                    encryptedSanityToken = self.RSACipher.encrypt(str(packetFD['Token']))
+                    encryptedSharedSecret = self.RSACipher.encrypt(str(self.sharedSecret))
+                    
+                    #Send out a a packet FC to the server
+                    print "#Send out a a packet FC to the server"
+                    PacketSenderManager.sendFC(self.socket, encryptedSharedSecret, encryptedSanityToken)
+                    
+                    #GUI handling
                     if(self.NoGUI == False):
                         self.window.ConnectPanel.callbackAfterConnect()
+                        #Wait for server screen to be ready
                         while(not hasattr(self.window, 'text')):
                             continue
-                    PacketListener(self, self.window, self.socket, self.FileObject).start()
+                        
                 except Exception, e:
+                    #handle gui errors
                     if(self.NoGUI == False and hasattr(self.window, 'ConnectPanel')):
                         self.window.ConnectPanel.Status.SetForegroundColour(wx.RED)
                         self.window.ConnectPanel.Status.SetLabel("Conection to sessions.mc.net failed")
                         self.window.ConnectPanel.RotationThread.Kill = True
+                    traceback.print_exc()
             else:
                 if(self.NoGUI):
                     print "Server is in offline mode"
-                PacketListenerManager.sendLoginRequest(self.socket, self.username)
+                #TODO: handle offline mod servers
         except Exception, e:
             if(self.NoGUI == False and self.window):
                 self.window.ConnectPanel.Status.SetForegroundColour(wx.RED)
@@ -81,153 +143,202 @@ class ServerConnection(threading.Thread):
             traceback.print_exc()
             return False
         #self.window.Status.SetLabel("Connected to " + self.server + "!")
+        
+class EncryptedFileObjectHandler():
+    
+    def __init__(self, fileobject, cipher):
+        self.fileobject = fileobject
+        self.cipher = cipher
+        
+    def read(self, length):
+        return self.cipher.decrypt(self.fileobject.read(length))
+    
+class EncryptedSocketObjectHandler():
+    
+    def __init__(self, socket, cipher):
+        self.socket = socket
+        self.cipher = cipher
+    
+    def send(self, stuff):
+        self.socket.send(self.cipher.encrypt(stuff))
+        
+    def recv(self, length):
+        return self.cipher.decrypt(self.socket.recv(length))
+    
+    def close(self):
+        self.socket.close()
                 
 class PacketListener(threading.Thread):
     
     def __init__(self, connection, window, socket, FileObject):
         threading.Thread.__init__(self)
-        self.socket = socket
-        self.window = window
-        self.FileObject = FileObject
         self.connection = connection
+        self.socket = socket
+        self.FileObject = FileObject
+        self.window = window
+        self.encryptedConnection = False
+        
+    def enableEncryption(self):
+        #Create an AES cipher from the previously obtained public key
+        print "#Create an AES cipher from the previously generated shared secret"
+        self.cipher = AES.new(str(self.connection.sharedSecret), AES.MODE_CFB, IV=self.connection.sharedSecret, segment_size=8)
+        self.rawsocket = self.socket
+        self.socket = EncryptedSocketObjectHandler(self.rawsocket, self.cipher)
+        self.rawFileObject = self.FileObject
+        self.FileObject = EncryptedFileObjectHandler(self.rawFileObject, self.cipher)
+        self.encryptedConnection = True
+        print "#Encryption enabled"
         
     def run(self):
-        self.socket.setblocking(1)
         while True:
             try:
-                response = self.socket.recv(1)
+                response = self.FileObject.read(1)
+                if (response == ""):
+                    continue
             except Exception, e:
                 if(self.window):
                     self.window.Status.SetLabel("Ping timeout")
                 else:
                     print "Ping timeout"
+                    traceback.print_exc()
                 break
-            #stdout.write((hex(ord(response[0]))) + ": ")
-            if(response[0] == "\x00"):
+            print hex(ord(response))
+            if(response == "\x00"):
                 PacketListenerManager.handle00(self.FileObject, self.socket)
-            if(response[0] == "\x01"):
+            elif(response == "\x01"):
                 PacketListenerManager.handle01(self.FileObject)
-            if(response[0] == "\x03"):
+            elif(response == "\x03"):
                 message = PacketListenerManager.handle03(self.FileObject)
                 if(self.connection.NoGUI):
-                    print message.replace(u'\xa7', '&')
+                    filtered_string = filter(lambda x: x in string.printable, message)
+                    #print message.replace(u'\xa7', '&')
+                    print filtered_string
                 elif(self.window):
                     self.window.handleChat(message)
-            if(response[0] == "\x04"):
+            elif(response == "\x04"):
                 PacketListenerManager.handle04(self.FileObject)
-            if(response[0] == "\x05"):
+            elif(response == "\x05"):
                 PacketListenerManager.handle05(self.FileObject)
-            if(response[0] == "\x06"):
+            elif(response == "\x06"):
                 PacketListenerManager.handle06(self.FileObject)
-            if(response[0] == "\x07"):
+            elif(response == "\x07"):
                 PacketListenerManager.handle07(self.FileObject)
-            if(response[0] == "\x08"):
+            elif(response == "\x08"):
                 PacketListenerManager.handle08(self.FileObject)
-            if(response[0] == "\x09"):
+            elif(response == "\x09"):
                 PacketListenerManager.handle09(self.FileObject)
-            if(response[0] == "\x0D"):
+            elif(response == "\x0D"):
                 PacketListenerManager.handle0D(self.FileObject)
-            if(response[0] == "\x11"):
+            elif(response == "\x11"):
                 PacketListenerManager.handle11(self.FileObject)
-            if(response[0] == "\x12"):
+            elif(response == "\x12"):
                 PacketListenerManager.handle12(self.FileObject)
-            if(response[0] == "\x14"):
+            elif(response == "\x14"):
                 PacketListenerManager.handle14(self.FileObject)
-            if(response[0] == "\x15"):
+            elif(response == "\x15"):
                 PacketListenerManager.handle15(self.FileObject)
-            if(response[0] == "\x16"):
+            elif(response == "\x16"):
                 PacketListenerManager.handle16(self.FileObject)
-            if(response[0] == "\x17"):
+            elif(response == "\x17"):
                 PacketListenerManager.handle17(self.FileObject)
-            if(response[0] == "\x18"):
+            elif(response == "\x18"):
                 PacketListenerManager.handle18(self.FileObject)
-            if(response[0] == "\x19"):
+            elif(response == "\x19"):
                 PacketListenerManager.handle19(self.FileObject)
-            if(response[0] == "\x1A"):
+            elif(response == "\x1A"):
                 PacketListenerManager.handle1A(self.FileObject)
-            if(response[0] == "\x1C"):
+            elif(response == "\x1C"):
                 PacketListenerManager.handle1C(self.FileObject)
-            if(response[0] == "\x1D"):
+            elif(response == "\x1D"):
                 PacketListenerManager.handle1D(self.FileObject)
-            if(response[0] == "\x1E"):
+            elif(response == "\x1E"):
                 PacketListenerManager.handle1E(self.FileObject)
-            if(response[0] == "\x1F"):
+            elif(response == "\x1F"):
                 PacketListenerManager.handle1F(self.FileObject)
-            if(response[0] == "\x20"):
+            elif(response == "\x20"):
                 PacketListenerManager.handle20(self.FileObject)
-            if(response[0] == "\x21"):
+            elif(response == "\x21"):
                 PacketListenerManager.handle21(self.FileObject)
-            if(response[0] == "\x22"):
+            elif(response == "\x22"):
                 PacketListenerManager.handle22(self.FileObject)
-            if(response[0] == "\x23"):
+            elif(response == "\x23"):
                 PacketListenerManager.handle23(self.FileObject)
-            if(response[0] == "\x26"):
+            elif(response == "\x26"):
                 PacketListenerManager.handle26(self.FileObject)
-            if(response[0] == "\x27"):
+            elif(response == "\x27"):
                 PacketListenerManager.handle27(self.FileObject)
-            if(response[0] == "\x28"):
+            elif(response == "\x28"):
                 PacketListenerManager.handle28(self.FileObject)
-            if(response[0] == "\x29"):
+            elif(response == "\x29"):
                 PacketListenerManager.handle29(self.FileObject)
-            if(response[0] == "\x2A"):
+            elif(response == "\x2A"):
                 PacketListenerManager.handle2A(self.FileObject)
-            if(response[0] == "\x2B"): 
+            elif(response == "\x2B"): 
                 PacketListenerManager.handle2B(self.FileObject)
-            if(response[0] == "\x32"):
+            elif(response == "\x32"):
                 PacketListenerManager.handle32(self.FileObject)
-            if(response[0] == "\x33"):
+            elif(response == "\x33"):
                 PacketListenerManager.handle33(self.FileObject)
-            if(response[0] == "\x34"):
+            elif(response == "\x34"):
                 PacketListenerManager.handle34(self.FileObject)
-            if(response[0] == "\x35"):
+            elif(response == "\x35"):
                 PacketListenerManager.handle35(self.FileObject)
-            if(response[0] == "\x36"):
+            elif(response == "\x36"):
                 PacketListenerManager.handle36(self.FileObject)
-            if(response[0] == "\x3C"):
+            elif(response == "\x3C"):
                 PacketListenerManager.handle3C(self.FileObject)
-            if(response[0] == "\x3D"):
+            elif(response == "\x3D"):
                 PacketListenerManager.handle3D(self.FileObject)
-            if(response[0] == "\x46"):
+            elif(response == "\x46"):
                 PacketListenerManager.handle46(self.FileObject)
-            if(response[0] == "\x47"):
+            elif(response == "\x47"):
                 PacketListenerManager.handle47(self.FileObject)
-            if(response[0] == "\x64"):
+            elif(response == "\x64"):
                 PacketListenerManager.handle64(self.FileObject)
-            if(response[0] == "\x65"):
+            elif(response == "\x65"):
                 PacketListenerManager.handle65(self.FileObject)
-            if(response[0] == "\x67"):
+            elif(response == "\x67"):
                 PacketListenerManager.handle67(self.FileObject)
-            if(response[0] == "\x68"):
+            elif(response == "\x68"):
                 PacketListenerManager.handle68(self.FileObject)
-            if(response[0] == "\x69"):
+            elif(response == "\x69"):
                 PacketListenerManager.handle69(self.FileObject)
-            if(response[0] == "\x6A"):
+            elif(response == "\x6A"):
                 PacketListenerManager.handle6A(self.FileObject)
-            if(response[0] == "\x6B"):
+            elif(response == "\x6B"):
                 PacketListenerManager.handle6B(self.FileObject)
-            if(response[0] == "\x82"):
+            elif(response == "\x82"):
                 PacketListenerManager.handle82(self.FileObject)
-            if(response[0] == "\x83"):
+            elif(response == "\x83"):
                 PacketListenerManager.handle83(self.FileObject)
-            if(response[0] == "\x84"):
+            elif(response == "\x84"):
                 PacketListenerManager.handle84(self.FileObject)
-            if(response[0] == "\xC8"):
+            elif(response == "\xC8"):
                 PacketListenerManager.handleC8(self.FileObject)
-            if(response[0] == "\xC9"):
+            elif(response == "\xC9"):
                 PacketListenerManager.handleC9(self.FileObject)
-            if(response[0] == "\xCA"):
+            elif(response == "\xCA"):
                 PacketListenerManager.handleCA(self.FileObject)
-            if(response[0] == "\xFA"):
+            elif(response == "\xFA"):
                 PacketListenerManager.handleFA(self.FileObject)
-            if(response[0] == "\xFF"):
+            elif(response == "\xFC"):
+                PacketListenerManager.handleFC(self.FileObject)
+                if (not self.encryptedConnection):
+                    self.enableEncryption()
+                    PacketSenderManager.sendCD(self.socket, 0)
+            elif(response == "\xFF"):
                 DisconMessage = PacketListenerManager.handleFF(self.FileObject)
                 if(self.window == None):
                     print "Disconnected: " + DisconMessage
-                elif(self.window):
+                if(self.window):
                     if(hasattr(self.window, 'ChatPanel')):
                         self.window.ChatPanel.Status.SetLabel("Disconnected: " + DisconMessage)
-                    elif(hasattr(self.window, 'Status')):
+                    if(hasattr(self.window, 'Status')):
                         self.window.Status.SetLabel("Disconnected: " + DisconMessage)
                 self.socket.close()
                 break
-    
+            else:
+                if(self.window == None):
+                    print "Protocol error: " + hex(ord(response))
+                    self.socket.close()
+                    break
