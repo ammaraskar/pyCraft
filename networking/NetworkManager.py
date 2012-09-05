@@ -2,10 +2,12 @@ import socket
 import wx
 import PacketListenerManager
 import urllib2
+import urllib
 import traceback
 import threading
 import hashlib
 import string
+import Utils
 from networking import PacketSenderManager
 from Crypto.Random import _UserFriendlyRNG
 from Crypto.Util import asn1
@@ -65,28 +67,34 @@ class ServerConnection(threading.Thread):
             packetFD = PacketListenerManager.handleFD(self.FileObject)
             
             #Import the server's public key
-            print "#Import the server's public key"
             self.pubkey = RSA.importKey(packetFD['Public Key'])
             
             #Generate a 16 byte (128 bit) shared secret
-            print "#Generate a 16 byte (128 bit) shared secret"
             self.sharedSecret = _UserFriendlyRNG.get_random_bytes(16)
             
             #Grab the server id
-            print "#Grab the server id"
-            serverid = packetFD['ServerID']
             sha1 = hashlib.sha1()
-            sha1.update(serverid)
-            sha1.update(str(self.sharedSecret))
-            sha1.update(str(self.pubkey))
-            serverid = sha1.hexdigest()
+            sha1.update(packetFD['ServerID'])
+            sha1.update(self.sharedSecret)
+            sha1.update(packetFD['Public Key'])
+            #lovely java style hex digest by SirCmpwn
+            sha1 = sha1.hexdigest()
+            negative = (int(sha1[0], 16) & 0x80) == 0x80
+            if(negative):
+                sha1 = Utils.TwosCompliment(sha1.digest())
+            #else:
+            #    sha1 = sha1.digest()
+            Utils.trimStart(str(sha1), '0')
+            if (negative):
+                sha1 = '-' + sha1
+            serverid = sha1
             
             #Authenticate the server from sessions.minecraft.net
-            print "#Authenticate the server from sessions.minecraft.net"
             if(serverid != '-'):
                 try:
                     #Open up the url with the appropriate get parameters
                     url = "http://session.minecraft.net/game/joinserver.jsp?user=" + self.username + "&sessionId=" + self.sessionID + "&serverId=" + serverid
+                    print url
                     response = urllib2.urlopen(url).read()
                     
                     if(response != "OK"):
@@ -99,20 +107,16 @@ class ServerConnection(threading.Thread):
                             return False
                         
                     #Success \o/ We can now begin sending our stuff to the server
-                    print "#Success \o/ We can now begin sending our stuff to the server"
                     
                     #Instantiate our main packet listener
-                    print "#Instantiate our main packet listener"
                     PacketListener(self, self.window, self.socket, self.FileObject).start()
                     
                     #Encrypt the verification token from earlier along with our shared secret with the server's rsa key
-                    print "#Encrypt the verification token from earlier along with our shared secret"
                     self.RSACipher = PKCS1_v1_5.new(self.pubkey)
                     encryptedSanityToken = self.RSACipher.encrypt(str(packetFD['Token']))
                     encryptedSharedSecret = self.RSACipher.encrypt(str(self.sharedSecret))
                     
                     #Send out a a packet FC to the server
-                    print "#Send out a a packet FC to the server"
                     PacketSenderManager.sendFC(self.socket, encryptedSharedSecret, encryptedSanityToken)
                     
                     #GUI handling
@@ -151,7 +155,9 @@ class EncryptedFileObjectHandler():
         self.cipher = cipher
         
     def read(self, length):
-        return self.cipher.decrypt(self.fileobject.read(length))
+        rawData = self.fileobject.read(length)
+        unencryptedData = self.cipher.decrypt(rawData)
+        return unencryptedData
     
 class EncryptedSocketObjectHandler():
     
@@ -161,9 +167,6 @@ class EncryptedSocketObjectHandler():
     
     def send(self, stuff):
         self.socket.send(self.cipher.encrypt(stuff))
-        
-    def recv(self, length):
-        return self.cipher.decrypt(self.socket.recv(length))
     
     def close(self):
         self.socket.close()
@@ -180,14 +183,13 @@ class PacketListener(threading.Thread):
         
     def enableEncryption(self):
         #Create an AES cipher from the previously obtained public key
-        print "#Create an AES cipher from the previously generated shared secret"
-        self.cipher = AES.new(str(self.connection.sharedSecret), AES.MODE_CFB, IV=self.connection.sharedSecret, segment_size=8)
+        self.cipher = AES.new(self.connection.sharedSecret, AES.MODE_CFB, IV=self.connection.sharedSecret)
+        self.decipher = AES.new(self.connection.sharedSecret, AES.MODE_CFB, IV=self.connection.sharedSecret)
         self.rawsocket = self.socket
         self.socket = EncryptedSocketObjectHandler(self.rawsocket, self.cipher)
         self.rawFileObject = self.FileObject
-        self.FileObject = EncryptedFileObjectHandler(self.rawFileObject, self.cipher)
+        self.FileObject = EncryptedFileObjectHandler(self.rawFileObject, self.decipher)
         self.encryptedConnection = True
-        print "#Encryption enabled"
         
     def run(self):
         while True:
@@ -202,11 +204,11 @@ class PacketListener(threading.Thread):
                     print "Ping timeout"
                     traceback.print_exc()
                 break
-            print hex(ord(response))
             if(response == "\x00"):
                 PacketListenerManager.handle00(self.FileObject, self.socket)
             elif(response == "\x01"):
-                PacketListenerManager.handle01(self.FileObject)
+                packet01 = PacketListenerManager.handle01(self.FileObject)
+                print "Logged in \o/ Received an entity id of " + str(packet01['EntityID'])
             elif(response == "\x03"):
                 message = PacketListenerManager.handle03(self.FileObject)
                 if(self.connection.NoGUI):
@@ -275,8 +277,6 @@ class PacketListener(threading.Thread):
                 PacketListenerManager.handle2A(self.FileObject)
             elif(response == "\x2B"): 
                 PacketListenerManager.handle2B(self.FileObject)
-            elif(response == "\x32"):
-                PacketListenerManager.handle32(self.FileObject)
             elif(response == "\x33"):
                 PacketListenerManager.handle33(self.FileObject)
             elif(response == "\x34"):
@@ -285,10 +285,16 @@ class PacketListener(threading.Thread):
                 PacketListenerManager.handle35(self.FileObject)
             elif(response == "\x36"):
                 PacketListenerManager.handle36(self.FileObject)
+            elif(response == "\x37"):
+                PacketListenerManager.handle37(self.FileObject)
+            elif(response == "\x38"):
+                PacketListenerManager.handle38(self.FileObject)
             elif(response == "\x3C"):
                 PacketListenerManager.handle3C(self.FileObject)
             elif(response == "\x3D"):
                 PacketListenerManager.handle3D(self.FileObject)
+            elif(response == "\x3E"):
+                PacketListenerManager.handle3E(self.FileObject)
             elif(response == "\x46"):
                 PacketListenerManager.handle46(self.FileObject)
             elif(response == "\x47"):
@@ -300,7 +306,7 @@ class PacketListener(threading.Thread):
             elif(response == "\x67"):
                 PacketListenerManager.handle67(self.FileObject)
             elif(response == "\x68"):
-                PacketListenerManager.handle68(self.FileObject)
+                print PacketListenerManager.handle68(self.FileObject)
             elif(response == "\x69"):
                 PacketListenerManager.handle69(self.FileObject)
             elif(response == "\x6A"):
@@ -316,9 +322,11 @@ class PacketListener(threading.Thread):
             elif(response == "\xC8"):
                 PacketListenerManager.handleC8(self.FileObject)
             elif(response == "\xC9"):
-                PacketListenerManager.handleC9(self.FileObject)
+                print PacketListenerManager.handleC9(self.FileObject)
             elif(response == "\xCA"):
                 PacketListenerManager.handleCA(self.FileObject)
+            elif(response == "\xCB"):
+                PacketListenerManager.handleCB(self.FileObject)
             elif(response == "\xFA"):
                 PacketListenerManager.handleFA(self.FileObject)
             elif(response == "\xFC"):

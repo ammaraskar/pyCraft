@@ -9,8 +9,8 @@ def handle01(FileObject):
     Eid = struct.unpack('!i', FileObject.read(4))[0]
     length = struct.unpack('!h', FileObject.read(2))[0] * 2 
     world = FileObject.read(length).decode('utf-16be')
-    mode = struct.unpack('!i', FileObject.read(4))[0]
-    dimension = struct.unpack('!i', FileObject.read(4))[0]
+    mode = struct.unpack('!b', FileObject.read(1))[0]
+    dimension = struct.unpack('!b', FileObject.read(1))[0]
     difficulty = struct.unpack('!b', FileObject.read(1))[0]
     FileObject.read(1)
     maxplayers = struct.unpack('!B', FileObject.read(1))[0]
@@ -27,6 +27,12 @@ def handle02(FileObject):
     length = struct.unpack('!h', FileObject.read(2))[0] * 2
     message = FileObject.read(length)
     message = message.decode('utf-16be', 'strict')
+    return message
+
+def handle03(FileObject):
+    length = struct.unpack('!h', FileObject.read(2))[0] * 2
+    message = FileObject.read(length)
+    message = message.decode('utf-16be','strict')
     return message
 
 def handle04(FileObject):
@@ -140,7 +146,6 @@ def handle14(FileObject):
                 'curItem' : curItem,
                 'Metadata' : metadata
                 }
-    print toReturn
     return toReturn
 
 def handle15(FileObject):
@@ -211,6 +216,9 @@ def handle18(FileObject):
     Yaw = struct.unpack('!b', FileObject.read(1))[0]
     Pitch = struct.unpack('!b', FileObject.read(1))[0]
     HeadYaw = struct.unpack('!b', FileObject.read(1))[0]
+    VelocityX = struct.unpack('!h', FileObject.read(2))[0]
+    VelocityY = struct.unpack('!h', FileObject.read(2))[0]
+    VelocityZ = struct.unpack('!h', FileObject.read(2))[0]
     metadata = readEntityMetadata(FileObject)
 
     return {'EntityID' : EntityID,
@@ -221,7 +229,10 @@ def handle18(FileObject):
             'Yaw' : Yaw,
             'Pitch' : Pitch,
             'HeadYaw' : HeadYaw,
-            'Metadata' : metadata
+            'Metadata' : metadata,
+            'VelocityX' : VelocityX,
+            'VelocityY' : VelocityY,
+            'VelocityZ' : VelocityZ
             }
     
 def handle19(FileObject):
@@ -266,8 +277,11 @@ def handle1C(FileObject):
             }
     
 def handle1D(FileObject):
-    EntityID = struct.unpack('!i', FileObject.read(4))[0]
-    return EntityID
+    EntityArrayLength = struct.unpack('!b', FileObject.read(1))[0]
+    Entities = []
+    for i in range(EntityArrayLength):
+        Entities.append(struct.unpack('!i', FileObject.read(4))[0])
+    return Entities
 
 def handle1E(FileObject):
     EntityID = struct.unpack('!i', FileObject.read(4))[0]
@@ -377,16 +391,6 @@ def handle2B(FileObject):
             'Level' : Level,
             'TotalExp' : TotalExp
             }
-    
-def handle32(FileObject):
-    X = struct.unpack('!i', FileObject.read(4))[0]
-    raw = FileObject.read(4)
-    Z = struct.unpack('!i', raw)[0]
-    Mode = struct.unpack('?', FileObject.read(1))[0]
-    return {'x' : X,
-            'z' : Z,
-            'Mode' : Mode
-            }
 
 def handle33(FileObject):
     X = struct.unpack('!i', FileObject.read(4))[0]
@@ -395,7 +399,6 @@ def handle33(FileObject):
     PrimaryBitMap = struct.unpack('!H', FileObject.read(2))[0]
     AddBitMap = struct.unpack('!H', FileObject.read(2))[0]
     CompressedSize = struct.unpack('!i', FileObject.read(4))[0]
-    FileObject.read(4) #unused int
     FileObject.read(CompressedSize) #not going to be deflating and using this data until I know how to :3
     return {'x' : X,
             'z' : Z
@@ -416,7 +419,7 @@ def handle35(FileObject):
     X = struct.unpack('!i', FileObject.read(4))[0]
     Y = struct.unpack('!b', FileObject.read(1))[0]
     Z = struct.unpack('!i', FileObject.read(4))[0]
-    BlockType = struct.unpack('!b', FileObject.read(1))[0]
+    BlockType = struct.unpack('!h', FileObject.read(2))[0]
     BlockMetaData = struct.unpack('!b', FileObject.read(1))[0]
     return {'x' : X,
             'y' : Y,
@@ -431,18 +434,57 @@ def handle36(FileObject):
     Z = struct.unpack('!i', FileObject.read(4))[0]
     Byte1 = struct.unpack('!b', FileObject.read(1))[0]
     Byte2 = struct.unpack('!b', FileObject.read(1))[0]
+    BlockID = struct.unpack('!h', FileObject.read(2))[0]
     return {'x' : X,
             'y' : Y,
             'z' : Z,
             'Byte1' : Byte1,
-            'Byte2' : Byte2
+            'Byte2' : Byte2,
+            'BlockID' : BlockID
+            }
+    
+def handle37(FileObject):
+    #int - EntityID
+    EntityID = struct.unpack('!i', FileObject.read(4))[0]
+    
+    #int - X cord
+    x = struct.unpack('!i', FileObject.read(4))[0]
+    
+    #int - Y cord
+    y = struct.unpack('!i', FileObject.read(4))[0]
+    
+    #int - Z cord
+    z = struct.unpack('!i', FileObject.read(4))[0]
+    
+    #byte - Stage
+    DestroyedStage = struct.unpack('!b', FileObject.read(1))[0]
+    return {'EntityID' : EntityID,
+            'x' : x,
+            'y' : y,
+            'z' : z,
+            'DestroyedStage' : DestroyedStage
+            }
+    
+def handle38(FileObject):
+    #short - number of chunks
+    ChunkCount = struct.unpack('!h', FileObject.read(2))[0]
+    
+    #int - chunk data length
+    ChunkDataLength = struct.unpack('!i', FileObject.read(4))[0]
+    FileObject.read(ChunkDataLength) #just gonna ignore this for now
+    
+    #metadata - ignoring this
+    for i in range(ChunkCount):
+        FileObject.read(12)
+    
+    return {'ChunkCount' : ChunkCount
             }
     
 def handle3C(FileObject):
     X = struct.unpack('!d', FileObject.read(8))[0]
     Y = struct.unpack('!d', FileObject.read(8))[0]
     Z = struct.unpack('!d', FileObject.read(8))[0]
-    FileObject.read(4) #Unknown what this float does
+    Radius = struct.unpack('!f', FileObject.read(4))[0]
     RecordCount = struct.unpack('!i', FileObject.read(4))[0]
     AffectedBlocks = []
     for i in range((RecordCount * 3)):
@@ -450,9 +492,15 @@ def handle3C(FileObject):
         y = struct.unpack('!b', FileObject.read(1))[0]
         z = struct.unpack('!b', FileObject.read(1))[0]
         AffectedBlocks.append({'x' : x, 'y' : y, 'z' : z})
-    return {'X' : X,
-            'Y' : Y,
-            'Z' : Z,
+    #---Unknown what these floats do
+    FileObject.read(4)
+    FileObject.read(4)
+    FileObject.read(4)
+    #---
+    return {'x' : X,
+            'y' : Y,
+            'z' : Z,
+            'Raidus' : Radius,
             'AffectedBlocks' : AffectedBlocks
             }
     
@@ -467,6 +515,22 @@ def handle3D(FileObject):
             'Y' : Y,
             'Z' : Z,
             'Data' : Data
+            }
+    
+def handle3E(FileObject):
+    length = struct.unpack('!h', FileObject.read(2))[0] * 2 
+    Sound = FileObject.read(length).decode('utf-16be')
+    x = struct.unpack('!i', FileObject.read(4))[0]
+    y = struct.unpack('!i', FileObject.read(4))[0]
+    z = struct.unpack('!i', FileObject.read(4))[0]
+    Volume = struct.unpack('!f', FileObject.read(4))[0]
+    Pitch = struct.unpack('!b', FileObject.read(1))[0]
+    return {'Sound' : Sound,
+            'x' : x,
+            'y' : y,
+            'z' : z,
+            'Volume' : Volume,
+            'Pitch' : Pitch
             }
     
 def handle46(FileObject):
@@ -519,7 +583,6 @@ def handle68(FileObject):
     Slots = []
     for i in range(Count):
         SlotData = decodeSlotData(FileObject)
-        SlotData["index"] = i
         Slots.append(SlotData)
     return {'WindowID' : WindowID,
             'Count' : Count,
@@ -555,7 +618,7 @@ def handle82(FileObject):
     X = struct.unpack('!i', FileObject.read(4))[0]
     Y = struct.unpack('!h', FileObject.read(2))[0]
     Z = struct.unpack('!i', FileObject.read(4))[0]
-    length = struct.unpack('!i', FileObject.read(2))[0] * 2
+    length = struct.unpack('!h', FileObject.read(2))[0] * 2
     Line1 = FileObject.read(length).decode("utf-16be")
     length = struct.unpack('!h', FileObject.read(2))[0] * 2
     Line2 = FileObject.read(length).decode("utf-16be")
@@ -587,16 +650,19 @@ def handle84(FileObject):
     Y = struct.unpack('!h', FileObject.read(2))[0]
     Z = struct.unpack('!i', FileObject.read(4))[0]
     Action = struct.unpack('!b', FileObject.read(1))[0]
-    Custom1 = struct.unpack('!i', FileObject.read(4))[0]
-    Custom2 = struct.unpack('!i', FileObject.read(4))[0]
-    Custom3 = struct.unpack('!i', FileObject.read(4))[0]
+    DataLength = struct.unpack('!h', FileObject.read(2))[0]
+    if (DataLength != -1):
+        NBTData = struct.unpack(str(DataLength) + "s", FileObject.read(DataLength))[0]
+        return {'x' : X,
+                'y' : Y,
+                'z' : Z,
+                'Action' : Action,
+                'NBTData' : NBTData
+                }
     return {'x' : X,
             'y' : Y,
             'z' : Z,
-            'Action' : Action,
-            'Custom1' : Custom1,
-            'Custom2' : Custom2,
-            'Custom3': Custom3
+            'Action' : Action
             }
     
 def handleC8(FileObject):
@@ -617,15 +683,23 @@ def handleC9(FileObject):
             }
     
 def handleCA(FileObject):
-    Invulnerable = struct.unpack('?', FileObject.read(1))[0]
-    IsFlying = struct.unpack('?', FileObject.read(1))[0]
-    CanFly = struct.unpack('?', FileObject.read(1))[0]
-    InstantDestroy = struct.unpack('?', FileObject.read(1))[0]
-    return {'Invulnerable' : Invulnerable,
-            'IsFlying' : IsFlying,
-            'CanFly' : CanFly,
-            'InstantDestroy' : InstantDestroy
+    #byte - flags
+    Flags = struct.unpack('!b', FileObject.read(1))[0]
+
+    #byte - fly speed
+    FlySpeed = struct.unpack('!b', FileObject.read(1))[0]
+    
+    #byte - walk speed
+    WalkSpeed = struct.unpack('!b', FileObject.read(1))[0]
+    return {'Flags' : Flags,
+            'Fly Speed' : FlySpeed,
+            'Walk Speed' : WalkSpeed
             }
+    
+def handleCB(FileObject):
+    length = struct.unpack('!h', FileObject.read(2))[0] * 2
+    text = FileObject.read(length).decode("utf-16be")
+    return {'Text' : text}
     
 def handleFA(FileObject):
     length = struct.unpack('!h', FileObject.read(2))[0] * 2
@@ -716,22 +790,21 @@ def decodeSlotData(FileObject):
     BlockID = struct.unpack('!h', FileObject.read(2))[0]
     if(BlockID != -1):
         ItemCount = struct.unpack('!b', FileObject.read(1))[0]
-        MetaData = struct.unpack('!h', FileObject.read(2))[0]
-        if((256 <= BlockID and BlockID <= 259) or (267 <= BlockID and BlockID <= 279) or (283 <= BlockID and BlockID <= 286) or (290 <= BlockID and BlockID <= 294) or (298 <= BlockID and BlockID <= 317) or BlockID == 261 or BlockID == 359 or BlockID == 346):
-            IncomingDataLength = struct.unpack('!h', FileObject.read(2))[0]
-            if(IncomingDataLength != -1):
-                raw = FileObject.read(IncomingDataLength)
-                ByteArray = struct.unpack(str(IncomingDataLength) + "s", raw)[0]
-                Data = zlib.decompress(ByteArray, 15+32)
-                return {'BlockID' : BlockID,
-                        'ItemCount' : ItemCount,
-                        'MetaData' : MetaData,
-                        'Data' : Data
-                        }
+        Damage = struct.unpack('!h', FileObject.read(2))[0]
+        MetadataLength = struct.unpack('!h', FileObject.read(2))[0]
+        if(MetadataLength != -1):
+            raw = FileObject.read(MetadataLength)
+            ByteArray = struct.unpack(str(MetadataLength) + "s", raw)[0]
+            Data = zlib.decompress(ByteArray, 15+32)
+            return {'BlockID' : BlockID,
+                    'ItemCount' : ItemCount,
+                    'Damage' : Damage,
+                    'Data' : Data
+                    }
         return {'BlockID' : BlockID,
                 'ItemCount' : ItemCount,
-                'MetaData' : MetaData
+                'Damage' : Damage
                 }
     return {'BlockID' : -1,
-            'ItemCount' : -1
+            'ItemCount' : 0
             }
