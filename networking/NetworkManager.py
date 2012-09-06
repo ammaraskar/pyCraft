@@ -94,7 +94,6 @@ class ServerConnection(threading.Thread):
                 try:
                     #Open up the url with the appropriate get parameters
                     url = "http://session.minecraft.net/game/joinserver.jsp?user=" + self.username + "&sessionId=" + self.sessionID + "&serverId=" + serverid
-                    print url
                     response = urllib2.urlopen(url).read()
                     
                     if(response != "OK"):
@@ -306,7 +305,7 @@ class PacketListener(threading.Thread):
             elif(response == "\x67"):
                 PacketListenerManager.handle67(self.FileObject)
             elif(response == "\x68"):
-                print PacketListenerManager.handle68(self.FileObject)
+                PacketListenerManager.handle68(self.FileObject)
             elif(response == "\x69"):
                 PacketListenerManager.handle69(self.FileObject)
             elif(response == "\x6A"):
@@ -322,7 +321,7 @@ class PacketListener(threading.Thread):
             elif(response == "\xC8"):
                 PacketListenerManager.handleC8(self.FileObject)
             elif(response == "\xC9"):
-                print PacketListenerManager.handleC9(self.FileObject)
+                PacketListenerManager.handleC9(self.FileObject)
             elif(response == "\xCA"):
                 PacketListenerManager.handleCA(self.FileObject)
             elif(response == "\xCB"):

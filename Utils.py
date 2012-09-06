@@ -3,14 +3,15 @@ import array
 def stringToByteArray(string):
     return array.array('B', string.decode("hex"))
 
-def TwosCompliment(hash):
-    hash = array.array('B', hash.decode("hex"))
+def TwosCompliment(digest):
     carry = True
-    for i in range((hash.__len__() - 1), 0, -1):
+    for i in range((digest.__len__() - 1), -1, -1):
+        value = 255 - digest[i]
+        digest[i] = value
         if(carry):
-            carry = hash[i] == 0xFF
-            hash[i] += 1
-    return hash
+            carry = digest[i] == 0xFF
+            digest[i] = digest[i] + 1
+    return digest
 
 def trimStart(string, character):
     for c in string:
@@ -19,4 +20,12 @@ def trimStart(string, character):
         else:
             break
     return string
-            
+
+def getHexString(byteArray):
+    result = ""
+    for i in range(byteArray.__len__()):
+        if (byteArray[i] < 0x10):
+            result += '0'
+        result += hex(byteArray[i])[2:]
+    return result
+        
