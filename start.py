@@ -4,16 +4,16 @@ import getpass
 import sys
 from networking import PacketSenderManager, NetworkManager
 import NoGUIstuff
-import GUI
 import time
 import threading
-noGoooeees = False
+wxImportError = False
 try:
     import wx
+    import GUI
     wx = wx
 except ImportError:
     print "wxPython not found, falling back to no gui version"
-    noGoooeees = True
+    wxImportError = True
       
 class MinecraftLoginThread(threading.Thread):
     
@@ -97,29 +97,33 @@ class KeepConnectionAlive(threading.Thread):
                 self.window.parent.loggedIn = True            
 
 if __name__ == "__main__":
+    noGUI = False
     if (len(sys.argv) > 1):
-        if(sys.argv[1] == "nogui" or noGoooeees == True):
-            user = raw_input("Enter your username: ")
-            passwd = getpass.getpass("Enter your password: ")
-            derp = NoGUIstuff.loginToMinecraft(user, passwd)
-            if(derp['Response'] == "Incorrect username/password" or derp['Response'] == "Can't connect to minecraft.net" or derp['Response'] == "Account migrated, use e-mail as username."):
-                print derp['Response']
-                sys.exit()                
-            sessionid = derp['SessionID']
-            print "Logged in as " + derp['Username'] + "! Your session id is: " + sessionid
-            stuff = raw_input("Enter host and port if any: ")
-            if ':' in stuff:
-                StuffEnteredIntoBox = stuff.split(":")
-                host = StuffEnteredIntoBox[0]
-                port = int(StuffEnteredIntoBox[1])
-            else:
-                host = stuff
-                port = 25565
-            connection = NetworkManager.ServerConnection(None, derp['Username'], passwd, sessionid, host, port)
-            connection.start()
-            while True:
-                chat = raw_input()
-                PacketSenderManager.send03(connection.grabSocket(), chat)
+        if (sys.argv.count("nogui") > 1) :
+            noGUI = True
+            
+    if(noGUI or wxImportError):
+        user = raw_input("Enter your username: ")
+        passwd = getpass.getpass("Enter your password: ")
+        derp = NoGUIstuff.loginToMinecraft(user, passwd)
+        if(derp['Response'] == "Incorrect username/password" or derp['Response'] == "Can't connect to minecraft.net" or derp['Response'] == "Account migrated, use e-mail as username."):
+            print derp['Response']
+            sys.exit()                
+        sessionid = derp['SessionID']
+        print "Logged in as " + derp['Username'] + "! Your session id is: " + sessionid
+        stuff = raw_input("Enter host and port if any: ")
+        if ':' in stuff:
+            StuffEnteredIntoBox = stuff.split(":")
+            host = StuffEnteredIntoBox[0]
+            port = int(StuffEnteredIntoBox[1])
+        else:
+            host = stuff
+            port = 25565
+        connection = NetworkManager.ServerConnection(None, derp['Username'], passwd, sessionid, host, port)
+        connection.start()
+        while True:
+            chat = raw_input()
+            PacketSenderManager.send03(connection.grabSocket(), chat)
     else:
         app = wx.PySimpleApp()
         Login = GUI.MainFrame(None, -1, "")

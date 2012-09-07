@@ -1,15 +1,17 @@
-import wx
-import wx.lib.scrolledpanel as scrolled
-import wx.richtext as rt
 import start
 import threading
 import time
 from networking import NetworkManager, PacketSenderManager
 import thread
 from threading import Lock
-
-#pydev error fix
-wx=wx
+try:
+    import wx
+    import wx.lib.scrolledpanel as scrolled
+    import wx.richtext as rt
+    #Eclipse pyDev error fix
+    wx=wx
+except ImportError:
+    pass
 
 connection = None
 
