@@ -99,7 +99,7 @@ class KeepConnectionAlive(threading.Thread):
 if __name__ == "__main__":
     noGUI = False
     if (len(sys.argv) > 1):
-        if (sys.argv.count("nogui") > 1) :
+        if (sys.argv.count("nogui") > 0) :
             noGUI = True
             
     if(noGUI or wxImportError):
@@ -121,9 +121,7 @@ if __name__ == "__main__":
             port = 25565
         connection = NetworkManager.ServerConnection(None, derp['Username'], passwd, sessionid, host, port)
         connection.start()
-        while True:
-            chat = raw_input()
-            PacketSenderManager.send03(connection.grabSocket(), chat)
+        raw_input()
     else:
         app = wx.PySimpleApp()
         Login = GUI.MainFrame(None, -1, "")
