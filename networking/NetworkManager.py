@@ -1,12 +1,12 @@
 import socket
 import PacketListenerManager
 import urllib2
-import urllib
 import traceback
 import threading
 import hashlib
 import string
 import Utils
+import sys
 from networking import PacketSenderManager
 from Crypto.Random import _UserFriendlyRNG
 from Crypto.Util import asn1
@@ -110,7 +110,8 @@ class ServerConnection(threading.Thread):
                     #Success \o/ We can now begin sending our stuff to the server
                     
                     #Instantiate our main packet listener
-                    PacketListener(self, self.window, self.socket, self.FileObject).start()
+                    self.listener = PacketListener(self, self.window, self.socket, self.FileObject)
+                    self.listener.start()
                     
                     #Encrypt the verification token from earlier along with our shared secret with the server's rsa key
                     self.RSACipher = PKCS1_v1_5.new(self.pubkey)
@@ -186,10 +187,17 @@ class PacketListener(threading.Thread):
         #Create an AES cipher from the previously obtained public key
         self.cipher = AES.new(self.connection.sharedSecret, AES.MODE_CFB, IV=self.connection.sharedSecret)
         self.decipher = AES.new(self.connection.sharedSecret, AES.MODE_CFB, IV=self.connection.sharedSecret)
+        
         self.rawsocket = self.socket
+        self.connection.rawsocket = self.connection.socket
         self.socket = EncryptedSocketObjectHandler(self.rawsocket, self.cipher)
+        self.connection.socket = self.socket
+        
         self.rawFileObject = self.FileObject
+        self.connection.rawFileObject = self.connection.FileObject
         self.FileObject = EncryptedFileObjectHandler(self.rawFileObject, self.decipher)
+        self.connection.FileObject = self.FileObject
+        
         self.encryptedConnection = True
         
     def run(self):
@@ -203,7 +211,7 @@ class PacketListener(threading.Thread):
                     self.window.Status.SetLabel("Ping timeout")
                 else:
                     print "Ping timeout"
-                    traceback.print_exc()
+                    sys.exit()
                 break
             if(response == "\x00"):
                 PacketListenerManager.handle00(self.FileObject, self.socket)
@@ -339,6 +347,7 @@ class PacketListener(threading.Thread):
                 DisconMessage = PacketListenerManager.handleFF(self.FileObject)
                 if(self.window == None):
                     print "Disconnected: " + DisconMessage
+                    sys.exit()
                 if(self.window):
                     if(hasattr(self.window, 'ChatPanel')):
                         self.window.ChatPanel.Status.SetLabel("Disconnected: " + DisconMessage)

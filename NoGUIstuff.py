@@ -1,4 +1,5 @@
 import urllib2, urllib
+from networking import PacketSenderManager
 
 def loginToMinecraft(username, password):
     try:
