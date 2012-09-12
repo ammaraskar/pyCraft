@@ -69,6 +69,10 @@ class ServerConnection(threading.Thread):
             self.NoGUI = False
         self.window = window
         
+    def disconnect(self):
+        self.listener.kill = True
+        self.socket.close()
+        
     def setWindow(self, window):
         self.window = window
         
@@ -214,6 +218,7 @@ class PacketListener(threading.Thread):
         self.FileObject = FileObject
         self.window = window
         self.encryptedConnection = False
+        self.kill = False
         
     def enableEncryption(self):
         #Create an AES cipher from the previously obtained public key
@@ -234,6 +239,8 @@ class PacketListener(threading.Thread):
         
     def run(self):
         while True:
+            if (self.kill):
+                break
             try:
                 response = self.FileObject.read(1)
                 if (response == ""):

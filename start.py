@@ -121,7 +121,12 @@ if __name__ == "__main__":
             port = 25565
         connection = NetworkManager.ServerConnection(None, derp['Username'], passwd, sessionid, host, port)
         connection.start()
-        raw_input()
+        while True:
+            try:
+                raw_input()
+            except KeyboardInterrupt, e:
+                connection.disconnect()
+                sys.exit(1)
     else:
         app = wx.PySimpleApp()
         Login = GUI.MainFrame(None, -1, "")
