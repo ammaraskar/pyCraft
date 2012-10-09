@@ -123,7 +123,11 @@ if __name__ == "__main__":
         connection.start()
         while True:
             try:
-                raw_input()
+                chat_input = raw_input()
+                if (connection.isConnected):
+                    PacketSenderManager.send03(connection.grabSocket(), chat_input) 
+                else:
+                    pass               
             except KeyboardInterrupt, e:
                 connection.disconnect()
                 sys.exit(1)
