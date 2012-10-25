@@ -37,7 +37,10 @@ def handle03(FileObject):
 
 def handle04(FileObject):
     time = struct.unpack('!q', FileObject.read(8))[0]
-    return time
+    dayTime = struct.unpack('!q', FileObject.read(8))[0]
+    return {'Time' : time,
+            'DayTime' : dayTime
+            }
 
 def handle05(FileObject):
     EntityID = struct.unpack('!i', FileObject.read(4))[0]
@@ -150,26 +153,32 @@ def handle14(FileObject):
 
 def handle15(FileObject):
     EntityID = struct.unpack('!i', FileObject.read(4))[0]
-    Item = struct.unpack('!h', FileObject.read(2))[0]
-    Count = struct.unpack('!b', FileObject.read(1))[0]
-    Damage = struct.unpack('!h', FileObject.read(2))[0]
+    ItemID = struct.unpack('!h', FileObject.read(2))[0]
+    if (ItemID != -1):
+        Count = struct.unpack('!b', FileObject.read(1))[0]
+        Damage = struct.unpack('!h', FileObject.read(2))[0]
+        ArrayLength = struct.unpack('!h', FileObject.read(2))[0]
+        if (ArrayLength != -1):
+            Array = FileObject.read(ArrayLength) #TODO: find out what this does and do stuff accrodingly
     x = struct.unpack('!i', FileObject.read(4))[0]
     y = struct.unpack('!i', FileObject.read(4))[0]
     z = struct.unpack('!i', FileObject.read(4))[0]
     Rotation = struct.unpack('!b', FileObject.read(1))[0]
     Pitch = struct.unpack('!b', FileObject.read(1))[0]
     Roll = struct.unpack('!b', FileObject.read(1))[0]
-    return {'EntityID' : EntityID,
-            'Item' : Item,
-            'Count' : Count,
-            'Damage' : Damage,
-            'x' : x,
-            'y' : y,
-            'z' : z,
-            'Rotation' : Rotation,
-            'Pitch' : Pitch,
-            'Roll' : Roll
-            }
+    toReturn = {'EntityID' : EntityID,
+                'ItemID' : ItemID,
+                'x' : x,
+                'y' : y,
+                'z' : z,
+                'Rotation' : Rotation,
+                'Pitch' : Pitch,
+                'Roll' : Roll
+                }
+    if (ItemID != -1):
+        toReturn['Count'] = Count
+        toReturn['Damage'] = Damage
+    return toReturn
     
 def handle16(FileObject):
     CollectedID = struct.unpack('!i', FileObject.read(4))[0]
@@ -510,11 +519,13 @@ def handle3D(FileObject):
     Y = struct.unpack('!b', FileObject.read(1))[0]
     Z = struct.unpack('!i', FileObject.read(4))[0]
     Data = struct.unpack('!i', FileObject.read(4))[0]
+    NoVolDecrease = struct.unpack('?', FileObject.read(1))[0]
     return {'EffectID' : EffectID,
             'X' : X,
             'Y' : Y,
             'Z' : Z,
-            'Data' : Data
+            'Data' : Data,
+            'NoVolumeDecrease' : NoVolDecrease
             }
     
 def handle3E(FileObject):
@@ -776,8 +787,9 @@ def readEntityMetadata(FileObject):
         if ty == 5:
             val = {}
             val["id"]     = struct.unpack('!h', FileObject.read(2))[0]
-            val["count"]  = struct.unpack('!b', FileObject.read(1))[0]
-            val["damage"] = struct.unpack('!h', FileObject.read(2))[0]
+            if (val["id"] != -1):
+                val["count"]  = struct.unpack('!b', FileObject.read(1))[0]
+                val["damage"] = struct.unpack('!h', FileObject.read(2))[0]
         if ty == 6:
             val = []
             for i in range(3):
