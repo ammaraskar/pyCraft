@@ -6,7 +6,7 @@ def sendHandshake(socket, username, host, port):
     socket.send("\x02")
     
     #byte - protocol version
-    socket.send(struct.pack('!b', 39))
+    socket.send(struct.pack('!b', 47))
     
     #string - username
     socket.send(struct.pack('!h', username.__len__()))
@@ -45,3 +45,7 @@ def sendFC(socket, secret, token):
     #token
     socket.send(struct.pack('!h', token.__len__())) #length
     socket.send(token)
+    
+def sendFF(socket, reason):
+    socket.send(struct.pack('!h', reason.__len__())) #length
+    socket.send(reason.encode("utf-16be")) #message

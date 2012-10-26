@@ -24,8 +24,9 @@ EntityID = 0
 
 class ServerConnection(threading.Thread):
     
-    def __init__(self, window, username, password, sessionID, server, port):
+    def __init__(self, window, username, password, sessionID, server, port, options=None):
         threading.Thread.__init__(self)
+        self.options = options
         self.isConnected = False
         self.username = username
         self.password = password
@@ -39,6 +40,7 @@ class ServerConnection(threading.Thread):
         self.window = window
         
     def disconnect(self):
+        PacketSenderManager.sendFF(self.socket, "Disconnected by user")
         self.listener.kill = True
         self.socket.close()
         
@@ -198,6 +200,9 @@ class PacketListener(threading.Thread):
         self.encryptedConnection = True
         
     def run(self):
+        
+        if(self.connection.options != None and self.connection.options.dumpPackets):
+            f = open(self.connection.options.filename, 'w')
         while True:
             if (self.kill):
                 break
@@ -213,133 +218,136 @@ class PacketListener(threading.Thread):
                     sys.exit()
                 break
             if(response == "\x00"):
-                PacketListenerManager.handle00(self.FileObject, self.socket)
+                packet = PacketListenerManager.handle00(self.FileObject, self.socket)
             elif(response == "\x01"):
-                packet01 = PacketListenerManager.handle01(self.FileObject)
-                print "Logged in \o/ Received an entity id of " + str(packet01['EntityID'])
+                packet = PacketListenerManager.handle01(self.FileObject)
+                print "Logged in \o/ Received an entity id of " + str(packet['EntityID'])
             elif(response == "\x03"):
-                message = PacketListenerManager.handle03(self.FileObject)
+                packet = PacketListenerManager.handle03(self.FileObject)
                 if(self.connection.NoGUI):
                     # Add "\x1b" because it is essential for ANSI escapes emitted by translate_escapes
-                    filtered_string = filter(lambda x: x in string.printable + "\x1b", Utils.translate_escapes(message))
+                    filtered_string = filter(lambda x: x in string.printable + "\x1b", Utils.translate_escapes(packet))
                     #print message.replace(u'\xa7', '&')
                     print filtered_string
+                    packet = {'Message' : filtered_string}
                 elif(self.window):
-                    self.window.handleChat(message)
+                    self.window.handleChat(packet)
             elif(response == "\x04"):
-                PacketListenerManager.handle04(self.FileObject)
+                packet = PacketListenerManager.handle04(self.FileObject)
             elif(response == "\x05"):
-                PacketListenerManager.handle05(self.FileObject)
+                packet = PacketListenerManager.handle05(self.FileObject)
             elif(response == "\x06"):
-                PacketListenerManager.handle06(self.FileObject)
+                packet = PacketListenerManager.handle06(self.FileObject)
             elif(response == "\x07"):
-                PacketListenerManager.handle07(self.FileObject)
+                packet = PacketListenerManager.handle07(self.FileObject)
             elif(response == "\x08"):
-                PacketListenerManager.handle08(self.FileObject)
+                packet = PacketListenerManager.handle08(self.FileObject)
             elif(response == "\x09"):
-                PacketListenerManager.handle09(self.FileObject)
+                packet = PacketListenerManager.handle09(self.FileObject)
             elif(response == "\x0D"):
-                PacketListenerManager.handle0D(self.FileObject)
+                packet = PacketListenerManager.handle0D(self.FileObject)
             elif(response == "\x11"):
-                PacketListenerManager.handle11(self.FileObject)
+                packet = PacketListenerManager.handle11(self.FileObject)
             elif(response == "\x12"):
-                PacketListenerManager.handle12(self.FileObject)
+                packet = PacketListenerManager.handle12(self.FileObject)
             elif(response == "\x14"):
-                PacketListenerManager.handle14(self.FileObject)
+                packet = PacketListenerManager.handle14(self.FileObject)
             elif(response == "\x15"):
-                PacketListenerManager.handle15(self.FileObject)
+                packet = PacketListenerManager.handle15(self.FileObject)
             elif(response == "\x16"):
-                PacketListenerManager.handle16(self.FileObject)
+                packet = PacketListenerManager.handle16(self.FileObject)
             elif(response == "\x17"):
-                PacketListenerManager.handle17(self.FileObject)
+                packet = PacketListenerManager.handle17(self.FileObject)
             elif(response == "\x18"):
-                PacketListenerManager.handle18(self.FileObject)
+                packet = PacketListenerManager.handle18(self.FileObject)
             elif(response == "\x19"):
-                PacketListenerManager.handle19(self.FileObject)
+                packet = PacketListenerManager.handle19(self.FileObject)
             elif(response == "\x1A"):
-                PacketListenerManager.handle1A(self.FileObject)
+                packet = PacketListenerManager.handle1A(self.FileObject)
             elif(response == "\x1C"):
-                PacketListenerManager.handle1C(self.FileObject)
+                packet = PacketListenerManager.handle1C(self.FileObject)
             elif(response == "\x1D"):
-                PacketListenerManager.handle1D(self.FileObject)
+                packet = PacketListenerManager.handle1D(self.FileObject)
             elif(response == "\x1E"):
-                PacketListenerManager.handle1E(self.FileObject)
+                packet = PacketListenerManager.handle1E(self.FileObject)
             elif(response == "\x1F"):
-                PacketListenerManager.handle1F(self.FileObject)
+                packet = PacketListenerManager.handle1F(self.FileObject)
             elif(response == "\x20"):
-                PacketListenerManager.handle20(self.FileObject)
+                packet = PacketListenerManager.handle20(self.FileObject)
             elif(response == "\x21"):
-                PacketListenerManager.handle21(self.FileObject)
+                packet = PacketListenerManager.handle21(self.FileObject)
             elif(response == "\x22"):
-                PacketListenerManager.handle22(self.FileObject)
+                packet = PacketListenerManager.handle22(self.FileObject)
             elif(response == "\x23"):
-                PacketListenerManager.handle23(self.FileObject)
+                packet = PacketListenerManager.handle23(self.FileObject)
             elif(response == "\x26"):
-                PacketListenerManager.handle26(self.FileObject)
+                packet = PacketListenerManager.handle26(self.FileObject)
             elif(response == "\x27"):
-                PacketListenerManager.handle27(self.FileObject)
+                packet = PacketListenerManager.handle27(self.FileObject)
             elif(response == "\x28"):
-                PacketListenerManager.handle28(self.FileObject)
+                packet = PacketListenerManager.handle28(self.FileObject)
             elif(response == "\x29"):
-                PacketListenerManager.handle29(self.FileObject)
+                packet = PacketListenerManager.handle29(self.FileObject)
             elif(response == "\x2A"):
-                PacketListenerManager.handle2A(self.FileObject)
+                packet = PacketListenerManager.handle2A(self.FileObject)
             elif(response == "\x2B"): 
-                PacketListenerManager.handle2B(self.FileObject)
+                packet = PacketListenerManager.handle2B(self.FileObject)
             elif(response == "\x33"):
                 PacketListenerManager.handle33(self.FileObject)
+                packet = {'PlaceHolder' : 0}
             elif(response == "\x34"):
-                PacketListenerManager.handle34(self.FileObject)
+                packet = PacketListenerManager.handle34(self.FileObject)
             elif(response == "\x35"):
-                PacketListenerManager.handle35(self.FileObject)
+                packet = PacketListenerManager.handle35(self.FileObject)
             elif(response == "\x36"):
-                PacketListenerManager.handle36(self.FileObject)
+                packet = PacketListenerManager.handle36(self.FileObject)
             elif(response == "\x37"):
-                PacketListenerManager.handle37(self.FileObject)
+                packet = PacketListenerManager.handle37(self.FileObject)
             elif(response == "\x38"):
                 PacketListenerManager.handle38(self.FileObject)
+                packet = {'PlaceHolder' : 0}
             elif(response == "\x3C"):
-                PacketListenerManager.handle3C(self.FileObject)
+                packet = PacketListenerManager.handle3C(self.FileObject)
             elif(response == "\x3D"):
-                PacketListenerManager.handle3D(self.FileObject)
+                packet = PacketListenerManager.handle3D(self.FileObject)
             elif(response == "\x3E"):
-                PacketListenerManager.handle3E(self.FileObject)
+                packet = PacketListenerManager.handle3E(self.FileObject)
             elif(response == "\x46"):
-                PacketListenerManager.handle46(self.FileObject)
+                packet = PacketListenerManager.handle46(self.FileObject)
             elif(response == "\x47"):
-                PacketListenerManager.handle47(self.FileObject)
+                packet = PacketListenerManager.handle47(self.FileObject)
             elif(response == "\x64"):
-                PacketListenerManager.handle64(self.FileObject)
+                packet = PacketListenerManager.handle64(self.FileObject)
             elif(response == "\x65"):
-                PacketListenerManager.handle65(self.FileObject)
+                packet = PacketListenerManager.handle65(self.FileObject)
             elif(response == "\x67"):
-                PacketListenerManager.handle67(self.FileObject)
+                packet = PacketListenerManager.handle67(self.FileObject)
             elif(response == "\x68"):
-                PacketListenerManager.handle68(self.FileObject)
+                packet = PacketListenerManager.handle68(self.FileObject)
             elif(response == "\x69"):
-                PacketListenerManager.handle69(self.FileObject)
+                packet = PacketListenerManager.handle69(self.FileObject)
             elif(response == "\x6A"):
-                PacketListenerManager.handle6A(self.FileObject)
+                packet = PacketListenerManager.handle6A(self.FileObject)
             elif(response == "\x6B"):
-                PacketListenerManager.handle6B(self.FileObject)
+                packet = PacketListenerManager.handle6B(self.FileObject)
             elif(response == "\x82"):
-                PacketListenerManager.handle82(self.FileObject)
+                packet = PacketListenerManager.handle82(self.FileObject)
             elif(response == "\x83"):
-                PacketListenerManager.handle83(self.FileObject)
+                packet = PacketListenerManager.handle83(self.FileObject)
             elif(response == "\x84"):
-                PacketListenerManager.handle84(self.FileObject)
+                packet = PacketListenerManager.handle84(self.FileObject)
             elif(response == "\xC8"):
-                PacketListenerManager.handleC8(self.FileObject)
+                packet = PacketListenerManager.handleC8(self.FileObject)
             elif(response == "\xC9"):
-                PacketListenerManager.handleC9(self.FileObject)
+                packet = PacketListenerManager.handleC9(self.FileObject)
             elif(response == "\xCA"):
-                PacketListenerManager.handleCA(self.FileObject)
+                packet = PacketListenerManager.handleCA(self.FileObject)
             elif(response == "\xCB"):
-                PacketListenerManager.handleCB(self.FileObject)
+                packet = PacketListenerManager.handleCB(self.FileObject)
             elif(response == "\xFA"):
-                PacketListenerManager.handleFA(self.FileObject)
+                packet = PacketListenerManager.handleFA(self.FileObject)
             elif(response == "\xFC"):
-                PacketListenerManager.handleFC(self.FileObject)
+                packet = PacketListenerManager.handleFC(self.FileObject)
                 if (not self.encryptedConnection):
                     self.enableEncryption()
                     self.connection.isConnected = True
@@ -355,9 +363,15 @@ class PacketListener(threading.Thread):
                     if(hasattr(self.window, 'Status')):
                         self.window.Status.SetLabel("Disconnected: " + DisconMessage)
                 self.socket.close()
+                sys.exit(1)
                 break
             else:
                 if(self.window == None):
                     print "Protocol error: " + hex(ord(response))
                     self.socket.close()
+                    if(f != None):
+                        f.close()
+                    sys.exit(1)
                     break
+            if(self.connection.options != None and self.connection.options.dumpPackets):
+                f.write(hex(ord(response)) + " : " + str(packet) + '\n')

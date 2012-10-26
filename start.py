@@ -2,10 +2,11 @@ import urllib
 import urllib2
 import getpass
 import sys
-from networking import PacketSenderManager, NetworkManager
 import NoGUIstuff
 import time
 import threading
+from networking import PacketSenderManager, NetworkManager
+from optparse import OptionParser
 wxImportError = False
 try:
     import wx
@@ -97,21 +98,50 @@ class KeepConnectionAlive(threading.Thread):
                 self.window.parent.loggedIn = True            
 
 if __name__ == "__main__":
-    noGUI = False
-    if (len(sys.argv) > 1):
-        if (sys.argv.count("nogui") > 0) :
-            noGUI = True
+        
+    parser = OptionParser()
+    
+    parser.add_option("-n", "--nogui",
+                  action="store_true", dest="noGUI", default=False,
+                  help="don't use a GUI")
+    
+    parser.add_option("-u", "--username", dest="username", default="",
+                  help="username to log in with (only with no gui mode)")
+    
+    parser.add_option("-p", "--password", dest="password", default="",
+                  help="password to log in with (only with no gui mode)")
+    
+    parser.add_option("-s", "--server", dest="server", default="",
+                  help="server to connect to (only with no gui mode)")
+    
+    parser.add_option("-d", "--dump-packets", 
+                  action="store_true", dest="dumpPackets", default=False,
+                  help="run with this argument to dump packets")
+    
+    parser.add_option("-o", "--out-file", dest="filename", default="dump.txt",
+                  help="file to dump packets to")
+    
+    (options, args) = parser.parse_args()
             
-    if(noGUI or wxImportError):
-        user = raw_input("Enter your username: ")
-        passwd = getpass.getpass("Enter your password: ")
+    if(options.noGUI or wxImportError):
+        if(options.username != ""):
+            user = options.username
+        else:
+            user = raw_input("Enter your username: ")
+        if(options.password != ""):
+            passwd = options.password
+        else:
+            passwd = getpass.getpass("Enter your password: ")
         derp = NoGUIstuff.loginToMinecraft(user, passwd)
-        if(derp['Response'] == "Incorrect username/password" or derp['Response'] == "Can't connect to minecraft.net" or derp['Response'] == "Account migrated, use e-mail as username."):
+        if(derp['Response'] != "Good to go!"):
             print derp['Response']
-            sys.exit()                
+            sys.exit()
         sessionid = derp['SessionID']
         print "Logged in as " + derp['Username'] + "! Your session id is: " + sessionid
-        stuff = raw_input("Enter host and port if any: ")
+        if(options.server != ""):
+            stuff = options.server
+        else:
+            stuff = raw_input("Enter host and port if any: ")
         if ':' in stuff:
             StuffEnteredIntoBox = stuff.split(":")
             host = StuffEnteredIntoBox[0]
@@ -119,7 +149,7 @@ if __name__ == "__main__":
         else:
             host = stuff
             port = 25565
-        connection = NetworkManager.ServerConnection(None, derp['Username'], passwd, sessionid, host, port)
+        connection = NetworkManager.ServerConnection(None, derp['Username'], passwd, sessionid, host, port, options)
         connection.start()
         while True:
             try:
@@ -127,7 +157,7 @@ if __name__ == "__main__":
                 if (connection.isConnected):
                     PacketSenderManager.send03(connection.grabSocket(), chat_input) 
                 else:
-                    pass               
+                    pass       
             except KeyboardInterrupt, e:
                 connection.disconnect()
                 sys.exit(1)
