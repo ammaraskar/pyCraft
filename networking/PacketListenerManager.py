@@ -1,90 +1,83 @@
-import struct
-import zlib
+import DataUtil
+import PacketSenderManager
 
 def handle00(FileObject, socket):
-    KAid = struct.unpack('!i', FileObject.read(4))[0]
-    socket.send("\x00" + struct.pack('!i', KAid))
+    KAid = DataUtil.readInt(FileObject)
+    PacketSenderManager.send00(socket, KAid)
     
 def handle01(FileObject):
-    Eid = struct.unpack('!i', FileObject.read(4))[0]
-    length = struct.unpack('!h', FileObject.read(2))[0] * 2 
-    world = FileObject.read(length).decode('utf-16be')
-    mode = struct.unpack('!b', FileObject.read(1))[0]
-    dimension = struct.unpack('!b', FileObject.read(1))[0]
-    difficulty = struct.unpack('!b', FileObject.read(1))[0]
+    Eid = DataUtil.readInt(FileObject)
+    world = DataUtil.readString(FileObject)
+    mode = DataUtil.readByte(FileObject)
+    dimension = DataUtil.readByte(FileObject)
+    difficulty = DataUtil.readByte(FileObject)
     FileObject.read(1)
-    maxplayers = struct.unpack('!B', FileObject.read(1))[0]
-    toReturn = {'EntityID' : Eid,
+    maxplayers = DataUtil.readByte(FileObject)
+    return     {'EntityID' : Eid,
                 'World' : world,
                 'Mode' : mode,
                 'Dimension' : dimension,
                 'Difficulty' : difficulty,
                 'MaxPlayers' : maxplayers
                 }
-    return toReturn
 
 def handle02(FileObject):
-    length = struct.unpack('!h', FileObject.read(2))[0] * 2
-    message = FileObject.read(length)
-    message = message.decode('utf-16be', 'strict')
+    message = DataUtil.readString(FileObject)
     return message
 
 def handle03(FileObject):
-    length = struct.unpack('!h', FileObject.read(2))[0] * 2
-    message = FileObject.read(length)
-    message = message.decode('utf-16be','strict')
+    message = DataUtil.readString(FileObject)
     return message
 
 def handle04(FileObject):
-    time = struct.unpack('!q', FileObject.read(8))[0]
-    dayTime = struct.unpack('!q', FileObject.read(8))[0]
+    time = DataUtil.readLong(FileObject)
+    dayTime = DataUtil.readLong(FileObject)
     return {'Time' : time,
             'DayTime' : dayTime
             }
 
 def handle05(FileObject):
-    EntityID = struct.unpack('!i', FileObject.read(4))[0]
-    Slot = struct.unpack('!h', FileObject.read(2))[0]
-    Item = decodeSlotData(FileObject)
+    EntityID = DataUtil.readInt(FileObject)
+    Slot = DataUtil.readShort(FileObject)
+    Item = DataUtil.readSlotData(FileObject)
     return {'EntityID' : EntityID,
             'Slot' : Slot,
             'Item' : Item
             }
 
 def handle06(FileObject):
-    x = struct.unpack('!i', FileObject.read(4))[0]
-    y = struct.unpack('!i', FileObject.read(4))[0]
-    z = struct.unpack('!i', FileObject.read(4))[0]
+    x = DataUtil.readInt(FileObject)
+    y = DataUtil.readInt(FileObject)
+    z = DataUtil.readInt(FileObject)
     return {'x' : x,
             'y' : y,
             'z' : z
             }
     
 def handle07(FileObject):
-    userID = struct.unpack('!i', FileObject.read(4))[0]
-    targetID = struct.unpack('!i', FileObject.read(4))[0]
-    mButton = struct.unpack('?', FileObject.read(1))[0]
+    userID = DataUtil.readInt(FileObject)
+    targetID = DataUtil.readInt(FileObject)
+    mButton = DataUtil.readBoolean(FileObject)
     return {'userID' : userID,
             'targetID' : targetID,
             'mButton' : mButton
             }
     
 def handle08(FileObject):
-    health = struct.unpack('!h', FileObject.read(2))[0]
-    food = struct.unpack('!h', FileObject.read(2))[0]
-    saturation = struct.unpack('!f', FileObject.read(4))[0]
+    health = DataUtil.readShort(FileObject)
+    food = DataUtil.readShort(FileObject)
+    saturation = DataUtil.readFloat(FileObject)
     return {'health' : health,
             'food' : food,
             'saturation' : saturation
             }
     
 def handle09(FileObject):
-    dimension = struct.unpack('!i', FileObject.read(4))[0]
-    difficulty = struct.unpack('!b', FileObject.read(1))[0]
-    mode = struct.unpack('!b', FileObject.read(1))[0]
-    height = struct.unpack('!h', FileObject.read(2))[0]
-    length = struct.unpack('!h', FileObject.read(2))[0] * 2 
-    world = FileObject.read(length).decode('utf-16be')
+    dimension = DataUtil.readInt(FileObject)
+    difficulty = DataUtil.readByte(FileObject)
+    mode = DataUtil.readByte(FileObject)
+    height = DataUtil.readShort(FileObject)
+    world = DataUtil.readString(FileObject)
     return {'Dimension' : dimension,
             'Difficulty' : difficulty,
             'Mode' : mode,
@@ -93,13 +86,13 @@ def handle09(FileObject):
             }
     
 def handle0D(FileObject):
-    x = struct.unpack('!d', FileObject.read(8))[0]
-    stance = struct.unpack('!d', FileObject.read(8))[0]
-    y = struct.unpack('!d', FileObject.read(8))[0]
-    z = struct.unpack('!d', FileObject.read(8))[0]
-    yaw = struct.unpack('!f', FileObject.read(4))[0]
-    pitch = struct.unpack('!f', FileObject.read(4))[0]
-    onGround = struct.unpack('?', FileObject.read(1))[0]
+    x = DataUtil.readDouble(FileObject)
+    stance = DataUtil.readDouble(FileObject)
+    y = DataUtil.readDouble(FileObject)
+    z = DataUtil.readDouble(FileObject)
+    yaw = DataUtil.readFloat(FileObject)
+    pitch = DataUtil.readFloat(FileObject)
+    onGround = DataUtil.readBoolean(FileObject)
     return {'x' : x,
             'stance' : stance,
             'y' : y,
@@ -110,11 +103,11 @@ def handle0D(FileObject):
             }
     
 def handle11(FileObject):
-    EntityID = struct.unpack('!i', FileObject.read(4))[0]
+    EntityID = DataUtil.readInt(FileObject)
     FileObject.read(1) #Unused
-    x = struct.unpack('!i', FileObject.read(4))[0]
-    y = struct.unpack('!b', FileObject.read(1))[0]
-    z = struct.unpack('!i', FileObject.read(4))[0]
+    x = DataUtil.readInt(FileObject)
+    y = DataUtil.readByte(FileObject)
+    z = DataUtil.readInt(FileObject)
     return {'EntityID' : EntityID,
             'x' : x,
             'y' : y,
@@ -122,23 +115,22 @@ def handle11(FileObject):
             }
     
 def handle12(FileObject):
-    EntityID = struct.unpack('!i', FileObject.read(4))[0]
-    Animation = struct.unpack('!b', FileObject.read(1))[0]
+    EntityID = DataUtil.readInt(FileObject)
+    Animation = DataUtil.readByte(FileObject)
     return {'EntityID' : EntityID,
             'AnimationID' : Animation
             }
     
 def handle14(FileObject):
-    EntityID = struct.unpack('!i', FileObject.read(4))[0]
-    length = struct.unpack('!h', FileObject.read(2))[0] * 2
-    PlayerName = FileObject.read(length).decode('utf-16be')
-    x = struct.unpack('!i', FileObject.read(4))[0]
-    y = struct.unpack('!i', FileObject.read(4))[0]
-    z = struct.unpack('!i', FileObject.read(4))[0]
-    yaw = struct.unpack('!f', FileObject.read(4))[0]
-    pitch = struct.unpack('!f', FileObject.read(4))[0]
-    curItem = struct.unpack('!h', FileObject.read(2))[0]
-    metadata = readEntityMetadata(FileObject)
+    EntityID = DataUtil.readInt(FileObject)
+    PlayerName = DataUtil.readString(FileObject)
+    x = DataUtil.readInt(FileObject)
+    y = DataUtil.readInt(FileObject)
+    z = DataUtil.readInt(FileObject)
+    yaw = DataUtil.readFloat(FileObject)
+    pitch = DataUtil.readFloat(FileObject)
+    curItem = DataUtil.readShort(FileObject)
+    metadata = DataUtil.readEntityMetadata(FileObject)
     toReturn = {'EntityID' : EntityID,
                 'Player Name' : PlayerName,
                 'x' : x,
@@ -152,20 +144,20 @@ def handle14(FileObject):
     return toReturn
 
 def handle15(FileObject):
-    EntityID = struct.unpack('!i', FileObject.read(4))[0]
-    ItemID = struct.unpack('!h', FileObject.read(2))[0]
+    EntityID = DataUtil.readInt(FileObject)
+    ItemID = DataUtil.readShort(FileObject)
     if (ItemID != -1):
-        Count = struct.unpack('!b', FileObject.read(1))[0]
-        Damage = struct.unpack('!h', FileObject.read(2))[0]
-        ArrayLength = struct.unpack('!h', FileObject.read(2))[0]
+        Count = DataUtil.readByte(FileObject)
+        Damage = DataUtil.readShort(FileObject)
+        ArrayLength = DataUtil.readShort(FileObject)
         if (ArrayLength != -1):
             Array = FileObject.read(ArrayLength) #TODO: find out what this does and do stuff accrodingly
-    x = struct.unpack('!i', FileObject.read(4))[0]
-    y = struct.unpack('!i', FileObject.read(4))[0]
-    z = struct.unpack('!i', FileObject.read(4))[0]
-    Rotation = struct.unpack('!b', FileObject.read(1))[0]
-    Pitch = struct.unpack('!b', FileObject.read(1))[0]
-    Roll = struct.unpack('!b', FileObject.read(1))[0]
+    x = DataUtil.readInt(FileObject)
+    y = DataUtil.readInt(FileObject)
+    z = DataUtil.readInt(FileObject)
+    Rotation = DataUtil.readByte(FileObject)
+    Pitch = DataUtil.readByte(FileObject)
+    Roll = DataUtil.readByte(FileObject)
     toReturn = {'EntityID' : EntityID,
                 'ItemID' : ItemID,
                 'x' : x,
@@ -181,23 +173,23 @@ def handle15(FileObject):
     return toReturn
     
 def handle16(FileObject):
-    CollectedID = struct.unpack('!i', FileObject.read(4))[0]
-    CollectorID = struct.unpack('!i', FileObject.read(4))[0]
+    CollectedID = DataUtil.readInt(FileObject)
+    CollectorID = DataUtil.readInt(FileObject)
     return {'CollectedID' : CollectedID,
             'CollectorID' : CollectorID
             }
     
 def handle17(FileObject):
-    EntityID = struct.unpack('!i', FileObject.read(4))[0]
-    Type = struct.unpack('!b', FileObject.read(1))[0]
-    x = struct.unpack('!i', FileObject.read(4))[0]
-    y = struct.unpack('!i', FileObject.read(4))[0]
-    z = struct.unpack('!i', FileObject.read(4))[0]
-    ThrowerEntityID = struct.unpack('!i', FileObject.read(4))[0]
+    EntityID = DataUtil.readInt(FileObject)
+    Type = DataUtil.readByte(FileObject)
+    x = DataUtil.readInt(FileObject)
+    y = DataUtil.readInt(FileObject)
+    z = DataUtil.readInt(FileObject)
+    ThrowerEntityID = DataUtil.readInt(FileObject)
     if(ThrowerEntityID > 0):
-        SpeedX = struct.unpack('!h', FileObject.read(2))[0]
-        SpeedY = struct.unpack('!h', FileObject.read(2))[0]
-        SpeedZ = struct.unpack('!h', FileObject.read(2))[0]
+        SpeedX = DataUtil.readShort(FileObject)
+        SpeedY = DataUtil.readShort(FileObject)
+        SpeedZ = DataUtil.readShort(FileObject)
         return {'EntityID' : EntityID,
                 'Type' : Type,
                 'x' : x,
@@ -217,18 +209,18 @@ def handle17(FileObject):
                 }
         
 def handle18(FileObject):
-    EntityID = struct.unpack('!i', FileObject.read(4))[0]
-    Type = struct.unpack('!b', FileObject.read(1))[0]
-    x = struct.unpack('!i', FileObject.read(4))[0]
-    y = struct.unpack('!i', FileObject.read(4))[0]
-    z = struct.unpack('!i', FileObject.read(4))[0]
-    Yaw = struct.unpack('!b', FileObject.read(1))[0]
-    Pitch = struct.unpack('!b', FileObject.read(1))[0]
-    HeadYaw = struct.unpack('!b', FileObject.read(1))[0]
-    VelocityX = struct.unpack('!h', FileObject.read(2))[0]
-    VelocityY = struct.unpack('!h', FileObject.read(2))[0]
-    VelocityZ = struct.unpack('!h', FileObject.read(2))[0]
-    metadata = readEntityMetadata(FileObject)
+    EntityID = DataUtil.readInt(FileObject)
+    Type = DataUtil.readByte(FileObject)
+    x = DataUtil.readInt(FileObject)
+    y = DataUtil.readInt(FileObject)
+    z = DataUtil.readInt(FileObject)
+    Yaw = DataUtil.readByte(FileObject)
+    Pitch = DataUtil.readByte(FileObject)
+    HeadYaw = DataUtil.readByte(FileObject)
+    VelocityX = DataUtil.readShort(FileObject)
+    VelocityY = DataUtil.readShort(FileObject)
+    VelocityZ = DataUtil.readShort(FileObject)
+    metadata = DataUtil.readEntityMetadata(FileObject)
 
     return {'EntityID' : EntityID,
             'Type' : Type,
@@ -245,14 +237,12 @@ def handle18(FileObject):
             }
     
 def handle19(FileObject):
-    EntityID = struct.unpack('!i', FileObject.read(4))[0]
-    length = struct.unpack('!h', FileObject.read(2))[0] * 2 
-    Title = FileObject.read(length).decode('utf-16be')
-    raw = FileObject.read(4)
-    x = struct.unpack('!i', raw)[0]
-    y = struct.unpack('!i', FileObject.read(4))[0]
-    z = struct.unpack('!i', FileObject.read(4))[0]
-    Direction = struct.unpack('!i', FileObject.read(4))[0]
+    EntityID = DataUtil.readInt(FileObject)
+    Title = DataUtil.readString(FileObject)
+    x = DataUtil.readInt(FileObject)
+    y = DataUtil.readInt(FileObject)
+    z = DataUtil.readInt(FileObject)
+    Direction = DataUtil.readInt(FileObject)
     return {'EntityID' : EntityID,
             'Title' : Title,
             'x' : x,
@@ -262,11 +252,11 @@ def handle19(FileObject):
             }
 
 def handle1A(FileObject):
-    EntityID = struct.unpack('!i', FileObject.read(4))[0]
-    x = struct.unpack('!i', FileObject.read(4))[0]
-    y = struct.unpack('!i', FileObject.read(4))[0]
-    z = struct.unpack('!i', FileObject.read(4))[0]
-    Count = struct.unpack('!h', FileObject.read(2))[0]
+    EntityID = DataUtil.readInt(FileObject)
+    x = DataUtil.readInt(FileObject)
+    y = DataUtil.readInt(FileObject)
+    z = DataUtil.readInt(FileObject)
+    Count = DataUtil.readShort(FileObject)
     return {'EntityID' : EntityID,
             'x' : x,
             'y' : y,
@@ -275,10 +265,10 @@ def handle1A(FileObject):
             }   
     
 def handle1C(FileObject):
-    EntityID = struct.unpack('!i', FileObject.read(4))[0]
-    VelocityX = struct.unpack('!h', FileObject.read(2))[0]
-    VelocityY = struct.unpack('!h', FileObject.read(2))[0]
-    VelocityZ = struct.unpack('!h', FileObject.read(2))[0]
+    EntityID = DataUtil.readInt(FileObject)
+    VelocityX = DataUtil.readShort(FileObject)
+    VelocityY = DataUtil.readShort(FileObject)
+    VelocityZ = DataUtil.readShort(FileObject)
     return {'EntityID' : EntityID,
             'VelocityX' : VelocityX,
             'VelocityY' : VelocityY,
@@ -286,21 +276,21 @@ def handle1C(FileObject):
             }
     
 def handle1D(FileObject):
-    EntityArrayLength = struct.unpack('!b', FileObject.read(1))[0]
+    EntityArrayLength = DataUtil.readByte(FileObject)
     Entities = []
     for i in range(EntityArrayLength):
-        Entities.append(struct.unpack('!i', FileObject.read(4))[0])
+        Entities.append(DataUtil.readInt(FileObject))
     return Entities
 
 def handle1E(FileObject):
-    EntityID = struct.unpack('!i', FileObject.read(4))[0]
+    EntityID = DataUtil.readInt(FileObject)
     return EntityID
 
 def handle1F(FileObject):
-    EntityID = struct.unpack('!i', FileObject.read(4))[0]
-    x = struct.unpack('!b', FileObject.read(1))[0]
-    y = struct.unpack('!b', FileObject.read(1))[0]
-    z = struct.unpack('!b', FileObject.read(1))[0]
+    EntityID = DataUtil.readInt(FileObject)
+    x = DataUtil.readByte(FileObject)
+    y = DataUtil.readByte(FileObject)
+    z = DataUtil.readByte(FileObject)
     return {'EntityID' : EntityID,
             'x' : x,
             'y' : y,
@@ -308,21 +298,21 @@ def handle1F(FileObject):
             }
     
 def handle20(FileObject):
-    EntityID = struct.unpack('!i', FileObject.read(4))[0]
-    Yaw = struct.unpack('!b', FileObject.read(1))[0]
-    Pitch = struct.unpack('!b', FileObject.read(1))[0]
+    EntityID = DataUtil.readInt(FileObject)
+    Yaw = DataUtil.readByte(FileObject)
+    Pitch = DataUtil.readByte(FileObject)
     return {'EntityID' : EntityID,
             'Yaw' : Yaw,
             'Pitch' : Pitch
             }
     
 def handle21(FileObject):
-    EntityID = struct.unpack('!i', FileObject.read(4))[0]
-    x = struct.unpack('!b', FileObject.read(1))[0]
-    y = struct.unpack('!b', FileObject.read(1))[0]
-    z = struct.unpack('!b', FileObject.read(1))[0]
-    Yaw = struct.unpack('!b', FileObject.read(1))[0]
-    Pitch = struct.unpack('!b', FileObject.read(1))[0]
+    EntityID = DataUtil.readInt(FileObject)
+    x = DataUtil.readByte(FileObject)
+    y = DataUtil.readByte(FileObject)
+    z = DataUtil.readByte(FileObject)
+    Yaw = DataUtil.readByte(FileObject)
+    Pitch = DataUtil.readByte(FileObject)
     return {'EntityID' : EntityID,
             'x' : x,
             'y' : y,
@@ -332,12 +322,12 @@ def handle21(FileObject):
             }
     
 def handle22(FileObject):
-    EntityID = struct.unpack('!i', FileObject.read(4))[0]
-    x = struct.unpack('!i', FileObject.read(4))[0]
-    y = struct.unpack('!i', FileObject.read(4))[0]
-    z = struct.unpack('!i', FileObject.read(4))[0]
-    Yaw = struct.unpack('!b', FileObject.read(1))[0]
-    Pitch = struct.unpack('!b', FileObject.read(1))[0]
+    EntityID = DataUtil.readInt(FileObject)
+    x = DataUtil.readInt(FileObject)
+    y = DataUtil.readInt(FileObject)
+    z = DataUtil.readInt(FileObject)
+    Yaw = DataUtil.readByte(FileObject)
+    Pitch = DataUtil.readByte(FileObject)
     return {'EntityID' : EntityID,
             'x' : x,
             'y' : y,
@@ -347,38 +337,38 @@ def handle22(FileObject):
             }
     
 def handle23(FileObject):
-    EntityID = struct.unpack('!i', FileObject.read(4))[0]
-    HeadYaw = struct.unpack('!b', FileObject.read(1))[0]
+    EntityID = DataUtil.readInt(FileObject)
+    HeadYaw = DataUtil.readByte(FileObject)
     return {'EntityID' : EntityID,
             'HeadYaw' : HeadYaw
             }
     
 def handle26(FileObject):
-    EntityID = struct.unpack('!i', FileObject.read(4))[0]
-    Status = struct.unpack('!b', FileObject.read(1))[0]
+    EntityID = DataUtil.readInt(FileObject)
+    Status = DataUtil.readByte(FileObject)
     return {'EntityID' : EntityID,
             'Status' : Status
             }
     
 def handle27(FileObject):
-    EntityID = struct.unpack('!i', FileObject.read(4))[0]
-    VehicleID = struct.unpack('!i', FileObject.read(4))[0]
+    EntityID = DataUtil.readInt(FileObject)
+    VehicleID = DataUtil.readInt(FileObject)
     return {'EntityID' : EntityID,
             'VehicleID' : VehicleID
             }
     
 def handle28(FileObject):
-    EntityID = struct.unpack('!i', FileObject.read(4))[0]
-    metadata = readEntityMetadata(FileObject)
+    EntityID = DataUtil.readInt(FileObject)
+    metadata = DataUtil.readEntityMetadata(FileObject)
     return {'EntityID' : EntityID,
             'MetaData' : metadata
             }
     
 def handle29(FileObject):
-    EntityID = struct.unpack('!i', FileObject.read(4))[0]
-    EffectID = struct.unpack('!b', FileObject.read(1))[0]
-    Amplifier = struct.unpack('!b', FileObject.read(1))[0]
-    Duration = struct.unpack('!h', FileObject.read(2))[0]
+    EntityID = DataUtil.readInt(FileObject)
+    EffectID = DataUtil.readByte(FileObject)
+    Amplifier = DataUtil.readByte(FileObject)
+    Duration = DataUtil.readShort(FileObject)
     return {'EntityID' : EntityID,
             'EffectID' : EffectID,
             'Amplifier' : Amplifier,
@@ -386,38 +376,38 @@ def handle29(FileObject):
             }
     
 def handle2A(FileObject):
-    EntityID = struct.unpack('!i', FileObject.read(4))[0]
-    EffectID = struct.unpack('!b', FileObject.read(1))[0]
+    EntityID = DataUtil.readInt(FileObject)
+    EffectID = DataUtil.readByte(FileObject)
     return {'EntityID' : EntityID,
             'EffectID' : EffectID
             }
     
 def handle2B(FileObject):
-    ExperienceBar = struct.unpack('!f', FileObject.read(4))[0]
-    Level = struct.unpack('!h', FileObject.read(2))[0]
-    TotalExp = struct.unpack('!h', FileObject.read(2))[0]
+    ExperienceBar = DataUtil.readFloat(FileObject)
+    Level = DataUtil.readShort(FileObject)
+    TotalExp = DataUtil.readShort(FileObject)
     return {'ExpBar' : ExperienceBar,
             'Level' : Level,
             'TotalExp' : TotalExp
             }
 
 def handle33(FileObject):
-    X = struct.unpack('!i', FileObject.read(4))[0]
-    Z = struct.unpack('!i', FileObject.read(4))[0]
-    GroundUpContinous = struct.unpack('?', FileObject.read(1))[0]
-    PrimaryBitMap = struct.unpack('!H', FileObject.read(2))[0]
-    AddBitMap = struct.unpack('!H', FileObject.read(2))[0]
-    CompressedSize = struct.unpack('!i', FileObject.read(4))[0]
-    FileObject.read(CompressedSize) #not going to be deflating and using this data until I know how to :3
+    X = DataUtil.readInt(FileObject)
+    Z = DataUtil.readInt(FileObject)
+    GroundUpContinous = DataUtil.readBoolean(FileObject)
+    PrimaryBitMap = DataUtil.readShort(FileObject)
+    AddBitMap = DataUtil.readShort(FileObject)
+    CompressedSize = DataUtil.readInt(FileObject)
+    FileObject.read(CompressedSize) #not going to be inflating and using this data until I know how to :3
     return {'x' : X,
             'z' : Z
             }
     
 def handle34(FileObject):
-    ChunkX = struct.unpack('!i', FileObject.read(4))[0]
-    ChunkZ = struct.unpack('!i', FileObject.read(4))[0]
-    AffectedBlocks = struct.unpack('!h', FileObject.read(2))[0]
-    DataSize = struct.unpack('!i', FileObject.read(4))[0]
+    ChunkX = DataUtil.readInt(FileObject)
+    ChunkZ = DataUtil.readInt(FileObject)
+    AffectedBlocks = DataUtil.readShort(FileObject)
+    DataSize = DataUtil.readInt(FileObject)
     FileObject.read(DataSize) #not going to be using this until I know how to.
     return {'ChunkX' : ChunkX,
             'ChunkZ' : ChunkZ,
@@ -425,11 +415,11 @@ def handle34(FileObject):
             }
     
 def handle35(FileObject):
-    X = struct.unpack('!i', FileObject.read(4))[0]
-    Y = struct.unpack('!b', FileObject.read(1))[0]
-    Z = struct.unpack('!i', FileObject.read(4))[0]
-    BlockType = struct.unpack('!h', FileObject.read(2))[0]
-    BlockMetaData = struct.unpack('!b', FileObject.read(1))[0]
+    X = DataUtil.readInt(FileObject)
+    Y = DataUtil.readByte(FileObject)
+    Z = DataUtil.readInt(FileObject)
+    BlockType = DataUtil.readShort(FileObject)
+    BlockMetaData = DataUtil.readByte(FileObject)
     return {'x' : X,
             'y' : Y,
             'z' : Z,
@@ -438,12 +428,12 @@ def handle35(FileObject):
             }
     
 def handle36(FileObject):
-    X = struct.unpack('!i', FileObject.read(4))[0]
-    Y = struct.unpack('!h', FileObject.read(2))[0]
-    Z = struct.unpack('!i', FileObject.read(4))[0]
-    Byte1 = struct.unpack('!b', FileObject.read(1))[0]
-    Byte2 = struct.unpack('!b', FileObject.read(1))[0]
-    BlockID = struct.unpack('!h', FileObject.read(2))[0]
+    X = DataUtil.readInt(FileObject)
+    Y = DataUtil.readShort(FileObject)
+    Z = DataUtil.readInt(FileObject)
+    Byte1 = DataUtil.readByte(FileObject)
+    Byte2 = DataUtil.readByte(FileObject)
+    BlockID = DataUtil.readShort(FileObject)
     return {'x' : X,
             'y' : Y,
             'z' : Z,
@@ -454,19 +444,19 @@ def handle36(FileObject):
     
 def handle37(FileObject):
     #int - EntityID
-    EntityID = struct.unpack('!i', FileObject.read(4))[0]
+    EntityID = DataUtil.readInt(FileObject)
     
     #int - X cord
-    x = struct.unpack('!i', FileObject.read(4))[0]
+    x = DataUtil.readInt(FileObject)
     
     #int - Y cord
-    y = struct.unpack('!i', FileObject.read(4))[0]
+    y = DataUtil.readInt(FileObject)
     
     #int - Z cord
-    z = struct.unpack('!i', FileObject.read(4))[0]
+    z = DataUtil.readInt(FileObject)
     
     #byte - Stage
-    DestroyedStage = struct.unpack('!b', FileObject.read(1))[0]
+    DestroyedStage = DataUtil.readByte(FileObject)
     return {'EntityID' : EntityID,
             'x' : x,
             'y' : y,
@@ -476,10 +466,10 @@ def handle37(FileObject):
     
 def handle38(FileObject):
     #short - number of chunks
-    ChunkCount = struct.unpack('!h', FileObject.read(2))[0]
+    ChunkCount = DataUtil.readShort(FileObject)
     
     #int - chunk data length
-    ChunkDataLength = struct.unpack('!i', FileObject.read(4))[0]
+    ChunkDataLength = DataUtil.readInt(FileObject)
     FileObject.read(ChunkDataLength) #just gonna ignore this for now
     
     #metadata - ignoring this
@@ -490,16 +480,16 @@ def handle38(FileObject):
             }
     
 def handle3C(FileObject):
-    X = struct.unpack('!d', FileObject.read(8))[0]
-    Y = struct.unpack('!d', FileObject.read(8))[0]
-    Z = struct.unpack('!d', FileObject.read(8))[0]
-    Radius = struct.unpack('!f', FileObject.read(4))[0]
-    RecordCount = struct.unpack('!i', FileObject.read(4))[0]
+    X = DataUtil.readDouble(FileObject)
+    Y = DataUtil.readDouble(FileObject)
+    Z = DataUtil.readDouble(FileObject)
+    Radius = DataUtil.readFloat(FileObject)
+    RecordCount = DataUtil.readInt(FileObject)
     AffectedBlocks = []
     for i in range((RecordCount * 3)):
-        x = struct.unpack('!b', FileObject.read(1))[0]
-        y = struct.unpack('!b', FileObject.read(1))[0]
-        z = struct.unpack('!b', FileObject.read(1))[0]
+        x = DataUtil.readByte(FileObject)
+        y = DataUtil.readByte(FileObject)
+        z = DataUtil.readByte(FileObject)
         AffectedBlocks.append({'x' : x, 'y' : y, 'z' : z})
     #---Unknown what these floats do
     FileObject.read(4)
@@ -514,12 +504,12 @@ def handle3C(FileObject):
             }
     
 def handle3D(FileObject):
-    EffectID = struct.unpack('!i', FileObject.read(4))[0]
-    X = struct.unpack('!i', FileObject.read(4))[0]
-    Y = struct.unpack('!b', FileObject.read(1))[0]
-    Z = struct.unpack('!i', FileObject.read(4))[0]
-    Data = struct.unpack('!i', FileObject.read(4))[0]
-    NoVolDecrease = struct.unpack('?', FileObject.read(1))[0]
+    EffectID = DataUtil.readInt(FileObject)
+    X = DataUtil.readInt(FileObject)
+    Y = DataUtil.readByte(FileObject)
+    Z = DataUtil.readInt(FileObject)
+    Data = DataUtil.readInt(FileObject)
+    NoVolDecrease = DataUtil.readBoolean(FileObject)
     return {'EffectID' : EffectID,
             'X' : X,
             'Y' : Y,
@@ -529,13 +519,12 @@ def handle3D(FileObject):
             }
     
 def handle3E(FileObject):
-    length = struct.unpack('!h', FileObject.read(2))[0] * 2 
-    Sound = FileObject.read(length).decode('utf-16be')
-    x = struct.unpack('!i', FileObject.read(4))[0]
-    y = struct.unpack('!i', FileObject.read(4))[0]
-    z = struct.unpack('!i', FileObject.read(4))[0]
-    Volume = struct.unpack('!f', FileObject.read(4))[0]
-    Pitch = struct.unpack('!b', FileObject.read(1))[0]
+    Sound = DataUtil.readString(FileObject)
+    x = DataUtil.readInt(FileObject)
+    y = DataUtil.readInt(FileObject)
+    z = DataUtil.readInt(FileObject)
+    Volume = DataUtil.readFloat(FileObject)
+    Pitch = DataUtil.readByte(FileObject)
     return {'Sound' : Sound,
             'x' : x,
             'y' : y,
@@ -545,18 +534,18 @@ def handle3E(FileObject):
             }
     
 def handle46(FileObject):
-    Reason = struct.unpack('!b', FileObject.read(1))[0]
-    GameMode = struct.unpack('!b', FileObject.read(1))[0]
+    Reason = DataUtil.readByte(FileObject)
+    GameMode = DataUtil.readByte(FileObject)
     return {'Reason' : Reason,
             'GameMode' : GameMode
             }
     
 def handle47(FileObject):
-    EntityID = struct.unpack('!i', FileObject.read(4))[0]
+    EntityID = DataUtil.readInt(FileObject)
     FileObject.read(1) #Boolean don't do nothing
-    x = struct.unpack('!i', FileObject.read(4))[0]
-    y = struct.unpack('!i', FileObject.read(4))[0]
-    z = struct.unpack('!i', FileObject.read(4))[0]
+    x = DataUtil.readInt(FileObject)
+    y = DataUtil.readInt(FileObject)
+    z = DataUtil.readInt(FileObject)
     return {'EntityID' : EntityID,
             'x' : x,
             'y' : y,
@@ -564,11 +553,10 @@ def handle47(FileObject):
             }
     
 def handle64(FileObject):
-    WindowID = struct.unpack('!b', FileObject.read(1))[0]
-    InventoryType = struct.unpack('!b', FileObject.read(1))[0]
-    length = struct.unpack('!h', FileObject.read(2))[0] * 2
-    WindowTitle = FileObject.read(length).decode("utf-16be")
-    NumberOfSlots = struct.unpack('!b', FileObject.read(1))[0]
+    WindowID = DataUtil.readByte(FileObject)
+    InventoryType = DataUtil.readByte(FileObject)
+    WindowTitle = DataUtil.readString(FileObject)
+    NumberOfSlots = DataUtil.readByte(FileObject)
     return {'WindowID' : WindowID,
             'InventoryType' : InventoryType,
             'WindowTitle' : WindowTitle,
@@ -576,24 +564,24 @@ def handle64(FileObject):
             }
     
 def handle65(FileObject):
-    WindowID = struct.unpack('!b', FileObject.read(1))[0]
+    WindowID = DataUtil.readByte(FileObject)
     return WindowID
 
 def handle67(FileObject):
-    WindowID = struct.unpack('!b', FileObject.read(1))[0]
-    Slot = struct.unpack('!h', FileObject.read(2))[0]
-    SlotData = decodeSlotData(FileObject)
+    WindowID = DataUtil.readByte(FileObject)
+    Slot = DataUtil.readShort(FileObject)
+    SlotData = DataUtil.readSlotData(FileObject)
     return {'WindowID' : WindowID,
             'Slot' : Slot,
             'SlotData' : SlotData
             }
     
 def handle68(FileObject):
-    WindowID = struct.unpack('!b', FileObject.read(1))[0]
-    Count = struct.unpack('!h', FileObject.read(2))[0]
+    WindowID = DataUtil.readByte(FileObject)
+    Count = DataUtil.readShort(FileObject)
     Slots = []
     for i in range(Count):
-        SlotData = decodeSlotData(FileObject)
+        SlotData = DataUtil.readSlotData(FileObject)
         Slots.append(SlotData)
     return {'WindowID' : WindowID,
             'Count' : Count,
@@ -601,42 +589,38 @@ def handle68(FileObject):
             }
     
 def handle69(FileObject):
-    WindowID = struct.unpack('!b', FileObject.read(1))[0]
-    Property = struct.unpack('!h', FileObject.read(2))[0]
-    Value = struct.unpack('!h', FileObject.read(2))[0]
+    WindowID = DataUtil.readByte(FileObject)
+    Property = DataUtil.readShort(FileObject)
+    Value = DataUtil.readShort(FileObject)
     return {'WindowID' : WindowID,
             'Property' : Property,
             'Value' : Value
             }
     
 def handle6A(FileObject):
-    WindowID = struct.unpack('!b', FileObject.read(1))[0]
-    ActionType = struct.unpack('!h', FileObject.read(2))[0]
-    Accepted = struct.unpack('?', FileObject.read(1))[0]
+    WindowID = DataUtil.readByte(FileObject)
+    ActionType = DataUtil.readShort(FileObject)
+    Accepted = DataUtil.readBoolean(FileObject)
     return {'WindowID' : WindowID,
             'ActionType' : ActionType,
             'Accepted' : Accepted
             }
     
 def handle6B(FileObject):
-    Slot = struct.unpack('!h', FileObject.read(2))[0]
-    ClickedItem = decodeSlotData(FileObject)
+    Slot = DataUtil.readShort(FileObject)
+    ClickedItem = DataUtil.readSlotData(FileObject)
     return {'Slot' : Slot,
             'ClickedItem' : ClickedItem
             }
     
 def handle82(FileObject):
-    X = struct.unpack('!i', FileObject.read(4))[0]
-    Y = struct.unpack('!h', FileObject.read(2))[0]
-    Z = struct.unpack('!i', FileObject.read(4))[0]
-    length = struct.unpack('!h', FileObject.read(2))[0] * 2
-    Line1 = FileObject.read(length).decode("utf-16be")
-    length = struct.unpack('!h', FileObject.read(2))[0] * 2
-    Line2 = FileObject.read(length).decode("utf-16be")
-    length = struct.unpack('!h', FileObject.read(2))[0] * 2
-    Line3 = FileObject.read(length).decode("utf-16be")
-    length = struct.unpack('!h', FileObject.read(2))[0] * 2
-    Line4 = FileObject.read(length).decode("utf-16be")
+    X = DataUtil.readInt(FileObject)
+    Y = DataUtil.readShort(FileObject)
+    Z = DataUtil.readInt(FileObject)
+    Line1 = DataUtil.readString(FileObject)
+    Line2 = DataUtil.readString(FileObject)
+    Line3 = DataUtil.readString(FileObject)
+    Line4 = DataUtil.readString(FileObject)
     return {'x' : X,
             'y' : Y,
             'z' : Z,
@@ -647,23 +631,23 @@ def handle82(FileObject):
             }
     
 def handle83(FileObject):
-    ItemType = struct.unpack('!h', FileObject.read(2))[0]
-    ItemID = struct.unpack('!h', FileObject.read(2))[0]
-    TextLength = struct.unpack('!B', FileObject.read(1))[0]
-    Text = struct.unpack(str(TextLength) + 'p', FileObject.read(TextLength))
+    ItemType = DataUtil.readShort(FileObject)
+    ItemID = DataUtil.readShort(FileObject)
+    TextLength = DataUtil.readByte(FileObject)
+    Text = DataUtil.readByteArray(FileObject, TextLength)
     return {'ItemType' : ItemType,
             'ItemID' : ItemID,
             'Text' : Text
             }
     
 def handle84(FileObject):
-    X = struct.unpack('!i', FileObject.read(4))[0]
-    Y = struct.unpack('!h', FileObject.read(2))[0]
-    Z = struct.unpack('!i', FileObject.read(4))[0]
-    Action = struct.unpack('!b', FileObject.read(1))[0]
-    DataLength = struct.unpack('!h', FileObject.read(2))[0]
+    X = DataUtil.readInt(FileObject)
+    Y = DataUtil.readShort(FileObject)
+    Z = DataUtil.readInt(FileObject)
+    Action = DataUtil.readByte(FileObject)
+    DataLength = DataUtil.readShort(FileObject)
     if (DataLength != -1):
-        NBTData = struct.unpack(str(DataLength) + "s", FileObject.read(DataLength))[0]
+        NBTData = DataUtil.readByteArray(FileObject, DataLength)
         return {'x' : X,
                 'y' : Y,
                 'z' : Z,
@@ -677,17 +661,16 @@ def handle84(FileObject):
             }
     
 def handleC8(FileObject):
-    StatID = struct.unpack('!i', FileObject.read(4))[0]
-    Amount = struct.unpack('!b', FileObject.read(1))[0]
+    StatID = DataUtil.readInt(FileObject)
+    Amount = DataUtil.readByte(FileObject)
     return {'StatID' : StatID,
             'Amount' : Amount
             }    
     
 def handleC9(FileObject):
-    length = struct.unpack('!h', FileObject.read(2))[0] * 2
-    PlayerName = FileObject.read(length).decode("utf-16be")
-    Online = struct.unpack('?', FileObject.read(1))[0]
-    Ping = struct.unpack('!h', FileObject.read(2))[0]
+    PlayerName = DataUtil.readString(FileObject)
+    Online = DataUtil.readBoolean(FileObject)
+    Ping = DataUtil.readShort(FileObject)
     return {'PlayerName' : PlayerName,
             'Online' : Online,
             'Ping' : Ping
@@ -695,29 +678,26 @@ def handleC9(FileObject):
     
 def handleCA(FileObject):
     #byte - flags
-    Flags = struct.unpack('!b', FileObject.read(1))[0]
+    Flags = DataUtil.readByte(FileObject)
 
     #byte - fly speed
-    FlySpeed = struct.unpack('!b', FileObject.read(1))[0]
+    FlySpeed = DataUtil.readByte(FileObject)
     
     #byte - walk speed
-    WalkSpeed = struct.unpack('!b', FileObject.read(1))[0]
+    WalkSpeed = DataUtil.readByte(FileObject)
     return {'Flags' : Flags,
             'Fly Speed' : FlySpeed,
             'Walk Speed' : WalkSpeed
             }
     
 def handleCB(FileObject):
-    length = struct.unpack('!h', FileObject.read(2))[0] * 2
-    text = FileObject.read(length).decode("utf-16be")
+    text = DataUtil.readString(FileObject)
     return {'Text' : text}
     
 def handleFA(FileObject):
-    length = struct.unpack('!h', FileObject.read(2))[0] * 2
-    Channel = FileObject.read(length).decode("utf-16be")
-    length = struct.unpack('!h', FileObject.read(2))[0]
-    raw = FileObject.read(length)
-    message = struct.unpack(str(length) + 's', raw)
+    Channel = DataUtil.readString(FileObject)
+    length = DataUtil.readShort(FileObject)
+    message = DataUtil.readByteArray(FileObject, length)
     return {'Channel' : Channel,
             'message' : message
             }
@@ -725,14 +705,14 @@ def handleFA(FileObject):
 def handleFC(FileObject):
     
     #short - shared secret length
-    secretLength = struct.unpack('!h', FileObject.read(2))[0]
+    secretLength = DataUtil.readShort(FileObject)
     
-    sharedSecret = struct.unpack(str(secretLength) + "s", FileObject.read(secretLength))[0] #ignore this data, it doesn't matter
+    sharedSecret = DataUtil.readByteArray(FileObject, secretLength) #ignore this data, it doesn't matter
     
     #short - token length
-    length = struct.unpack('!h', FileObject.read(2))[0]
+    length = DataUtil.readShort(FileObject)
     
-    token = struct.unpack(str(length) + "s", FileObject.read(length))[0] #ignore this data, it doesn't matter
+    token = DataUtil.readByteArray(FileObject, length) #ignore this data, it doesn't matter
     
     return {'Secret Length' : secretLength,
             'Shared Secret' : sharedSecret,
@@ -744,20 +724,19 @@ def handleFC(FileObject):
 def handleFD(FileObject):
     
     #string - server id
-    length = struct.unpack('!h', FileObject.read(2))[0] * 2
-    serverid = FileObject.read(length).decode("utf-16be")
+    serverid = DataUtil.readString(FileObject)
     
     #short - pub key length
-    length = struct.unpack('!h', FileObject.read(2))[0]
+    length = DataUtil.readShort(FileObject)
     
     #byte array - pub key
-    pubkey = struct.unpack(str(length) + "s", FileObject.read(length))[0]
+    pubkey = DataUtil.readByteArray(FileObject, length)
     
     #short - token length
-    length = struct.unpack('!h', FileObject.read(2))[0]
+    length = DataUtil.readShort(FileObject)
     
     #byte array - token
-    token = struct.unpack(str(length) + "s", FileObject.read(length))[0]
+    token = DataUtil.readByteArray(FileObject, length)
     
     return {'ServerID' : serverid,
             'Public Key' : pubkey,
@@ -765,58 +744,5 @@ def handleFD(FileObject):
             }
     
 def handleFF(FileObject):
-    length = struct.unpack('!h', FileObject.read(2))[0] * 2
-    Reason = FileObject.read(length)
-    Reason = Reason.decode("utf-16be", 'strict')
-    print Reason
+    Reason = DataUtil.readString(FileObject)
     return Reason
-
-def readEntityMetadata(FileObject):
-    metadata = {}
-    byte = struct.unpack('!B', FileObject.read(1))[0]
-    while byte != 127:
-        index = byte & 0x1F # Lower 5 bits
-        ty    = byte >> 5   # Upper 3 bits
-        if ty == 0: val = struct.unpack('!b', FileObject.read(1))[0]
-        if ty == 1: val = struct.unpack('!h', FileObject.read(2))[0]
-        if ty == 2: val = struct.unpack('!i', FileObject.read(4))[0]
-        if ty == 3: val = struct.unpack('!f', FileObject.read(4))[0] 
-        if ty == 4: 
-            length = struct.unpack('!h', FileObject.read(2))[0] * 2
-            val = FileObject.read(length).decode('utf-16be')
-        if ty == 5:
-            val = {}
-            val["id"]     = struct.unpack('!h', FileObject.read(2))[0]
-            if (val["id"] != -1):
-                val["count"]  = struct.unpack('!b', FileObject.read(1))[0]
-                val["damage"] = struct.unpack('!h', FileObject.read(2))[0]
-        if ty == 6:
-            val = []
-            for i in range(3):
-                val.append(struct.unpack('!i', FileObject.read(4))[0])
-        metadata[index] = (ty, val)
-        byte = struct.unpack('!B', FileObject.read(1))[0]
-    return metadata
-
-def decodeSlotData(FileObject):
-    BlockID = struct.unpack('!h', FileObject.read(2))[0]
-    if(BlockID != -1):
-        ItemCount = struct.unpack('!b', FileObject.read(1))[0]
-        Damage = struct.unpack('!h', FileObject.read(2))[0]
-        MetadataLength = struct.unpack('!h', FileObject.read(2))[0]
-        if(MetadataLength != -1):
-            raw = FileObject.read(MetadataLength)
-            ByteArray = struct.unpack(str(MetadataLength) + "s", raw)[0]
-            Data = zlib.decompress(ByteArray, 15+32)
-            return {'BlockID' : BlockID,
-                    'ItemCount' : ItemCount,
-                    'Damage' : Damage,
-                    'Data' : Data
-                    }
-        return {'BlockID' : BlockID,
-                'ItemCount' : ItemCount,
-                'Damage' : Damage
-                }
-    return {'BlockID' : -1,
-            'ItemCount' : 0
-            }

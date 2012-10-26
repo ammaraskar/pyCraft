@@ -1,6 +1,13 @@
 import socket
 import struct
 
+def send00(socket, KAid):
+    #packet id
+    socket.send("\x00")
+    
+    #int - keep alive id
+    socket.send(struct.pack('!i', KAid))
+
 def sendHandshake(socket, username, host, port):
     #packet id
     socket.send("\x02")
