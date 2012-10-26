@@ -1,4 +1,5 @@
 import struct
+import types
 
 def readBoolean(FileObject):
     return struct.unpack('?', FileObject.read(1))[0]
@@ -33,6 +34,41 @@ def readByteArray(FileObject, length):
 def readString(FileObject):
     length = readShort(FileObject) * 2
     return FileObject.read(length).decode("utf-16be")
+
+def sendBoolean(socket, value):
+    assert type(value) is types.BooleanType, "value is not a boolean: %r" % value
+    socket.send(struct.pack('?', value))
+    
+def sendByte(socket, value):
+    socket.send(struct.pack('!b', value))
+    
+def sendUnsignedByte(socket, value):
+    socket.send(struct.pack('!B', value))
+    
+def sendShort(socket, value):
+    socket.send(struct.pack('!h', value))
+    
+def sendUnsignedShort(socket, value):
+    socket.send(struct.pack('!H', value))
+    
+def sendInt(socket, value):
+    assert type(value) is types.IntType, "value is not an integer: %r" % value
+    socket.send(struct.pack('!i', value))
+
+def sendFloat(socket, value):
+    socket.send(struct.pack('!f', value))
+    
+def sendLong(socket, value):
+    socket.send(struct.pack('!q', value))
+    
+def sendDouble(socket, value):
+    socket.send(struct.pack('!d'), value)
+    
+def sendString(socket, value):
+    if (type(value) is not types.StringType):
+        value = str(value)
+    socket.send(struct.pack('!h', value.__len__()))
+    socket.send(value.encode('utf-16be'))    
 
 def readEntityMetadata(FileObject):
     metadata = {}

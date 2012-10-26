@@ -27,7 +27,7 @@ def handle02(FileObject):
 
 def handle03(FileObject):
     message = DataUtil.readString(FileObject)
-    return message
+    return {'Message' : message }
 
 def handle04(FileObject):
     time = DataUtil.readLong(FileObject)
@@ -745,4 +745,4 @@ def handleFD(FileObject):
     
 def handleFF(FileObject):
     Reason = DataUtil.readString(FileObject)
-    return Reason
+    return {'Reason' : Reason}

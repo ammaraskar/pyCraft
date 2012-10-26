@@ -39,8 +39,8 @@ class ServerConnection(threading.Thread):
             self.NoGUI = False
         self.window = window
         
-    def disconnect(self):
-        PacketSenderManager.sendFF(self.socket, "Disconnected by user")
+    def disconnect(self, reason="Disconnected by user"):
+        PacketSenderManager.sendFF(self.socket, reason)
         self.listener.kill = True
         self.socket.close()
         
@@ -64,13 +64,7 @@ class ServerConnection(threading.Thread):
             packetid = self.socket.recv(1)
             
             #Sanity check the packet id
-            if (packetid != "\xFD"):
-                if(self.NoGUI == False):
-                    self.window.ConnectPanel.Status.SetFont(wx.Font(15, wx.MODERN, wx.NORMAL, wx.NORMAL, 0, "Minecraft"))
-                    self.window.ConnectPanel.Status.SetLabel("Server responded with malformed packet")
-                else:
-                    print "Server responded with malformed packet"
-                    return False
+            assert packetid == "\xFD", "Server didn't respond back to handshake with proper packet!"
                 
             #Parse the packet
             packetFD = PacketListenerManager.handleFD(self.FileObject)
@@ -118,35 +112,17 @@ class ServerConnection(threading.Thread):
                     
                     #Send out a a packet FC to the server
                     PacketSenderManager.sendFC(self.socket, encryptedSharedSecret, encryptedSanityToken)
-                    
-                    #GUI handling
-                    if(self.NoGUI == False):
-                        self.window.ConnectPanel.callbackAfterConnect()
-                        #Wait for server screen to be ready
-                        while(not hasattr(self.window, 'text')):
-                            continue
                         
                 except Exception, e:
-                    #handle gui errors
-                    if(self.NoGUI == False and hasattr(self.window, 'ConnectPanel')):
-                        self.window.ConnectPanel.Status.SetForegroundColour(wx.RED)
-                        self.window.ConnectPanel.Status.SetLabel("Conection to sessions.mc.net failed")
-                        self.window.ConnectPanel.RotationThread.Kill = True
                     traceback.print_exc()
             else:
-                if(self.NoGUI):
-                    print "Server is in offline mode"
+                print "Server is in offline mode"
                 #TODO: handle offline mod servers
         except Exception, e:
-            if(self.NoGUI == False and self.window):
-                self.window.ConnectPanel.Status.SetForegroundColour(wx.RED)
-                self.window.ConnectPanel.Status.SetLabel("Connection to server failed")
-                self.window.ConnectPanel.RotationThread.Kill = True
-            else:
-                print "Connection to server failed"
+            print "Connection to server failed"
             traceback.print_exc()
+            sys.exit(1)
             return False
-        #self.window.Status.SetLabel("Connected to " + self.server + "!")
         
 class EncryptedFileObjectHandler():
     
@@ -224,14 +200,11 @@ class PacketListener(threading.Thread):
                 print "Logged in \o/ Received an entity id of " + str(packet['EntityID'])
             elif(response == "\x03"):
                 packet = PacketListenerManager.handle03(self.FileObject)
-                if(self.connection.NoGUI):
-                    # Add "\x1b" because it is essential for ANSI escapes emitted by translate_escapes
-                    filtered_string = filter(lambda x: x in string.printable + "\x1b", Utils.translate_escapes(packet))
-                    #print message.replace(u'\xa7', '&')
-                    print filtered_string
-                    packet = {'Message' : filtered_string}
-                elif(self.window):
-                    self.window.handleChat(packet)
+                # Add "\x1b" because it is essential for ANSI escapes emitted by translate_escapes
+                filtered_string = filter(lambda x: x in string.printable + "\x1b", Utils.translate_escapes(packet['Message']))
+                #print message.replace(u'\xa7', '&')
+                print filtered_string
+                packet['Message'] = filter(lambda x: x in string.printable, packet['Message'])
             elif(response == "\x04"):
                 packet = PacketListenerManager.handle04(self.FileObject)
             elif(response == "\x05"):
@@ -294,7 +267,7 @@ class PacketListener(threading.Thread):
                 packet = PacketListenerManager.handle2B(self.FileObject)
             elif(response == "\x33"):
                 PacketListenerManager.handle33(self.FileObject)
-                packet = {'PlaceHolder' : 0}
+                packet = {'ChunkPlaceHolder' : 0}
             elif(response == "\x34"):
                 packet = PacketListenerManager.handle34(self.FileObject)
             elif(response == "\x35"):
@@ -305,7 +278,7 @@ class PacketListener(threading.Thread):
                 packet = PacketListenerManager.handle37(self.FileObject)
             elif(response == "\x38"):
                 PacketListenerManager.handle38(self.FileObject)
-                packet = {'PlaceHolder' : 0}
+                packet = {'ChunkPlaceHolder' : 0}
             elif(response == "\x3C"):
                 packet = PacketListenerManager.handle3C(self.FileObject)
             elif(response == "\x3D"):
@@ -353,25 +326,19 @@ class PacketListener(threading.Thread):
                     self.connection.isConnected = True
                     PacketSenderManager.sendCD(self.socket, 0)
             elif(response == "\xFF"):
-                DisconMessage = PacketListenerManager.handleFF(self.FileObject)
-                if(self.window == None):
-                    print "Disconnected: " + DisconMessage
-                    sys.exit()
-                if(self.window):
-                    if(hasattr(self.window, 'ChatPanel')):
-                        self.window.ChatPanel.Status.SetLabel("Disconnected: " + DisconMessage)
-                    if(hasattr(self.window, 'Status')):
-                        self.window.Status.SetLabel("Disconnected: " + DisconMessage)
-                self.socket.close()
+                packet = PacketListenerManager.handleFF(self.FileObject)
+                print "Disconnected: " + packet['Reason']
+                if(f != None):
+                    f.close()
+                self.connection.disconnect()
                 sys.exit(1)
                 break
             else:
-                if(self.window == None):
-                    print "Protocol error: " + hex(ord(response))
-                    self.socket.close()
-                    if(f != None):
-                        f.close()
-                    sys.exit(1)
-                    break
+                print "Protocol error: " + hex(ord(response))
+                self.connection.disconnect("Protocol error, invalid packet: " + hex(ord(response)))
+                if(f != None):
+                    f.close()
+                sys.exit(1)
+                break
             if(self.connection.options != None and self.connection.options.dumpPackets):
                 f.write(hex(ord(response)) + " : " + str(packet) + '\n')

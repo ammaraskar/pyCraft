@@ -1,4 +1,7 @@
 import re
+import urllib2
+import urllib
+import threading
 from hashlib import sha1
 
 # This function courtesy of barneygale
@@ -40,3 +43,41 @@ def translate_escape(m):
 
 def translate_escapes(s):
     return re.sub(ur"\xa7([0-9a-zA-Z])", translate_escape, s) + "\x1b[0m"
+
+def loginToMinecraft(username, password):
+    try:
+        url = 'https://login.minecraft.net'
+        header = {'Content-Type' : 'application/x-www-form-urlencoded'}
+        data = {'user' : username,
+                'password' : password,
+                'version' : '13'}
+        data = urllib.urlencode(data)
+        req = urllib2.Request(url, data, header)
+        opener = urllib2.build_opener()
+        response = opener.open(req, None, 10)
+        response = response.read()
+    except urllib2.URLError:
+        return {'Response' : "Can't connect to minecraft.net"}
+    if(not "deprecated" in response.lower()):
+        return {'Response' : response}
+    response = response.split(":")
+    sessionid = response[3]
+    toReturn = {'Response' : "Good to go!",
+                'Username' : response[2],
+                'SessionID' : sessionid
+                }
+    return toReturn
+      
+class MinecraftLoginThread(threading.Thread):
+    
+    def __init__(self, username, password):
+        threading.Thread.__init__(self)
+        self.username = username
+        self.password = password
+               
+    def run(self):
+        self.response = loginToMinecraft(self.username, self.password)
+        
+    def getResponse(self):
+        return self.response
+    
