@@ -328,7 +328,7 @@ class PacketListener(threading.Thread):
             elif(response == "\xFF"):
                 packet = PacketListenerManager.handleFF(self.FileObject)
                 print "Disconnected: " + packet['Reason']
-                if(f != None):
+                if(self.connection.options != None and self.connection.options.dumpPackets):
                     f.close()
                 self.connection.disconnect()
                 sys.exit(1)
