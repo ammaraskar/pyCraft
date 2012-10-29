@@ -72,40 +72,38 @@ def sendString(socket, value):
 
 def readEntityMetadata(FileObject):
     metadata = {}
-    byte = struct.unpack('!B', FileObject.read(1))[0]
+    byte = readUnsignedByte(FileObject)
     while byte != 127:
         index = byte & 0x1F # Lower 5 bits
         ty    = byte >> 5   # Upper 3 bits
-        if ty == 0: val = struct.unpack('!b', FileObject.read(1))[0]
-        if ty == 1: val = struct.unpack('!h', FileObject.read(2))[0]
+        if ty == 0: val = readByte(FileObject)
+        if ty == 1: val = readShort(FileObject)
         if ty == 2: val = readInt(FileObject)
-        if ty == 3: val = struct.unpack('!f', FileObject.read(4))[0] 
+        if ty == 3: val = readFloat(FileObject)
         if ty == 4: 
-            length = struct.unpack('!h', FileObject.read(2))[0] * 2
-            val = FileObject.read(length).decode('utf-16be')
+            val = readString(FileObject)
         if ty == 5:
             val = {}
-            val["id"]     = struct.unpack('!h', FileObject.read(2))[0]
+            val["id"] = readShort(FileObject)
             if (val["id"] != -1):
-                val["count"]  = struct.unpack('!b', FileObject.read(1))[0]
-                val["damage"] = struct.unpack('!h', FileObject.read(2))[0]
+                val["count"]  = readByte(FileObject)
+                val["damage"] = readShort(FileObject)
         if ty == 6:
             val = []
             for i in range(3):
                 val.append(readInt(FileObject))
         metadata[index] = (ty, val)
-        byte = struct.unpack('!B', FileObject.read(1))[0]
+        byte = readUnsignedByte(FileObject)
     return metadata
 
 def readSlotData(FileObject):
-    BlockID = struct.unpack('!h', FileObject.read(2))[0]
+    BlockID = readShort(FileObject)
     if(BlockID != -1):
-        ItemCount = struct.unpack('!b', FileObject.read(1))[0]
-        Damage = struct.unpack('!h', FileObject.read(2))[0]
-        MetadataLength = struct.unpack('!h', FileObject.read(2))[0]
+        ItemCount = readByte(FileObject)
+        Damage = readShort(FileObject)
+        MetadataLength = readShort(FileObject)
         if(MetadataLength != -1):
-            raw = FileObject.read(MetadataLength)
-            ByteArray = struct.unpack(str(MetadataLength) + "s", raw)[0]
+            ByteArray = readByteArray(FileObject, MetadataLength)
             return {'BlockID' : BlockID,
                     'ItemCount' : ItemCount,
                     'Damage' : Damage,
