@@ -1,5 +1,7 @@
 import DataUtil
 import PacketSenderManager
+from io import BytesIO
+from pynbt import NBTFile
 
 def handle00(FileObject, socket):
     KAid = DataUtil.readInt(FileObject)
@@ -647,7 +649,8 @@ def handle84(FileObject):
     Action = DataUtil.readByte(FileObject)
     DataLength = DataUtil.readShort(FileObject)
     if (DataLength != -1):
-        NBTData = DataUtil.readByteArray(FileObject, DataLength)
+        ByteArray = DataUtil.readByteArray(FileObject, DataLength)
+        NBTData = NBTFile(BytesIO(ByteArray), compression=NBTFile.Compression.GZIP)
         return {'x' : X,
                 'y' : Y,
                 'z' : Z,

@@ -129,11 +129,16 @@ class EncryptedFileObjectHandler():
     def __init__(self, fileobject, cipher):
         self.fileobject = fileobject
         self.cipher = cipher
+        self.length = 0
         
     def read(self, length):
         rawData = self.fileobject.read(length)
+        self.length += length
         unencryptedData = self.cipher.decrypt(rawData)
         return unencryptedData
+    
+    def tell(self):
+        return self.length
     
 class EncryptedSocketObjectHandler():
     

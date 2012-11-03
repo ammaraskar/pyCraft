@@ -1,5 +1,7 @@
 import struct
 import types
+from io import BytesIO
+from pynbt import NBTFile
 
 def readBoolean(FileObject):
     return struct.unpack('?', FileObject.read(1))[0]
@@ -104,10 +106,11 @@ def readSlotData(FileObject):
         MetadataLength = readShort(FileObject)
         if(MetadataLength != -1):
             ByteArray = readByteArray(FileObject, MetadataLength)
+            NBTData = NBTFile(BytesIO(ByteArray), compression=NBTFile.Compression.GZIP)
             return {'BlockID' : BlockID,
                     'ItemCount' : ItemCount,
                     'Damage' : Damage,
-                    'Data' : ByteArray
+                    'Data' : NBTData
                     }
         return {'BlockID' : BlockID,
                 'ItemCount' : ItemCount,
