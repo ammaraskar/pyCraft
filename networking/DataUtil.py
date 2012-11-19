@@ -90,6 +90,9 @@ def readEntityMetadata(FileObject):
             if (val["id"] != -1):
                 val["count"]  = readByte(FileObject)
                 val["damage"] = readShort(FileObject)
+                nbtDataLength = readShort(FileObject)
+                if (nbtDataLength != -1):
+                    val["NBT"] = NBTFile(BytesIO(readByteArray(FileObject, nbtDataLength)), compression=NBTFile.Compression.GZIP)
         if ty == 6:
             val = []
             for i in range(3):

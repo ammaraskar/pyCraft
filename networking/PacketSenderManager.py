@@ -12,7 +12,7 @@ def sendHandshake(socket, username, host, port):
     socket.send("\x02")
     
     #byte - protocol version
-    DataUtil.sendByte(socket, 47)
+    DataUtil.sendByte(socket, 49)
     
     #string - username
     DataUtil.sendString(socket, username)

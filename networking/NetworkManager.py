@@ -85,13 +85,8 @@ class ServerConnection(threading.Thread):
                     response = urllib2.urlopen(url).read()
                     
                     if(response != "OK"):
-                        #handle gui errors
-                        if(self.NoGUI == False):
-                            self.window.ConnectPanel.Status.SetFont(wx.Font(15, wx.MODERN, wx.NORMAL, wx.NORMAL, 0, "Minecraft"))
-                            self.window.ConnectPanel.Status.SetLabel("Response from sessions.minecraft.net wasn't OK")
-                        else:
-                            print "Response from sessions.minecraft.net wasn't OK, it was " + response
-                            return False
+                        print "Response from sessions.minecraft.net wasn't OK, it was " + response
+                        return False
                         
                     #Success \o/ We can now begin sending our stuff to the server
                     

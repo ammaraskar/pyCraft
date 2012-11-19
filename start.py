@@ -25,7 +25,7 @@ if __name__ == "__main__":
                   help="file to dump packets to")
     
     (options, args) = parser.parse_args()
-            
+                
     if(options.username != ""):
         user = options.username
     else:
@@ -40,7 +40,7 @@ if __name__ == "__main__":
     derp = loginThread.getResponse()
     if(derp['Response'] != "Good to go!"):
         print derp['Response']
-        sys.exit()
+        sys.exit(1)
     sessionid = derp['SessionID']
     print "Logged in as " + derp['Username'] + "! Your session id is: " + sessionid
     if(options.server != ""):

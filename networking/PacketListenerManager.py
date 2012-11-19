@@ -635,7 +635,7 @@ def handle82(FileObject):
 def handle83(FileObject):
     ItemType = DataUtil.readShort(FileObject)
     ItemID = DataUtil.readShort(FileObject)
-    TextLength = DataUtil.readByte(FileObject)
+    TextLength = DataUtil.readShort(FileObject)
     Text = DataUtil.readByteArray(FileObject, TextLength)
     return {'ItemType' : ItemType,
             'ItemID' : ItemID,
