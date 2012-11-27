@@ -9,13 +9,13 @@ if __name__ == "__main__":
     parser = OptionParser()
     
     parser.add_option("-u", "--username", dest="username", default="",
-                  help="username to log in with (only with no gui mode)")
+                  help="username to log in with")
     
     parser.add_option("-p", "--password", dest="password", default="",
-                  help="password to log in with (only with no gui mode)")
+                  help="password to log in with")
     
     parser.add_option("-s", "--server", dest="server", default="",
-                  help="server to connect to (only with no gui mode)")
+                  help="server to connect to")
     
     parser.add_option("-d", "--dump-packets", 
                   action="store_true", dest="dumpPackets", default=False,

@@ -7,28 +7,28 @@ def readBoolean(FileObject):
     return struct.unpack('?', FileObject.read(1))[0]
 
 def readByte(FileObject):
-    return struct.unpack('!b', FileObject.read(1))[0]
+    return struct.unpack('>b', FileObject.read(1))[0]
 
 def readUnsignedByte(FileObject):
-    return struct.unpack('!B', FileObject.read(1))[0]
+    return struct.unpack('>B', FileObject.read(1))[0]
 
 def readShort(FileObject):
-    return struct.unpack('!h', FileObject.read(2))[0]
+    return struct.unpack('>h', FileObject.read(2))[0]
 
 def readUnsignedShort(FileObject):
-    return struct.unpack('!H', FileObject.read(2))[0]
+    return struct.unpack('>H', FileObject.read(2))[0]
 
 def readInt(FileObject):
-    return struct.unpack('!i', FileObject.read(4))[0]
+    return struct.unpack('>i', FileObject.read(4))[0]
 
 def readFloat(FileObject):
-    return struct.unpack('!f', FileObject.read(4))[0]
+    return struct.unpack('>f', FileObject.read(4))[0]
 
 def readLong(FileObject):
-    return struct.unpack('!q', FileObject.read(8))[0]
+    return struct.unpack('>q', FileObject.read(8))[0]
 
 def readDouble(FileObject):
-    return struct.unpack('!d', FileObject.read(8))[0]
+    return struct.unpack('>d', FileObject.read(8))[0]
 
 def readByteArray(FileObject, length):
     return struct.unpack(str(length) + "s", FileObject.read(length))[0]
@@ -42,34 +42,34 @@ def sendBoolean(socket, value):
     socket.send(struct.pack('?', value))
     
 def sendByte(socket, value):
-    socket.send(struct.pack('!b', value))
+    socket.send(struct.pack('>b', value))
     
 def sendUnsignedByte(socket, value):
-    socket.send(struct.pack('!B', value))
+    socket.send(struct.pack('>B', value))
     
 def sendShort(socket, value):
-    socket.send(struct.pack('!h', value))
+    socket.send(struct.pack('>h', value))
     
 def sendUnsignedShort(socket, value):
-    socket.send(struct.pack('!H', value))
+    socket.send(struct.pack('>H', value))
     
 def sendInt(socket, value):
     assert type(value) is types.IntType, "value is not an integer: %r" % value
-    socket.send(struct.pack('!i', value))
+    socket.send(struct.pack('>i', value))
 
 def sendFloat(socket, value):
-    socket.send(struct.pack('!f', value))
+    socket.send(struct.pack('>f', value))
     
 def sendLong(socket, value):
-    socket.send(struct.pack('!q', value))
+    socket.send(struct.pack('>q', value))
     
 def sendDouble(socket, value):
-    socket.send(struct.pack('!d'), value)
+    socket.send(struct.pack('>d'), value)
     
 def sendString(socket, value):
     if (type(value) is not types.StringType):
         value = str(value)
-    socket.send(struct.pack('!h', value.__len__()))
+    socket.send(struct.pack('>h', value.__len__()))
     socket.send(value.encode('utf-16be'))    
 
 def readEntityMetadata(FileObject):
