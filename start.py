@@ -24,6 +24,10 @@ if __name__ == "__main__":
     parser.add_option("-o", "--out-file", dest="filename", default="dump.txt",
                   help="file to dump packets to")
     
+    parser.add_option("-x", "--offline-mode", dest="offlineMode",
+                  action="store_true", default=False,
+                  help="run in offline mode i.e don't attempt to auth via minecraft.net")
+    
     (options, args) = parser.parse_args()
                 
     if(options.username != ""):
@@ -32,29 +36,35 @@ if __name__ == "__main__":
         user = raw_input("Enter your username: ")
     if(options.password != ""):
         passwd = options.password
-    else:
+    elif(not options.offlineMode):
         passwd = getpass.getpass("Enter your password: ")
-    loginThread = Utils.MinecraftLoginThread(user, passwd)
-    loginThread.start()
-    loginThread.join()
-    derp = loginThread.getResponse()
-    if(derp['Response'] != "Good to go!"):
-        print derp['Response']
-        sys.exit(1)
-    sessionid = derp['SessionID']
-    print "Logged in as " + derp['Username'] + "! Your session id is: " + sessionid
-    if(options.server != ""):
-        stuff = options.server
+        
+    if (not options.offlineMode):
+        loginThread = Utils.MinecraftLoginThread(user, passwd)
+        loginThread.start()
+        loginThread.join()
+        loginResponse = loginThread.getResponse()
+        if(loginResponse['Response'] != "Good to go!"):
+            print loginResponse['Response']
+            sys.exit(1)
+        sessionid = loginResponse['SessionID']
+        user = loginResponse['Username']
+        print "Logged in as " + loginResponse['Username'] + "! Your session id is: " + sessionid
     else:
-        stuff = raw_input("Enter host and port if any: ")
-    if ':' in stuff:
-        StuffEnteredIntoBox = stuff.split(":")
+        sessionid = None
+        
+    if(options.server != ""):
+        serverAddress = options.server
+    else:
+        serverAddress = raw_input("Enter host and port if any: ")
+    if ':' in serverAddress:
+        StuffEnteredIntoBox = serverAddress.split(":")
         host = StuffEnteredIntoBox[0]
         port = int(StuffEnteredIntoBox[1])
     else:
-        host = stuff
+        host = serverAddress
         port = 25565
-    connection = NetworkManager.ServerConnection(None, derp['Username'], passwd, sessionid, host, port, options)
+    connection = NetworkManager.ServerConnection(None, user, sessionid, host, port, options)
     connection.start()
     while True:
         try:
