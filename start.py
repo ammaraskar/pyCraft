@@ -64,7 +64,7 @@ if __name__ == "__main__":
     else:
         host = serverAddress
         port = 25565
-    connection = NetworkManager.ServerConnection(None, user, sessionid, host, port, options)
+    connection = NetworkManager.ServerConnection(user, sessionid, host, port, options)
     connection.start()
     while True:
         try:

@@ -64,7 +64,7 @@ def sendLong(socket, value):
     socket.send(struct.pack('>q', value))
     
 def sendDouble(socket, value):
-    socket.send(struct.pack('>d'), value)
+    socket.send(struct.pack('>d', value))
     
 def sendString(socket, value):
     if (type(value) is not types.StringType):

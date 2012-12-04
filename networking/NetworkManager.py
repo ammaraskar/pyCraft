@@ -18,7 +18,7 @@ EntityID = 0
 
 class ServerConnection(threading.Thread):
     
-    def __init__(self, window, username, sessionID, server, port, options=None):
+    def __init__(self, username, sessionID, server, port, options=None):
         threading.Thread.__init__(self)
         self.options = options
         self.isConnected = False
@@ -26,11 +26,6 @@ class ServerConnection(threading.Thread):
         self.sessionID = sessionID
         self.server = server
         self.port = port
-        if(window == None):
-            self.NoGUI = True
-        else:
-            self.NoGUI = False
-        self.window = window
         
     def disconnect(self, reason="Disconnected by user"):
         PacketSenderManager.sendFF(self.socket, reason)
@@ -89,7 +84,7 @@ class ServerConnection(threading.Thread):
                     #Success \o/ We can now begin sending our serverAddress to the server
                     
                     #Instantiate our main packet listener
-                    self.listener = PacketListener(self, self.window, self.socket, self.FileObject)
+                    self.listener = PacketListener(self, self.socket, self.FileObject)
                     self.listener.start()
                     
                     #Encrypt the verification token from earlier along with our shared secret with the server's rsa key
@@ -105,7 +100,7 @@ class ServerConnection(threading.Thread):
             else:
                 print "Server is in offline mode"
                 #Instantiate our main packet listener
-                self.listener = PacketListener(self, self.window, self.socket, self.FileObject)
+                self.listener = PacketListener(self, self.socket, self.FileObject)
                 self.listener.start()
                 
                 #Encrypt the verification token from earlier along with our shared secret with the server's rsa key
@@ -151,12 +146,11 @@ class EncryptedSocketObjectHandler():
                 
 class PacketListener(threading.Thread):
     
-    def __init__(self, connection, window, socket, FileObject):
+    def __init__(self, connection, socket, FileObject):
         threading.Thread.__init__(self)
         self.connection = connection
         self.socket = socket
         self.FileObject = FileObject
-        self.window = window
         self.encryptedConnection = False
         self.kill = False
         
