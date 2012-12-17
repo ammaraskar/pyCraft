@@ -18,8 +18,9 @@ EntityID = 0
 
 class ServerConnection(threading.Thread):
     
-    def __init__(self, username, sessionID, server, port, options=None):
+    def __init__(self, pluginLoader, username, sessionID, server, port, options=None):
         threading.Thread.__init__(self)
+        self.pluginLoader = pluginLoader
         self.options = options
         self.isConnected = False
         self.username = username
@@ -85,6 +86,7 @@ class ServerConnection(threading.Thread):
                     
                     #Instantiate our main packet listener
                     self.listener = PacketListener(self, self.socket, self.FileObject)
+                    self.listener.setDaemon(True)
                     self.listener.start()
                     
                     #Encrypt the verification token from earlier along with our shared secret with the server's rsa key
@@ -101,6 +103,7 @@ class ServerConnection(threading.Thread):
                 print "Server is in offline mode"
                 #Instantiate our main packet listener
                 self.listener = PacketListener(self, self.socket, self.FileObject)
+                self.listener.setDaemon(True)
                 self.listener.start()
                 
                 #Encrypt the verification token from earlier along with our shared secret with the server's rsa key
@@ -172,9 +175,6 @@ class PacketListener(threading.Thread):
         self.encryptedConnection = True
         
     def run(self):
-        
-        if(self.connection.options != None and self.connection.options.dumpPackets):
-            f = open(self.connection.options.filename, 'w')
         while True:
             if (self.kill):
                 break
@@ -198,9 +198,8 @@ class PacketListener(threading.Thread):
                 packet = PacketListenerManager.handle03(self.FileObject)
                 # Add "\x1b" because it is essential for ANSI escapes emitted by translate_escapes
                 filtered_string = filter(lambda x: x in string.printable + "\x1b", Utils.translate_escapes(packet['Message']))
-                #print message.replace(u'\xa7', '&')
                 print filtered_string
-                packet['Message'] = filter(lambda x: x in string.printable, packet['Message'])
+
             elif(response == "\x04"):
                 packet = PacketListenerManager.handle04(self.FileObject)
             elif(response == "\x05"):
@@ -262,8 +261,7 @@ class PacketListener(threading.Thread):
             elif(response == "\x2B"): 
                 packet = PacketListenerManager.handle2B(self.FileObject)
             elif(response == "\x33"):
-                PacketListenerManager.handle33(self.FileObject)
-                packet = {'ChunkPlaceHolder' : 0}
+                packet = PacketListenerManager.handle33(self.FileObject)
             elif(response == "\x34"):
                 packet = PacketListenerManager.handle34(self.FileObject)
             elif(response == "\x35"):
@@ -273,8 +271,7 @@ class PacketListener(threading.Thread):
             elif(response == "\x37"):
                 packet = PacketListenerManager.handle37(self.FileObject)
             elif(response == "\x38"):
-                PacketListenerManager.handle38(self.FileObject)
-                packet = {'ChunkPlaceHolder' : 0}
+                packet = PacketListenerManager.handle38(self.FileObject)
             elif(response == "\x3C"):
                 packet = PacketListenerManager.handle3C(self.FileObject)
             elif(response == "\x3D"):
@@ -324,17 +321,17 @@ class PacketListener(threading.Thread):
             elif(response == "\xFF"):
                 packet = PacketListenerManager.handleFF(self.FileObject)
                 print "Disconnected: " + packet['Reason']
-                if(self.connection.options != None and self.connection.options.dumpPackets):
-                    f.close()
                 self.connection.disconnect()
+                self.connection.pluginLoader.disablePlugins()
                 sys.exit(1)
                 break
             else:
                 print "Protocol error: " + hex(ord(response))
                 self.connection.disconnect("Protocol error, invalid packet: " + hex(ord(response)))
-                if(f != None):
-                    f.close()
+                self.connection.pluginLoader.disablePlugins()
                 sys.exit(1)
                 break
-            if(self.connection.options != None and self.connection.options.dumpPackets):
-                f.write(hex(ord(response)) + " : " + str(packet) + '\n')
+            
+            # Invoke plugin listeners
+            for listener in self.connection.pluginLoader.getPacketListeners():
+                listener(response, packet)

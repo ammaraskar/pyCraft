@@ -1,6 +1,7 @@
 import getpass
 import sys
 import Utils
+from pluginloader import PluginLoader
 from networking import PacketSenderManager, NetworkManager
 from optparse import OptionParser
 
@@ -17,18 +18,17 @@ if __name__ == "__main__":
     parser.add_option("-s", "--server", dest="server", default="",
                   help="server to connect to")
     
-    parser.add_option("-d", "--dump-packets", 
-                  action="store_true", dest="dumpPackets", default=False,
-                  help="run with this argument to dump packets")
-    
-    parser.add_option("-o", "--out-file", dest="filename", default="dump.txt",
-                  help="file to dump packets to")
-    
     parser.add_option("-x", "--offline-mode", dest="offlineMode",
                   action="store_true", default=False,
                   help="run in offline mode i.e don't attempt to auth via minecraft.net")
+        
+    # pluginLoader
+    pluginLoader = PluginLoader("plugins")
+    pluginLoader.loadPlugins(parser)
     
     (options, args) = parser.parse_args()
+    
+    pluginLoader.notifyOptions(options)
                 
     if(options.username != ""):
         user = options.username
@@ -64,7 +64,8 @@ if __name__ == "__main__":
     else:
         host = serverAddress
         port = 25565
-    connection = NetworkManager.ServerConnection(user, sessionid, host, port, options)
+    connection = NetworkManager.ServerConnection(pluginLoader, user, sessionid, host, port, options)
+    connection.setDaemon(True)
     connection.start()
     while True:
         try:
@@ -75,4 +76,5 @@ if __name__ == "__main__":
                 pass       
         except KeyboardInterrupt, e:
             connection.disconnect()
+            pluginLoader.disablePlugins()
             sys.exit(1)
