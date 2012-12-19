@@ -12,11 +12,12 @@ class PluginLoader():
         
 
     def loadPlugins(self, parser):
-        for root, dirs, files in os.walk(self.path):
-            for source in (s for s in files if s.endswith(".py")):
-                name = os.path.splitext(os.path.basename(source))[0]
-                full_name = os.path.splitext(source)[0].replace(os.path.sep, '.')
-                m = imp.load_module(full_name, *imp.find_module(name, [root]))
+        for item in os.listdir(self.path):
+            split = os.path.splitext(item)
+            if (split[1] == '.py'):
+                name = split[0]
+                full_name = split[0].replace(os.path.sep, '.')
+                m = imp.load_module(full_name, *imp.find_module(name, [self.path]))
 
                 pluginClass = None
                 try:
