@@ -5,7 +5,7 @@ class IRC:
 
     def onEnable(self, parser):
 
-        parser.add_option("-q", "--irc-out-file", dest="filename", default="ircdump.txt",
+        parser.add_option("-q", "--irc-out-file", dest="ircDump", default="ircdump.txt",
                       help="file to dump messages to")
 
     def onDisable(self):
@@ -14,5 +14,5 @@ class IRC:
 
     def optionsParsed(self, parsedOptions):
         self.options = parsedOptions
-        if (self.options.dumpPackets):
+        if (self.options.ircDump):
             self.writeFile = open(self.options.filename, 'w')
