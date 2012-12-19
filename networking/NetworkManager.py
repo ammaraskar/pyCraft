@@ -8,11 +8,6 @@ import string
 import Utils
 import sys
 from networking import PacketSenderManager
-from Crypto.Random import _UserFriendlyRNG
-from Crypto.Util import asn1
-from Crypto.PublicKey import RSA
-from Crypto.Cipher import AES
-from Crypto.Cipher import PKCS1_v1_5
 
 EntityID = 0
 
@@ -58,12 +53,6 @@ class ServerConnection(threading.Thread):
             #Parse the packet
             packetFD = PacketListenerManager.handleFD(self.FileObject)
             
-            #Import the server's public key
-            self.pubkey = RSA.importKey(packetFD['Public Key'])
-            
-            #Generate a 16 byte (128 bit) shared secret
-            self.sharedSecret = _UserFriendlyRNG.get_random_bytes(16)
-            
             #Authenticate the server from sessions.minecraft.net
             if(packetFD['ServerID'] != '-'):
                 try:
@@ -89,13 +78,8 @@ class ServerConnection(threading.Thread):
                     self.listener.setDaemon(True)
                     self.listener.start()
                     
-                    #Encrypt the verification token from earlier along with our shared secret with the server's rsa key
-                    self.RSACipher = PKCS1_v1_5.new(self.pubkey)
-                    encryptedSanityToken = self.RSACipher.encrypt(str(packetFD['Token']))
-                    encryptedSharedSecret = self.RSACipher.encrypt(str(self.sharedSecret))
-                    
-                    #Send out a a packet FC to the server
-                    PacketSenderManager.sendFC(self.socket, encryptedSharedSecret, encryptedSanityToken)
+                    self.listener.connection.isConnected = True
+                    PacketSenderManager.sendCD(self.socket, 0)
                         
                 except Exception, e:
                     traceback.print_exc()
@@ -106,13 +90,8 @@ class ServerConnection(threading.Thread):
                 self.listener.setDaemon(True)
                 self.listener.start()
                 
-                #Encrypt the verification token from earlier along with our shared secret with the server's rsa key
-                self.RSACipher = PKCS1_v1_5.new(self.pubkey)
-                encryptedSanityToken = self.RSACipher.encrypt(str(packetFD['Token']))
-                encryptedSharedSecret = self.RSACipher.encrypt(str(self.sharedSecret))
-                
-                #Send out a a packet FC to the server
-                PacketSenderManager.sendFC(self.socket, encryptedSharedSecret, encryptedSanityToken)
+                self.listener.connection.isConnected = True
+                PacketSenderManager.sendCD(self.socket, 0)
         except Exception, e:
             print "Connection to server failed"
             traceback.print_exc()
@@ -156,23 +135,6 @@ class PacketListener(threading.Thread):
         self.FileObject = FileObject
         self.encryptedConnection = False
         self.kill = False
-        
-    def enableEncryption(self):
-        #Create an AES cipher from the previously obtained public key
-        self.cipher = AES.new(self.connection.sharedSecret, AES.MODE_CFB, IV=self.connection.sharedSecret)
-        self.decipher = AES.new(self.connection.sharedSecret, AES.MODE_CFB, IV=self.connection.sharedSecret)
-        
-        self.rawsocket = self.socket
-        self.connection.rawsocket = self.connection.socket
-        self.socket = EncryptedSocketObjectHandler(self.rawsocket, self.cipher)
-        self.connection.socket = self.socket
-        
-        self.rawFileObject = self.FileObject
-        self.connection.rawFileObject = self.connection.FileObject
-        self.FileObject = EncryptedFileObjectHandler(self.rawFileObject, self.decipher)
-        self.connection.FileObject = self.FileObject
-        
-        self.encryptedConnection = True
         
     def run(self):
         while True:
@@ -314,10 +276,6 @@ class PacketListener(threading.Thread):
                 packet = PacketListenerManager.handleFA(self.FileObject)
             elif(response == "\xFC"):
                 packet = PacketListenerManager.handleFC(self.FileObject)
-                if (not self.encryptedConnection):
-                    self.enableEncryption()
-                    self.connection.isConnected = True
-                    PacketSenderManager.sendCD(self.socket, 0)
             elif(response == "\xFF"):
                 packet = PacketListenerManager.handleFF(self.FileObject)
                 print "Disconnected: " + packet['Reason']
