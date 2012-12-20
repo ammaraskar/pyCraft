@@ -187,8 +187,10 @@ def handle17(FileObject):
     x = DataUtil.readInt(FileObject)
     y = DataUtil.readInt(FileObject)
     z = DataUtil.readInt(FileObject)
-    ThrowerEntityID = DataUtil.readInt(FileObject)
-    if(ThrowerEntityID > 0):
+    yaw = DataUtil.readByte(FileObject)
+    pitch = DataUtil.readByte(FileObject)
+    data = DataUtil.readInt(FileObject)
+    if(data > 0):
         SpeedX = DataUtil.readShort(FileObject)
         SpeedY = DataUtil.readShort(FileObject)
         SpeedZ = DataUtil.readShort(FileObject)
@@ -197,7 +199,8 @@ def handle17(FileObject):
                 'x' : x,
                 'y' : y,
                 'z' : z,
-                'ThrowerEntityID' : ThrowerEntityID,
+                'yaw' : yaw,
+                'pitch' : pitch,
                 'SpeedX' : SpeedX,
                 'SpeedY' : SpeedY,
                 'SpeedZ' : SpeedZ
@@ -208,6 +211,8 @@ def handle17(FileObject):
                 'x' : x,
                 'y' : y,
                 'z' : z,
+                'yaw' : yaw,
+                'pitch' : pitch
                 }
         
 def handle18(FileObject):
@@ -472,6 +477,7 @@ def handle38(FileObject):
     
     #int - chunk data length
     ChunkDataLength = DataUtil.readInt(FileObject)
+    DataUtil.readBoolean()
     FileObject.read(ChunkDataLength) #just gonna ignore this for now
     
     #metadata - ignoring this
