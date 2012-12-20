@@ -477,7 +477,7 @@ def handle38(FileObject):
     
     #int - chunk data length
     ChunkDataLength = DataUtil.readInt(FileObject)
-    DataUtil.readBoolean()
+    DataUtil.readBoolean(FileObject)
     FileObject.read(ChunkDataLength) #just gonna ignore this for now
     
     #metadata - ignoring this
