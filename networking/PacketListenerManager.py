@@ -103,6 +103,10 @@ def handle0D(FileObject):
             'pitch' : pitch,
             'onGround' : onGround
             }
+
+def handle10(FileObject):
+    slotID = DataUtil.readShort(FileObject)
+    return {'SlotID' : slotID}
     
 def handle11(FileObject):
     EntityID = DataUtil.readInt(FileObject)

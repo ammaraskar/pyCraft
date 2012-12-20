@@ -214,6 +214,8 @@ class PacketListener(threading.Thread):
                 packet = PacketListenerManager.handle09(self.FileObject)
             elif(response == "\x0D"):
                 packet = PacketListenerManager.handle0D(self.FileObject)
+            elif(response == "\x10"):
+                packet = PacketListenerManager.handle10(self.FileObject)
             elif(response == "\x11"):
                 packet = PacketListenerManager.handle11(self.FileObject)
             elif(response == "\x12"):
