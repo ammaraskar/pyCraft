@@ -7,16 +7,17 @@ from hashlib import sha1
 # This function courtesy of barneygale
 def javaHexDigest(digest):
     d = long(digest.hexdigest(), 16)
-    if d >> 39*4 & 0x8:
-        d = "-%x" % ((-d) & (2**(40*4)-1))
+    if d >> 39 * 4 & 0x8:
+        d = "-%x" % ((-d) & (2 ** (40 * 4) - 1))
     else:
         d = "%x" % d
     return d
 
+
 def translate_escape(m):
     c = m.group(1).lower()
-    
-    if   c == "0": return "\x1b[30m\x1b[21m" # black
+
+    if c == "0": return "\x1b[30m\x1b[21m" # black
     elif c == "1": return "\x1b[34m\x1b[21m" # dark blue
     elif c == "2": return "\x1b[32m\x1b[21m" # dark green
     elif c == "3": return "\x1b[36m\x1b[21m" # dark cyan
@@ -38,46 +39,48 @@ def translate_escape(m):
     elif c == "n": return "\x1b[4m"          # underline
     elif c == "o": return "\x1b[3m"          # italic (escape code not widely supported)
     elif c == "r": return "\x1b[0m"          # reset
-    
+
     return ""
+
 
 def translate_escapes(s):
     return re.sub(ur"\xa7([0-9a-zA-Z])", translate_escape, s) + "\x1b[0m"
 
+
 def loginToMinecraft(username, password):
     try:
         url = 'https://login.minecraft.net'
-        header = {'Content-Type' : 'application/x-www-form-urlencoded'}
-        data = {'user' : username,
-                'password' : password,
-                'version' : '13'}
+        header = {'Content-Type': 'application/x-www-form-urlencoded'}
+        data = {'user': username,
+                'password': password,
+                'version': '13'}
         data = urllib.urlencode(data)
         req = urllib2.Request(url, data, header)
         opener = urllib2.build_opener()
         response = opener.open(req, None, 10)
         response = response.read()
     except urllib2.URLError:
-        return {'Response' : "Can't connect to minecraft.net"}
-    if(not "deprecated" in response.lower()):
-        return {'Response' : response}
+        return {'Response': "Can't connect to minecraft.net"}
+    if (not "deprecated" in response.lower()):
+        return {'Response': response}
     response = response.split(":")
     sessionid = response[3]
-    toReturn = {'Response' : "Good to go!",
-                'Username' : response[2],
-                'SessionID' : sessionid
-                }
+    toReturn = {'Response': "Good to go!",
+                'Username': response[2],
+                'SessionID': sessionid
+    }
     return toReturn
-      
+
+
 class MinecraftLoginThread(threading.Thread):
-    
     def __init__(self, username, password):
         threading.Thread.__init__(self)
         self.username = username
         self.password = password
-               
+
     def run(self):
         self.response = loginToMinecraft(self.username, self.password)
-        
+
     def getResponse(self):
         return self.response
     

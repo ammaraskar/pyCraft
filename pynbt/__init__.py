@@ -12,4 +12,4 @@ from pynbt.nbt import (
     TAG_List,
     TAG_Compound,
     TAG_Int_Array
-)
+    )

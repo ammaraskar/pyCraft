@@ -2,14 +2,13 @@ import os
 import imp
 
 class PluginLoader():
-    
     path = ""
     plugins = []
     listeners = []
-    
+
     def __init__(self, path):
         self.path = path
-        
+
 
     def loadPlugins(self, parser):
         for item in os.listdir(self.path):
@@ -33,23 +32,23 @@ class PluginLoader():
                         pass
                 except AttributeError:
                     print "Plugin " + name + " is malformed"
-                    
+
     def disablePlugins(self):
         for plugin in self.plugins:
             try:
                 plugin.onDisable()
             except AttributeError:
                 pass
-                    
+
     def notifyOptions(self, options):
         for plugin in self.plugins:
             try:
                 plugin.optionsParsed(options)
             except AttributeError:
                 pass
-                    
+
     def getPlugins(self):
         return self.plugins
-    
+
     def getPacketListeners(self):
         return self.listeners

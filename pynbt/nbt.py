@@ -46,7 +46,7 @@ class BaseTag(object):
                     # A tag of 0 means we've reached TAG_End, used to terminate
                     # a TAG_Compound.
                     break
-                # We read in each tag in turn, using its name as the key in
+                    # We read in each tag in turn, using its name as the key in
                 # the dict (Since a compound cannot have repeating names,
                 # this works fine).
                 tmp = _tags[tag].read(read)
@@ -113,7 +113,7 @@ class BaseTag(object):
         elif isinstance(self, TAG_Compound):
             for v in self.value.values():
                 v.write(write)
-            # A tag of type 0 (TAg_End) terminates a TAG_Compound.
+                # A tag of type 0 (TAg_End) terminates a TAG_Compound.
             write('b', 0)
         elif isinstance(self, TAG_String):
             self._write_utf8(write, self.value)
@@ -280,7 +280,7 @@ _tags = (
     TAG_List,
     TAG_Compound,
     TAG_Int_Array
-)
+    )
 
 
 class NBTFile(TAG_Compound):
@@ -295,7 +295,7 @@ class NBTFile(TAG_Compound):
         GZIP = 20
 
     def __init__(self, io=None, name=None, value=None, compression=None,
-        little_endian=False):
+                 little_endian=False):
         """
         Creates a new NBTFile or loads one from any file-like object providing
         `read()`.
