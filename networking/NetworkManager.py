@@ -16,6 +16,7 @@ from Crypto.Cipher import PKCS1_v1_5
 
 EntityID = 0
 
+
 class ServerConnection(threading.Thread):
     def __init__(self, pluginLoader, username, sessionID, server, port, options=None):
         threading.Thread.__init__(self)
@@ -116,7 +117,6 @@ class ServerConnection(threading.Thread):
             print "Connection to server failed"
             traceback.print_exc()
             sys.exit(1)
-            return False
 
 
 class EncryptedFileObjectHandler():
