@@ -47,6 +47,13 @@ class PluginLoader():
             except AttributeError:
                 pass
 
+    def notify(self, methodName):
+        for plugin in self.plugins:
+            try:
+                getattr(plugin, methodName)()
+            except AttributeError:
+                pass
+
     def getPlugins(self):
         return self.plugins
 

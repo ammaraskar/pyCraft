@@ -96,6 +96,7 @@ class ServerConnection(threading.Thread):
 
                     #Send out a a packet FC to the server
                     PacketSenderManager.sendFC(self.socket, encryptedSharedSecret, encryptedSanityToken)
+                    self.pluginLoader.notify("onConnect")
 
                 except Exception, e:
                     traceback.print_exc()
@@ -113,6 +114,7 @@ class ServerConnection(threading.Thread):
 
                 #Send out a a packet FC to the server
                 PacketSenderManager.sendFC(self.socket, encryptedSharedSecret, encryptedSanityToken)
+                self.pluginLoader.notify("onConnect")
         except Exception, e:
             print "Connection to server failed"
             traceback.print_exc()

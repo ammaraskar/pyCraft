@@ -137,11 +137,11 @@ def readSlotData(FileObject):
                     'ItemCount': ItemCount,
                     'Damage': Damage,
                     'Data': NBTData
-            }
+                    }
         return {'BlockID': BlockID,
                 'ItemCount': ItemCount,
                 'Damage': Damage
-        }
+                }
     return {'BlockID': -1,
             'ItemCount': 0
-    }
+            }
