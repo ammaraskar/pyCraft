@@ -3,6 +3,7 @@ import types
 from io import BytesIO
 from pynbt import NBTFile
 
+
 def readBoolean(FileObject):
     return struct.unpack('?', FileObject.read(1))[0]
 

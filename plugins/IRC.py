@@ -2,7 +2,7 @@ class IRC:
     options = None
     writeFile = None
 
-    def onEnable(self, parser):
+    def onEnable(self, parser, pluginloader):
         parser.add_option("-q", "--irc-out-file", dest="ircDump", default="ircdump.txt",
             help="file to dump messages to")
 

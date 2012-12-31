@@ -7,7 +7,7 @@ class PacketDumper:
     options = None
     writeFile = None
 
-    def onEnable(self, parser):
+    def onEnable(self, parser, pluginloader):
         parser.add_option("-d", "--dump-packets",
                           action="store_true", dest="dumpPackets", default=False,
                           help="run with this argument to dump packets")

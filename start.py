@@ -4,6 +4,11 @@ import Utils
 from pluginloader import PluginLoader
 from networking import PacketSenderManager, NetworkManager
 from optparse import OptionParser
+try:
+    import colorama
+    colorama.init()
+except ImportError:
+    pass
 
 if __name__ == "__main__":
     parser = OptionParser()
@@ -20,6 +25,10 @@ if __name__ == "__main__":
     parser.add_option("-x", "--offline-mode", dest="offlineMode",
         action="store_true", default=False,
         help="run in offline mode i.e don't attempt to auth via minecraft.net")
+
+    parser.add_option("-c", "--disable-console-colours", dest="disableAnsiColours",
+        action="store_true", default=False,
+        help="print minecraft chat colours as their equivalent ansi colours")
 
     # pluginLoader
     pluginLoader = PluginLoader("plugins")

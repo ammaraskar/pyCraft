@@ -184,11 +184,8 @@ class PacketListener(threading.Thread):
                 if (response == ""):
                     continue
             except Exception, e:
-                if (self.window):
-                    self.window.Status.SetLabel("Ping timeout")
-                else:
-                    print "Ping timeout"
-                    sys.exit()
+                print "Ping timeout"
+                sys.exit()
                 break
             if (response == "\x00"):
                 packet = PacketListenerManager.handle00(self.FileObject, self.socket)
@@ -198,8 +195,11 @@ class PacketListener(threading.Thread):
             elif (response == "\x03"):
                 packet = PacketListenerManager.handle03(self.FileObject)
                 # Add "\x1b" because it is essential for ANSI escapes emitted by translate_escapes
-                filtered_string = filter(lambda x: x in string.printable + "\x1b",
-                    Utils.translate_escapes(packet['Message']))
+                if not self.connection.options.disableAnsiColours:
+                    filtered_string = filter(lambda x: x in string.printable + "\x1b",
+                        Utils.translate_escapes(packet['Message']))
+                else:
+                    filtered_string = filter(lambda x: x in string.printable, packet['Message'])
                 print filtered_string
 
             elif (response == "\x04"):

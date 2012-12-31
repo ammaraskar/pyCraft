@@ -24,7 +24,7 @@ In your plugin.py file define a single class with the exact same spellings as yo
 things happen in the minecraft world. See the [PacketDumper plugin](https://github.com/ammaraskar/pyCraft/blob/master/plugins/PacketDumper.py) as an example. Currently these methods are
 used:
 
-```onEnable(self, parser)``` This fires when your plugin is loaded and passes the option parser as an argument allowing you to add custom command line options
+```onEnable(self, parser, pluginloader)``` This fires when your plugin is loaded and passes the option parser as an argument allowing you to add custom command line options
 
 ```onDisable(self)``` This fires when pyCraft is exited cleanly, use it for cleaning up
 
