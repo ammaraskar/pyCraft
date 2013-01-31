@@ -5,6 +5,7 @@ import traceback
 import threading
 import hashlib
 import string
+import unicodedata
 import Utils
 import sys
 from networking import PacketSenderManager
@@ -194,12 +195,10 @@ class PacketListener(threading.Thread):
                 print "Logged in \o/ Received an entity id of " + str(packet['EntityID'])
             elif (response == "\x03"):
                 packet = PacketListenerManager.handle03(self.FileObject)
-                # Add "\x1b" because it is essential for ANSI escapes emitted by translate_escapes
                 if not self.connection.options.disableAnsiColours:
-                    filtered_string = filter(lambda x: x in string.printable + "\x1b",
-                        Utils.translate_escapes(packet['Message']))
+                    filtered_string = Utils.translate_escapes(packet['Message'])
                 else:
-                    filtered_string = filter(lambda x: x in string.printable, packet['Message'])
+                    filtered_string = packet['Message']
                 print filtered_string
 
             elif (response == "\x04"):

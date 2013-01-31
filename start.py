@@ -79,7 +79,8 @@ if __name__ == "__main__":
         try:
             chat_input = raw_input()
             if (connection.isConnected):
-                PacketSenderManager.send03(connection.grabSocket(), chat_input)
+                PacketSenderManager.send03(connection.grabSocket(),
+                        chat_input.decode('utf-8')[:100])
             else:
                 pass
         except KeyboardInterrupt, e:

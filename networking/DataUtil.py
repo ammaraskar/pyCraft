@@ -46,7 +46,7 @@ def readByteArray(FileObject, length):
 
 def readString(FileObject):
     length = readShort(FileObject) * 2
-    return FileObject.read(length).decode("utf-16be")
+    return unicode(FileObject.read(length), "utf-16be")
 
 
 def sendBoolean(socket, value):
@@ -88,10 +88,9 @@ def sendDouble(socket, value):
 
 
 def sendString(socket, value):
-    if (type(value) is not types.StringType):
-        value = str(value)
-    socket.send(struct.pack('>h', value.__len__()))
-    socket.send(value.encode('utf-16be'))
+    value = unicode(value).encode('utf-16be')
+    socket.send(struct.pack('>h', len(value) / 2))
+    socket.send(value)
 
 
 def readEntityMetadata(FileObject):
