@@ -196,7 +196,7 @@ class PacketListener(threading.Thread):
             elif (response == "\x03"):
                 packet = PacketListenerManager.handle03(self.FileObject)
                 if not self.connection.options.disableAnsiColours:
-                    filtered_string = Utils.translate_escapes(packet['Message']))
+                    filtered_string = Utils.translate_escapes(packet['Message'])
                 else:
                     filtered_string = packet['Message']
                 print filtered_string

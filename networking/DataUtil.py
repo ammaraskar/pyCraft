@@ -88,7 +88,7 @@ def sendDouble(socket, value):
 
 
 def sendString(socket, value):
-    value = unicode(value[:99]).encode('utf-16be')
+    value = unicode(value).encode('utf-16be')
     socket.send(struct.pack('>h', len(value) / 2))
     socket.send(value)
 
