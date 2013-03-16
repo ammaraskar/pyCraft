@@ -281,6 +281,8 @@ class PacketListener(threading.Thread):
                 packet = PacketListenerManager.handle3D(self.FileObject)
             elif (response == "\x3E"):
                 packet = PacketListenerManager.handle3E(self.FileObject)
+            elif (response == "\x3F"):
+                packet = PacketListenerManager.handle3F(self.FileObject)
             elif (response == "\x46"):
                 packet = PacketListenerManager.handle46(self.FileObject)
             elif (response == "\x47"):
@@ -313,6 +315,14 @@ class PacketListener(threading.Thread):
                 packet = PacketListenerManager.handleCA(self.FileObject)
             elif (response == "\xCB"):
                 packet = PacketListenerManager.handleCB(self.FileObject)
+            elif (response == "\xCE"):
+                packet = PacketListenerManager.handleCE(self.FileObject)
+            elif (response == "\xCF"):
+                packet = PacketListenerManager.handleCF(self.FileObject)
+            elif (response == "\xD0"):
+                packet = PacketListenerManager.handleD0(self.FileObject)
+            elif (response == "\xD1"):
+                packet = PacketListenerManager.handleD1(self.FileObject)
             elif (response == "\xFA"):
                 packet = PacketListenerManager.handleFA(self.FileObject)
             elif (response == "\xFC"):

@@ -602,6 +602,27 @@ def handle3E(FileObject):
             'Volume': Volume,
             'Pitch': Pitch
     }
+    
+def handle3F(FileObject):
+    name = DataUtil.readString(FileObject)
+    x = DataUtil.readFloat(FileObject)
+    y = DataUtil.readFloat(FileObject)
+    z = DataUtil.readFloat(FileObject)
+    offsetx = DataUtil.readFloat(FileObject)
+    offsety = DataUtil.readFloat(FileObject)
+    offsetz = DataUtil.readFloat(FileObject)
+    speed = DataUtil.readFloat(FileObject)
+    num = DataUtil.readInt(FileObject)
+    return {'Name' : name,
+            'x' : x,
+            'y' : y,
+            'z' : z,
+            'Offset x' : offsetx,
+            'Offset y' : offsety,
+            'Offset z' : offsetz,
+            'Speed' : speed,
+            'Number' : num
+    }
 
 
 def handle46(FileObject):
@@ -776,10 +797,46 @@ def handleCA(FileObject):
             'Walk Speed': WalkSpeed
     }
 
-
 def handleCB(FileObject):
     text = DataUtil.readString(FileObject)
     return {'Text': text}
+    
+def handleCE(FileObject):
+    name = DataUtil.readString(FileObject)
+    display_text = DataUtil.readString(FileObject)
+    create_or_remove = DataUtil.readBoolean(FileObject)
+    return {'Name' : name,
+            'Display Name' : display_text,
+            'Remove' : create_or_remove
+    }
+    
+def handleCF(FileObject):
+    name = DataUtil.readString(FileObject)
+    remove = DataUtil.readBoolean(FileObject)
+    score_name = DataUtil.readString(FileObject)
+    value = DataUtil.readInt(FileObject)
+    
+def handleD0(FileObject):
+    position = DataUtil.readByte(FileObject)
+    score = DataUtil.readString(FileObject)
+    return {'Position' : position,
+            'Score' : score
+    }
+    
+def handleD1(FileObject):
+    team = DataUtil.readString(FileObject)
+    mode = DataUtil.readByte(FileObject)
+    toReturn = {'Team' : team, 'Mode' : mode}
+    if mode == 0 or mode == 2:
+        toReturn['Display Name'] = DataUtil.readString(FileObject)
+        toReturn['Prefix'] = DataUtil.readString(FileObject)
+        toReturn['Suffix'] = DataUtil.readString(FileObject)
+    if mode == 0 or mode == 3 or mode == 4:
+        count = DataUtil.readShort(FileObject)
+        players = []
+        for i in range(count):
+            players.append(DataUtil.readString(FileObject))
+    return toReturn
 
 
 def handleFA(FileObject):
