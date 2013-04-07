@@ -831,6 +831,7 @@ def handleD1(FileObject):
         toReturn['Display Name'] = DataUtil.readString(FileObject)
         toReturn['Prefix'] = DataUtil.readString(FileObject)
         toReturn['Suffix'] = DataUtil.readString(FileObject)
+        toReturn['FriendlyFire'] = DataUtil.readByte(FileObject)
     if mode == 0 or mode == 3 or mode == 4:
         count = DataUtil.readShort(FileObject)
         players = []
