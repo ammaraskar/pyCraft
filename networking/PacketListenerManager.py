@@ -815,7 +815,12 @@ def handleCF(FileObject):
     remove = DataUtil.readBoolean(FileObject)
     score_name = DataUtil.readString(FileObject)
     value = DataUtil.readInt(FileObject)
-    
+    return {'Item Name' : name,
+            'Remove' : remove,
+            'Score Name' : score_name,
+            'Value' : value
+    }
+
 def handleD0(FileObject):
     position = DataUtil.readByte(FileObject)
     score = DataUtil.readString(FileObject)
