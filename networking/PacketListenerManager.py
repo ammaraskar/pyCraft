@@ -74,7 +74,7 @@ def handle07(FileObject):
 
 
 def handle08(FileObject):
-    health = DataUtil.readShort(FileObject)
+    health = DataUtil.readFloat(FileObject)
     food = DataUtil.readShort(FileObject)
     saturation = DataUtil.readFloat(FileObject)
     return {'health': health,
