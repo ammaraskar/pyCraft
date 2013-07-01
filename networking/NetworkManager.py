@@ -53,6 +53,8 @@ class ServerConnection(threading.Thread):
             #Receive the encryption packet id
             packetid = self.socket.recv(1)
 
+            if (packetid == "\xFF"):
+                print PacketListenerManager.handleFF(self.FileObject)
             #Sanity check the packet id
             assert packetid == "\xFD", "Server didn't respond back to handshake with proper packet!"
 
@@ -263,6 +265,8 @@ class PacketListener(threading.Thread):
                 packet = PacketListenerManager.handle2A(self.FileObject)
             elif (response == "\x2B"):
                 packet = PacketListenerManager.handle2B(self.FileObject)
+            elif (response == "\x2C"):
+                packet = PacketListenerManager.handle2C(self.FileObject)
             elif (response == "\x33"):
                 packet = PacketListenerManager.handle33(self.FileObject)
             elif (response == "\x34"):

@@ -394,8 +394,10 @@ def handle26(FileObject):
 def handle27(FileObject):
     EntityID = DataUtil.readInt(FileObject)
     VehicleID = DataUtil.readInt(FileObject)
+    Leash = DataUtil.readBoolean(FileObject)
     return {'EntityID': EntityID,
-            'VehicleID': VehicleID
+            'VehicleID': VehicleID,
+            'Leash': Leash
     }
 
 
@@ -434,6 +436,19 @@ def handle2B(FileObject):
     return {'ExpBar': ExperienceBar,
             'Level': Level,
             'TotalExp': TotalExp
+    }
+
+
+def handle2C(FileObject):
+    EntityID = DataUtil.readInt(FileObject)
+    PropertiesCount = DataUtil.readInt(FileObject)
+    Properties = {}
+    for i in range(PropertiesCount):
+        key = DataUtil.readString(FileObject)
+        value = DataUtil.readDouble(FileObject)
+        Properties[key] = value
+    return {'EntityID': EntityID,
+            'Properties': Properties
     }
 
 
@@ -651,10 +666,13 @@ def handle64(FileObject):
     InventoryType = DataUtil.readByte(FileObject)
     WindowTitle = DataUtil.readString(FileObject)
     NumberOfSlots = DataUtil.readByte(FileObject)
+    UseName = DataUtil.readBoolean(FileObject)
+    DataUtil.readInt(FileObject)
     return {'WindowID': WindowID,
             'InventoryType': InventoryType,
             'WindowTitle': WindowTitle,
-            'NumberOfSlots': NumberOfSlots
+            'NumberOfSlots': NumberOfSlots,
+            'UseName': UseName
     }
 
 
@@ -767,7 +785,7 @@ def handle84(FileObject):
 
 def handleC8(FileObject):
     StatID = DataUtil.readInt(FileObject)
-    Amount = DataUtil.readByte(FileObject)
+    Amount = DataUtil.readInt(FileObject)
     return {'StatID': StatID,
             'Amount': Amount
     }
@@ -788,10 +806,10 @@ def handleCA(FileObject):
     Flags = DataUtil.readByte(FileObject)
 
     #byte - fly speed
-    FlySpeed = DataUtil.readByte(FileObject)
+    FlySpeed = DataUtil.readFloat(FileObject)
 
     #byte - walk speed
-    WalkSpeed = DataUtil.readByte(FileObject)
+    WalkSpeed = DataUtil.readFloat(FileObject)
     return {'Flags': Flags,
             'Fly Speed': FlySpeed,
             'Walk Speed': WalkSpeed
