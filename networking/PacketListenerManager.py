@@ -447,6 +447,12 @@ def handle2C(FileObject):
         key = DataUtil.readString(FileObject)
         value = DataUtil.readDouble(FileObject)
         Properties[key] = value
+        len = DataUtil.readShort(FileObject)
+        for x in range(len):
+            uuid_msb = DataUtil.readLong(FileObject)
+            uuid_lsb = DataUtil.readLong(FileObject)
+            amount = DataUtil.readDouble(FileObject)
+            operation = DataUtil.readByte(FileObject)
     return {'EntityID': EntityID,
             'Properties': Properties
     }
@@ -731,6 +737,15 @@ def handle6B(FileObject):
             'ClickedItem': ClickedItem
     }
 
+def handle78(FileObject):
+    EntityID = DataUtil.readByte(FileObject)
+    X = DataUtil.readInt(FileObject)
+    Y = DataUtil.readInt(FileObject)
+    Z = DataUtil.readInt(FileObject)
+    return {'EntityID': EntityID,
+            'x': X,
+            'y': Y,
+            'z': Z}
 
 def handle82(FileObject):
     X = DataUtil.readInt(FileObject)
