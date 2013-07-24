@@ -737,15 +737,6 @@ def handle6B(FileObject):
             'ClickedItem': ClickedItem
     }
 
-def handle78(FileObject):
-    EntityID = DataUtil.readByte(FileObject)
-    X = DataUtil.readInt(FileObject)
-    Y = DataUtil.readInt(FileObject)
-    Z = DataUtil.readInt(FileObject)
-    return {'EntityID': EntityID,
-            'x': X,
-            'y': Y,
-            'z': Z}
 
 def handle82(FileObject):
     X = DataUtil.readInt(FileObject)
@@ -796,6 +787,17 @@ def handle84(FileObject):
             'z': Z,
             'Action': Action
     }
+
+
+def handle85(FileObject):
+    EntityID = DataUtil.readByte(FileObject)
+    X = DataUtil.readInt(FileObject)
+    Y = DataUtil.readInt(FileObject)
+    Z = DataUtil.readInt(FileObject)
+    return {'EntityID': EntityID,
+            'x': X,
+            'y': Y,
+            'z': Z}
 
 
 def handleC8(FileObject):

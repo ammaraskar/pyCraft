@@ -305,14 +305,14 @@ class PacketListener(threading.Thread):
                 packet = PacketListenerManager.handle6A(self.FileObject)
             elif (response == "\x6B"):
                 packet = PacketListenerManager.handle6B(self.FileObject)
-            elif (response == "\x78"):
-                packet = PacketListenerManager.handle78(self.FileObject)
             elif (response == "\x82"):
                 packet = PacketListenerManager.handle82(self.FileObject)
             elif (response == "\x83"):
                 packet = PacketListenerManager.handle83(self.FileObject)
             elif (response == "\x84"):
                 packet = PacketListenerManager.handle84(self.FileObject)
+            elif (response == "\x85"):
+                packet = PacketListenerManager.handle85(self.FileObject)
             elif (response == "\xC8"):
                 packet = PacketListenerManager.handleC8(self.FileObject)
             elif (response == "\xC9"):
