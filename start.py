@@ -14,9 +14,6 @@ except ImportError:
 if __name__ == "__main__":
     parser = OptionParser()
 
-    parser.add_option("-u", "--username", dest="username", default="",
-        help="username to log in with")
-
     parser.add_option("-p", "--password", dest="password", default="",
         help="password to log in with")
 
@@ -46,10 +43,6 @@ if __name__ == "__main__":
 
     pluginLoader.notifyOptions(options)
 
-    if (options.username != ""):
-        user = options.username
-    else:
-        user = raw_input("Enter your username: ")
     if (options.password != ""):
         passwd = options.password
     elif (not options.offlineMode):
