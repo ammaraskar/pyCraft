@@ -57,3 +57,37 @@ def sendFC(socket, secret, token):
 def sendFF(socket, reason):
     #string - disconnect reason
     DataUtil.sendString(socket, reason)
+
+
+#====
+def send0B(socket, x, y, z, stance, onGround):
+    #packet id
+    socket.send("\x0B")
+
+    DataUtil.sendDouble(socket, x)
+    DataUtil.sendDouble(socket, y)
+    DataUtil.sendDouble(socket, stance)
+    DataUtil.sendDouble(socket, z)
+    DataUtil.sendBoolean(socket, onGround) 
+
+
+def send0D(socket, x, y, z, stance, yaw, pitch, onGround):
+    #packet id
+    socket.send("\x0D")
+
+    DataUtil.sendDouble(socket, x)
+    DataUtil.sendDouble(socket, y)
+    DataUtil.sendDouble(socket, stance)
+    DataUtil.sendDouble(socket, z)
+    DataUtil.sendFloat(socket, yaw)
+    DataUtil.sendFloat(socket, pitch)
+    DataUtil.sendBoolean(socket, onGround) 
+
+
+def sendCA(socket, flags, flySpeed, walkSpeed):
+    #packet id
+    socket.send("\xCA")
+
+    DataUtil.sendByte(socket, flags)
+    DataUtil.sendFloat(socket, flySpeed)
+    DataUtil.sendFloat(socket, walkSpeed) 

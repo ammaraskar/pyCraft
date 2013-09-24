@@ -4,6 +4,7 @@ import Utils
 from pluginloader import PluginLoader
 from networking import PacketSenderManager, NetworkManager
 from optparse import OptionParser
+from bots import names
 try:
     import colorama
     colorama.init()
@@ -29,6 +30,13 @@ if __name__ == "__main__":
     parser.add_option("-c", "--disable-console-colours", dest="disableAnsiColours",
         action="store_true", default=False,
         help="print minecraft chat colours as their equivalent ansi colours")
+
+    parser.add_option("-b", "--bot-count", dest="bots", default=25, type="int",
+        help="the number of bots to connect") 
+
+    parser.add_option("-f", "--fun-bot-names", dest="funBotNames",
+        action="store_true", default=False,
+        help="use more fun bot names")
 
     # pluginLoader
     pluginLoader = PluginLoader("plugins")
@@ -72,9 +80,19 @@ if __name__ == "__main__":
     else:
         host = serverAddress
         port = 25565
-    connection = NetworkManager.ServerConnection(pluginLoader, user, sessionid, host, port, options)
-    connection.setDaemon(True)
-    connection.start()
+    ###
+    print "Connecting with " + str(options.bots) + " bots"
+    connections = []
+    for i in range(options.bots):
+        if options.funBotNames and i < len(names):
+            name = names[i]
+        else:
+            name = "bot_" + str(i)
+        connection = NetworkManager.ServerConnection(pluginLoader, name, sessionid, host, port, options)
+        connection.setDaemon(True)
+        connection.start()
+        connections.append(connection) 
+    ###
     while True:
         try:
             chat_input = raw_input()
@@ -84,6 +102,9 @@ if __name__ == "__main__":
             else:
                 pass
         except KeyboardInterrupt, e:
-            connection.disconnect()
+            ###
+            for connection in connections:
+                connection.disconnect() 
+            ###
             pluginLoader.disablePlugins()
             sys.exit(1)
