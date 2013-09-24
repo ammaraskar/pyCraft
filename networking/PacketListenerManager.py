@@ -673,13 +673,15 @@ def handle64(FileObject):
     WindowTitle = DataUtil.readString(FileObject)
     NumberOfSlots = DataUtil.readByte(FileObject)
     UseName = DataUtil.readBoolean(FileObject)
-    DataUtil.readInt(FileObject)
-    return {'WindowID': WindowID,
+    toReturn = {'WindowID': WindowID,
             'InventoryType': InventoryType,
             'WindowTitle': WindowTitle,
             'NumberOfSlots': NumberOfSlots,
             'UseName': UseName
     }
+    if InventoryType == 11:
+        toReturn['EntityId'] = DataUtil.readInt(FileObject)
+    return toReturn
 
 
 def handle65(FileObject):
