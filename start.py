@@ -1,6 +1,7 @@
 import getpass
 import sys
 import Utils
+import time
 from pluginloader import PluginLoader
 from networking import PacketSenderManager, NetworkManager
 from optparse import OptionParser
@@ -34,6 +35,10 @@ if __name__ == "__main__":
     parser.add_option("-f", "--fun-bot-names", dest="funBotNames",
         action="store_true", default=False,
         help="use more fun bot names")
+        
+    parser.add_option("-t", "--throttle", dest="throttle",
+        action="store_true", default=False,
+        help="throttle bot connections to join 1 per second")
 
     # pluginLoader
     pluginLoader = PluginLoader("plugins")
@@ -77,6 +82,8 @@ if __name__ == "__main__":
     print "Connecting with " + str(options.bots) + " bots"
     connections = []
     for i in range(options.bots):
+        if options.throttle:
+            time.sleep(1)
         if options.funBotNames and i < len(names):
             name = names[i]
         else:
