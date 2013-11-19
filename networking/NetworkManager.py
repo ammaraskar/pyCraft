@@ -14,6 +14,7 @@ from Crypto.Util import asn1
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import AES
 from Crypto.Cipher import PKCS1_v1_5
+from json import loads
 
 EntityID = 0
 
@@ -197,11 +198,10 @@ class PacketListener(threading.Thread):
                 print "Logged in \o/ Received an entity id of " + str(packet['EntityID'])
             elif (response == "\x03"):
                 packet = PacketListenerManager.handle03(self.FileObject)
+                filtered_string = loads(packet['Message'])["text"]
                 if not self.connection.options.disableAnsiColours:
-                    filtered_string = Utils.translate_escapes(packet['Message'])
-                else:
-                    filtered_string = packet['Message']
-                print filtered_string
+                    filtered_string = Utils.translate_escapes(filtered_string)
+                print filtered_string.decode("unicode-escape")
 
             elif (response == "\x04"):
                 packet = PacketListenerManager.handle04(self.FileObject)
