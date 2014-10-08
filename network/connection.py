@@ -1,12 +1,13 @@
-from packets import *
-from start import PROTOCOL_VERSION
 from collections import deque
 from threading import Lock
-from types import VarInt
 import threading
 import socket
 import time
 import select
+
+from packets import *
+from start import PROTOCOL_VERSION
+from types import VarInt
 
 
 class Connection:
@@ -62,7 +63,7 @@ class Connection:
         self._handshake()
 
     def _connect(self):
-        #Connect a socket to the server and create a file object from the socket
+        # Connect a socket to the server and create a file object from the socket
         #The file object is used to read any and all data from the socket since it's "guaranteed"
         #to read the number of bytes specified, the socket itself will mostly be
         #used to write data upstream to the server
@@ -98,7 +99,7 @@ class NetworkingThread(threading.Thread):
             num_packets = 0
             self.connection.write_lock.acquire()
             while self.connection._pop_packet():
-                
+
                 self.connection._pop_packet()
 
                 num_packets += 1
@@ -108,7 +109,7 @@ class NetworkingThread(threading.Thread):
 
             # Read and react to as many as 50 packets 
             num_packets = 0
-            packet = self.connection.reactor.read_packet(self.connection.socket, self.connection.file_object)
+            packet = self.connection.reactor.read_packet(self.connection.file_object)
             while packet:
                 num_packets += 1
 
@@ -116,13 +117,12 @@ class NetworkingThread(threading.Thread):
                 if num_packets >= 50:
                     break
 
-                packet = self.connection.reactor.read_packet(self.connection.socket, self.connection.file_object)
+                packet = self.connection.reactor.read_packet(self.connection.file_object)
 
             time.sleep(0.05)
 
 
 class PacketReactor:
-
     state_name = None
     clientbound_packets = None
 
@@ -131,7 +131,7 @@ class PacketReactor:
     def __init__(self, connection):
         self.connection = connection
 
-    def read_packet(self, socket, stream):
+    def read_packet(self, stream):
         ready = select.select([self.connection.socket], [], [], 0.5)
         if ready[0]:
             length = VarInt.read(stream)
@@ -152,17 +152,16 @@ class PacketReactor:
 
 
 class HandshakeReactor(PacketReactor):
-
     clientbound_packets = state_handshake_clientbound
 
 
 class StatusReactor(PacketReactor):
-
     clientbound_packets = state_status_clientbound
 
     def react(self, packet):
-        if packet.name == "response":
+        if packet.id == ResponsePacket.id:
             import json
+
             print json.loads(packet.json_response)
 
             ping_packet = PingPacket()

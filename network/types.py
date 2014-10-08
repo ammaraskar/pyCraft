@@ -4,8 +4,8 @@ These definitions and methods are used by the packet definitions
 """
 import struct
 
-class Type:
 
+class Type:
     @staticmethod
     def read(file_object):
         pass
@@ -14,11 +14,11 @@ class Type:
     def send(value, socket):
         pass
 
-#=========================================================
+
+# =========================================================
 
 
 class Boolean(Type):
-
     @staticmethod
     def read(file_object):
         return struct.unpack('?', file_object.read(1))[0]
@@ -29,7 +29,6 @@ class Boolean(Type):
 
 
 class Byte(Type):
-
     @staticmethod
     def read(file_object):
         return struct.unpack('>b', file_object.read(1))[0]
@@ -40,7 +39,6 @@ class Byte(Type):
 
 
 class Short(Type):
-
     @staticmethod
     def read(file_object):
         return struct.unpack('>h', file_object.read(2))[0]
@@ -51,7 +49,6 @@ class Short(Type):
 
 
 class UnsignedShort(Type):
-
     @staticmethod
     def read(file_object):
         return struct.unpack('>H', file_object.read(2))[0]
@@ -62,7 +59,6 @@ class UnsignedShort(Type):
 
 
 class Integer(Type):
-
     @staticmethod
     def read(file_object):
         return struct.unpack('>i', file_object.read(4))[0]
@@ -73,7 +69,6 @@ class Integer(Type):
 
 
 class VarInt(Type):
-
     @staticmethod
     def read_socket(s):
         d = 0
@@ -107,7 +102,6 @@ class VarInt(Type):
 
 
 class Long(Type):
-
     @staticmethod
     def read(file_object):
         return struct.unpack('>q', file_object.read(8))[0]
@@ -118,7 +112,6 @@ class Long(Type):
 
 
 class Float(Type):
-
     @staticmethod
     def read(file_object):
         return struct.unpack('>f', file_object.read(4))[0]
@@ -127,8 +120,8 @@ class Float(Type):
     def send(svalue, socket):
         socket.send(struct.pack('>f', value))
 
-class Double(Type):
 
+class Double(Type):
     @staticmethod
     def read(file_object):
         return struct.unpack('>d', file_object.read(8))[0]
@@ -139,7 +132,6 @@ class Double(Type):
 
 
 class ByteArray(Type):
-
     @staticmethod
     def read(file_object, length=None):
         if length is None:
@@ -153,7 +145,6 @@ class ByteArray(Type):
 
 
 class String(Type):
-
     @staticmethod
     def read(file_object):
         length = VarInt.read(file_object)

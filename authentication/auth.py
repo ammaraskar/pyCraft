@@ -1,15 +1,15 @@
 import urllib2
-import urllib
 import json
 
 BASE_URL = 'https://authserver.mojang.com/'
 AGENT_INFO = {"name": "Minecraft", "version": 1}
 
 
-"""Class to hold responses from Yggdrasil
-"""
-class Response:
+class Response(object):
+    """Class to hold responses from Yggdrasil
+    """
     error = False
+    payload = None
 
 
 def make_request(url, payload):
@@ -50,10 +50,11 @@ def make_request(url, payload):
     response.payload = json_response
     return response
 
-"""Yet another container class, this time to hold login info since it'll probably
-be need to passed around a lot afterwards
-"""
-class LoginResponse:
+
+class LoginResponse(object):
+    """Yet another container class, this time to hold login info since it'll probably
+    be need to passed around a lot afterwards
+    """
     pass
 
 
@@ -64,7 +65,7 @@ def login_to_minecraft(username, password):
     If there is an error, it will be accompanied with a `human_error` field.
     Otherwise `access_token`, `profile_id` and `username` fields will be present in the response.
     """
-    payload = { "username": username, "password": password, "agent": AGENT_INFO }
+    payload = {"username": username, "password": password, "agent": AGENT_INFO}
     response = make_request(BASE_URL + "authenticate", payload)
 
     login_response = LoginResponse()

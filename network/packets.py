@@ -1,8 +1,9 @@
-from types import *
 from io import BytesIO
 
+from types import *
 
-class PacketBuffer:
+
+class PacketBuffer(object):
     b = BytesIO()
 
     def send(self, value):
@@ -11,11 +12,15 @@ class PacketBuffer:
     def get_writable(self):
         return self.b.getvalue()
 
-class Packet:
+
+class Packet(object):
 
     name = "base"
     definition = []
-    
+
+    def __init__(self):
+        pass
+
     def read(self, file_object):
         for field in self.definition:
             for var_name, data_type in field.iteritems():
@@ -32,28 +37,29 @@ class Packet:
                 data = getattr(self, var_name)
                 data_type.send(data, packet_buffer)
 
-        VarInt.send(len(packet_buffer.get_writable()), socket) # Packet Size
-        socket.send(packet_buffer.get_writable()) # Packet Payload
+        VarInt.send(len(packet_buffer.get_writable()), socket)  # Packet Size
+        socket.send(packet_buffer.get_writable())  # Packet Payload
 
 
 # Handshake State
-#==============
+# ==============
 class HandShakePacket(Packet):
-
     id = 0x00
     name = "handshake"
     definition = [
-    {'protocol_version': VarInt},
-    {'server_address': String},
-    {'server_port': UnsignedShort},
-    {'next_state': VarInt}]
+        {'protocol_version': VarInt},
+        {'server_address': String},
+        {'server_port': UnsignedShort},
+        {'next_state': VarInt}]
+
 
 state_handshake_clientbound = {
-    
+
 }
 state_handshake_serverbound = {
     0x00: HandShakePacket
 }
+
 
 # Status State
 #==============
@@ -61,29 +67,34 @@ class ResponsePacket(Packet):
     id = 0x00
     name = "response"
     definition = [
-    {'json_response': String}]
+        {'json_response': String}]
+
 
 class PingPacket(Packet):
     id = 0x01
     name = "ping"
     definition = [
-    {'time': Long}]
+        {'time': Long}]
+
 
 state_status_clientbound = {
     0x00: ResponsePacket,
     0x01: PingPacket
 }
 
+
 class RequestPacket(Packet):
     id = 0x00
     name = "request"
     definition = []
 
+
 class PingPacket(Packet):
     id = 0x01
     name = "ping"
     definition = [
-    {'time': Long}]
+        {'time': Long}]
+
 
 state_status_serverbound = {
     0x00: RequestPacket,
@@ -93,28 +104,28 @@ state_status_serverbound = {
 # Login State
 #==============
 class DisconnectPacket(Packet):
-
     id = 0x00
     name = "disconnect"
     definition = [
-    {'json_data': String}]
-    
-class EncryptionRequestPacket(Packet):
+        {'json_data': String}]
 
+
+class EncryptionRequestPacket(Packet):
     id = 0x01
     name = "encryption request"
     definition = [
-    {'server_id': String},
-    {'public_key': ByteArray},
-    {'verify_token': ByteArray}]
+        {'server_id': String},
+        {'public_key': ByteArray},
+        {'verify_token': ByteArray}]
+
 
 class LoginSucessPacket(Packet):
-
     id = 0x02
     name = "login success"
     definition = [
-    {'UUID': String},
-    {'Username': String}]
+        {'UUID': String},
+        {'Username': String}]
+
 
 state_login_clientbound = {
     0x00: DisconnectPacket,
@@ -122,20 +133,21 @@ state_login_clientbound = {
     0x02: LoginSucessPacket
 }
 
+
 class LoginStartPacket(Packet):
-    
     id = 0x00
     name = "login start"
     definition = [
-    {'name': String}]
+        {'name': String}]
+
 
 class EncryptionResponsePacket(Packet):
-
     id = 0x01
     name = "encryption response"
     definition = [
-    {'shared_secret': ByteArray},
-    {'verify_token': ByteArray}]
+        {'shared_secret': ByteArray},
+        {'verify_token': ByteArray}]
+
 
 state_login_serverbound = {
     0x00: LoginStartPacket,
