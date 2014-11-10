@@ -4,7 +4,9 @@ from types import *
 
 
 class PacketBuffer(object):
-    b = BytesIO()
+
+    def __init__(self):
+        self.b = BytesIO()
 
     def send(self, value):
         self.b.write(value)

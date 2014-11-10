@@ -68,8 +68,7 @@ class Connection:
         #to read the number of bytes specified, the socket itself will mostly be
         #used to write data upstream to the server
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.settimeout(20.0)
-        self.socket.connect(( self.address, self.port ))
+        self.socket.connect((self.address, self.port))
         self.file_object = self.socket.makefile()
 
     def _handshake(self, next_state=2):
@@ -79,7 +78,7 @@ class Connection:
         handshake.server_port = self.port
         handshake.next_state = next_state
 
-        handshake.write(self.socket)
+        self.write_packet(handshake)
 
 
 class NetworkingThread(threading.Thread):
@@ -126,15 +125,15 @@ class PacketReactor:
     state_name = None
     clientbound_packets = None
 
-    TIME_OUT = 0.5
+    TIME_OUT = 1
 
     def __init__(self, connection):
         self.connection = connection
 
     def read_packet(self, stream):
-        ready = select.select([self.connection.socket], [], [], 0.5)
-        if ready[0]:
-            length = VarInt.read(stream)
+        ready = select.select([self.connection.socket], [], [], self.TIME_OUT)
+        if self.connection.socket in ready[0]:
+            length = VarInt.read_socket(self.connection.socket)
             packet_id = VarInt.read(stream)
 
             if packet_id in self.clientbound_packets:

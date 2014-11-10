@@ -5,7 +5,7 @@ These definitions and methods are used by the packet definitions
 import struct
 
 
-class Type:
+class Type(object):
     @staticmethod
     def read(file_object):
         pass
@@ -73,7 +73,10 @@ class VarInt(Type):
     def read_socket(s):
         d = 0
         for i in range(5):
-            b = ord(s.recv(1))
+            b = s.recv(1)
+            if b == "":
+                raise RuntimeError("Socket disconnected")
+            b = ord(b)
             d |= (b & 0x7F) << 7 * i
             if not b & 0x80:
                 break
@@ -117,7 +120,7 @@ class Float(Type):
         return struct.unpack('>f', file_object.read(4))[0]
 
     @staticmethod
-    def send(svalue, socket):
+    def send(value, socket):
         socket.send(struct.pack('>f', value))
 
 
