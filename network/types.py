@@ -28,6 +28,16 @@ class Boolean(Type):
         socket.send(struct.pack('?', value))
 
 
+class UnsignedByte(Type):
+    @staticmethod
+    def read(file_object):
+        return struct.unpack('>B', file_object.read(1))[0]
+
+    @staticmethod
+    def send(value, socket):
+        socket.send(struct.pack('>B', value))
+
+
 class Byte(Type):
     @staticmethod
     def read(file_object):
@@ -103,6 +113,28 @@ class VarInt(Type):
                 break
         socket.send(o)
 
+    @staticmethod
+    def size(value):
+        for max_value, size in VarInt_size_table.iteritems():
+            if value < max_value:
+                return size
+
+# Maps (maximum integer value -> size of VarInt in bytes)
+VarInt_size_table = {
+    2**7: 1,
+    2**14: 2,
+    2**21: 3,
+    2**28: 4,
+    2**35: 5,
+    2**42: 6,
+    2**49: 7,
+    2**56: 8,
+    2**63: 9,
+    2**70: 10,
+    2**77: 11,
+    2**84: 12
+}
+
 
 class Long(Type):
     @staticmethod
@@ -134,7 +166,7 @@ class Double(Type):
         socket.send(struct.pack('>d', value))
 
 
-class ByteArray(Type):
+class ShortPrefixedByteArray(Type):
     @staticmethod
     def read(file_object, length=None):
         if length is None:
@@ -145,6 +177,19 @@ class ByteArray(Type):
     def send(value, socket):
         Short.send(len(value), socket)
         socket.send(value)
+
+
+class VarIntPrefixedByteArray(Type):
+    @staticmethod
+    def read(file_object, length=None):
+        if length is None:
+            length = VarInt.read(file_object)
+        return struct.unpack(str(length) + "s", file_object.read(length))[0]
+
+    @staticmethod
+    def send(value, socket):
+        VarInt.send(len(value), socket)
+        socket.send(struct.pack(str(len(value)) + "s", value))
 
 
 class String(Type):

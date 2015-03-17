@@ -1,3 +1,6 @@
 *.pyc
 build/*
 src/*
+
+*.iml
+.idea/

@@ -5,9 +5,6 @@ from optparse import OptionParser
 import authentication
 
 
-PROTOCOL_VERSION = 5
-
-
 def main():
     parser = OptionParser()
 
@@ -28,13 +25,13 @@ def main():
     if not options.password:
         options.password = getpass.getpass("Enter your password: ")
 
-    login_response = authentication.login_to_minecraft(options.username, options.password)
-    from pprint import pprint  # TODO: remove debug
+    try:
+        login_response = authentication.login_to_minecraft(options.username, options.password)
+        from pprint import pprint  # TODO: remove debug
 
-    pprint(vars(login_response))  # TODO: remove debug
-
-    if login_response.error:
-        print login_response.human_error
+        pprint(vars(login_response))  # TODO: remove debug
+    except authentication.YggdrasilError as e:
+        print e.human_readable_error
         return
 
     print("Logged in as " + login_response.username)
@@ -53,7 +50,7 @@ def main():
     from network.connection import Connection
 
     connection = Connection(address, port, login_response)
-    connection.status()
+    connection.connect()
 
     while True:
         try:

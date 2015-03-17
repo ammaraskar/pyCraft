@@ -12,13 +12,18 @@ class Response(object):
     payload = None
 
 
+class YggdrasilError(Exception):
+
+    def __init__(self, error='', human_readable_error=''):
+        self.error = error
+        self.human_readable_error = human_readable_error
+
+
 def make_request(url, payload):
     """Makes http requests to the Yggdrasil authentication service
 
-    Returns a Response object with an error boolean, if there is an error
-    then it will also contain `error` and `human_error` fields
-    otherwise a `payload` field will be returned with the actual response
-    from Yggdrasil
+    Returns a Response object.
+    If there is an error then it will raise a YggdrasilError.
     """
     response = Response()
 
@@ -35,18 +40,21 @@ def make_request(url, payload):
         error = e.read()
         error = json.loads(error)
 
-        response.error = True
         response.human_error = error['errorMessage']
         response.error = error['error']
-        return response
+        raise YggdrasilError(error['error'], error['errorMessage'])
 
     except urllib2.URLError, e:
-        response.error = True
-        response.human_error = e.reason
-        return response
+        raise YggdrasilError(e.reason, e.reason)
 
     # ohey, everything didn't end up crashing and burning
-    json_response = json.loads(http_response)
+    if http_response == "":
+        http_response = "{}"
+    try:
+        json_response = json.loads(http_response)
+    except ValueError, e:
+        raise YggdrasilError(e.message, "JSON parsing exception on data: " + http_response)
+
     response.payload = json_response
     return response
 
@@ -69,15 +77,11 @@ def login_to_minecraft(username, password):
     response = make_request(BASE_URL + "authenticate", payload)
 
     login_response = LoginResponse()
-    if response.error:
-        login_response.error = True
-        login_response.human_error = response.human_error
-    else:
-        payload = response.payload
+    payload = response.payload
 
-        login_response.error = False
-        login_response.access_token = payload["accessToken"]
-        login_response.profile_id = payload["selectedProfile"]["id"]
-        login_response.username = payload["selectedProfile"]["name"]
+    login_response.error = False
+    login_response.access_token = payload["accessToken"]
+    login_response.profile_id = payload["selectedProfile"]["id"]
+    login_response.username = payload["selectedProfile"]["name"]
 
     return login_response
