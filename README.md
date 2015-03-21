@@ -3,6 +3,8 @@ pyCraft
 
 Minecraft Python Client!
 
+http://pycraft.readthedocs.org/en/latest/
+
 When running start.py, make sure you duck.
 
 #Requirements
