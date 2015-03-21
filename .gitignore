@@ -4,3 +4,7 @@ src/*
 
 *.iml
 .idea/
+
+_build
+_static
+_templates

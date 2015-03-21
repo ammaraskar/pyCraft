@@ -33,12 +33,12 @@ class Connection(object):
     options = ConnectionOptions()
 
     def __init__(self, address, port, login_response):
-        """Sets up an instance of this object to be able to connect to a minecraft server
+        """Sets up an instance of this object to be able to connect to a minecraft server.
         The connect method needs to be called in order to actually begin the connection
 
         :param address: address of the server to connect to
         :param port(int): port of the server to connect to
-        :param login_response: login_response object as obtained from the authentication package
+        :param login_response: :class:`authentication.LoginResponse` object as obtained from the authentication package
         """
         self.options.address = address
         self.options.port = port
@@ -56,9 +56,8 @@ class Connection(object):
         If force is false then the packet will be added to the end of the packet writing queue
         to be sent 'as soon as possible'
 
-        :param packet:
+        :param packet: The :class:`network.packets.Packet` to write
         :param force(bool): Specifies if the packet write should be immediate
-        :return:
         """
         if force:
             self._write_lock.acquire()
@@ -186,18 +185,22 @@ class PacketReactor(object):
             length = VarInt.read_socket(self.connection.socket)
 
             if self.connection.options.compression_enabled:
-                compressed_size = VarInt.read(stream)
+                compressed_size = VarInt.read_socket(self.connection.socket)
                 #  If this is a compressed packet we'll need to decompress it into a buffer
                 #  and then pretend that that is the actual network stream
                 if compressed_size > 0:
                     compressed_packet = stream.read(compressed_size)
                     stream = PacketBuffer()
                     stream.send(decompress(compressed_packet))
+                    print "woo, decompressed the data"
                     stream.reset_cursor()
 
-            packet_id = VarInt.read_socket(self.connection.socket)
+            packet_id = VarInt.read(stream)
 
             print "Reading packet: " + str(packet_id) + " / " + hex(packet_id) + " (Size: " + str(length) + ")"
+
+            if self.connection.options.compression_enabled:
+                print "Compressed Size: " + str(compressed_size) + ", Threshold: " + str(self.connection.options.compression_threshold)
 
             # If we know the structure of the packet, attempt to parse it
             # otherwise just skip it
@@ -207,7 +210,7 @@ class PacketReactor(object):
                 return packet
             else:
                 # TODO: remove debug
-                print "Unknown packet: " + str(packet_id) + " / " + hex(packet_id) + " (Size: " + str(length) + ")"
+                print "no definition, skipping bytes"
 
                 # if this is a compressed packet then we've already read it from the stream
                 # otherwise we need to skip the rest of the bytes properly
