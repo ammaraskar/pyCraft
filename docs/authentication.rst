@@ -48,10 +48,11 @@ You may make any arbitary request to the Yggdrasil service with
 ---------------
 An example of making an arbitary request can be seen here::
 
-	url = "https://sessionserver.mojang.com/session/minecraft/join"
-	server_id = encryption.generate_verification_hash(packet.server_id, secret, packet.public_key)
+    url = authentication.BASE_URL + "session/minecraft/join"
+    server_id = encryption.generate_verification_hash(packet.server_id, secret, packet.public_key)
+    payload = {'accessToken': self.connection.login_response.access_token,
+               'selectedProfile': self.connection.login_response.profile_id,
+               'serverId': server_id}
 
-	response = authentication.make_request(url, {'accessToken': self.connection.login_response.access_token,
-                                  				'selectedProfile': self.connection.login_response.profile_id,
-                                  				'serverId': server_id})
+    authentication.make_request(url, payload)
 

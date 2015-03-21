@@ -250,12 +250,13 @@ class LoginReactor(PacketReactor):
 
             # A server id of '-' means the server is in offline mode
             if packet.server_id != '-':
-                url = "https://sessionserver.mojang.com/session/minecraft/join"
+                url = authentication.BASE_URL + "session/minecraft/join"
                 server_id = encryption.generate_verification_hash(packet.server_id, secret, packet.public_key)
+                payload = {'accessToken': self.connection.login_response.access_token,
+                           'selectedProfile': self.connection.login_response.profile_id,
+                           'serverId': server_id}
 
-                authentication.make_request(url, {'accessToken': self.connection.login_response.access_token,
-                                                  'selectedProfile': self.connection.login_response.profile_id,
-                                                  'serverId': server_id})
+                authentication.make_request(url, payload)
 
             encryption_response = EncryptionResponsePacket()
             encryption_response.shared_secret = encrypted_secret
