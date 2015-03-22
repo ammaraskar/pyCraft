@@ -179,55 +179,37 @@ class PacketReactor(object):
     # Minimize any overheads, reading packets should be simple
     def read_packet(self, stream):
         ready_to_read, _, __ = select.select([self.connection.socket], [], [], self.TIME_OUT)
-        real_stream = stream
 
         if self.connection.socket in ready_to_read:
             length = VarInt.read_socket(self.connection.socket)
 
+            packet_data = PacketBuffer()
+            packet_data.send(stream.read(length))
+            # Ensure we read all the packet
+            while len(packet_data.get_writable()) < length:
+                packet_data.send(stream.read(length - len(packet_data.get_writable())))
+            packet_data.reset_cursor()
+
             if self.connection.options.compression_enabled:
-                compressed_size = VarInt.read_socket(self.connection.socket)
-                #  If this is a compressed packet we'll need to decompress it into a buffer
-                #  and then pretend that that is the actual network stream
+                compressed_size = VarInt.read(packet_data)
+
                 if compressed_size > 0:
-                    compressed_packet = stream.read(compressed_size)
-                    stream = PacketBuffer()
-                    stream.send(decompress(compressed_packet))
-                    print "woo, decompressed the data"
-                    stream.reset_cursor()
+                    decompressed_packet = decompress(packet_data.read(compressed_size))
+                    packet_data.reset()
+                    packet_data.send(decompressed_packet)
+                    packet_data.reset_cursor()
 
-            packet_id = VarInt.read(stream)
+            packet_id = VarInt.read(packet_data)
 
-            print "Reading packet: " + str(packet_id) + " / " + hex(packet_id) + " (Size: " + str(length) + ")"
-
-            if self.connection.options.compression_enabled:
-                print "Compressed Size: " + str(compressed_size) + ", Threshold: " + str(self.connection.options.compression_threshold)
+            print "Reading packet: " + str(packet_id) + " / " + hex(packet_id) + " (Size: " + str(length) + ") (Actual Size: " + str(len(packet_data.get_writable())) + ")"
 
             # If we know the structure of the packet, attempt to parse it
             # otherwise just skip it
             if packet_id in self.clientbound_packets:
                 packet = self.clientbound_packets[packet_id]()
-                packet.read(stream)
+                packet.read(packet_data)
                 return packet
             else:
-                # TODO: remove debug
-                print "no definition, skipping bytes"
-
-                # if this is a compressed packet then we've already read it from the stream
-                # otherwise we need to skip the rest of the bytes properly
-                if self.connection.options.compression_enabled and compressed_size > 0:
-                    return Packet()
-
-                # if compression is enabled and the data isn't compressed then we need to
-                # subtract the size of the compressed_size and packet_id VarInts from the total data length
-                # to get the number of bytes to skip
-                if self.connection.options.compression_enabled and compressed_size == 0:
-                    real_stream.read(length - (VarInt.size(compressed_size) + VarInt.size(packet_id)))
-                    return Packet()
-
-                # If compression isn't enabled, just subtract the size of the packet_id VarInt we read
-                # from the total length of the packet
-                real_stream.read(length - VarInt.size(packet_id))
-
                 return Packet()
         else:
             return None
@@ -250,7 +232,7 @@ class LoginReactor(PacketReactor):
 
             # A server id of '-' means the server is in offline mode
             if packet.server_id != '-':
-                url = authentication.BASE_URL + "session/minecraft/join"
+                url = "https://sessionserver.mojang.com/session/minecraft/join"
                 server_id = encryption.generate_verification_hash(packet.server_id, secret, packet.public_key)
                 payload = {'accessToken': self.connection.login_response.access_token,
                            'selectedProfile': self.connection.login_response.profile_id,
@@ -293,6 +275,11 @@ class PlayingReactor(PacketReactor):
         if packet.packet_name == "set compression":
             self.connection.options.compression_threshold = packet.threshold
             self.connection.options.compression_enabled = True
+
+        if packet.packet_name == "keep alive":
+            keep_alive_packet = KeepAlivePacket()
+            keep_alive_packet.keep_alive_id = packet.keep_alive_id
+            self.connection.write_packet(keep_alive_packet)
 
 
 class StatusReactor(PacketReactor):

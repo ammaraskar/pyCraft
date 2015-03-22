@@ -19,6 +19,9 @@ class PacketBuffer(object):
     def read(self, length):
         return self.b.read(length)
 
+    def reset(self):
+        self.b = BytesIO()
+
     def reset_cursor(self):
         self.b.seek(0)
 
