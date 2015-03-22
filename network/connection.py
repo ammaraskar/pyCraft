@@ -281,6 +281,20 @@ class PlayingReactor(PacketReactor):
             keep_alive_packet.keep_alive_id = packet.keep_alive_id
             self.connection.write_packet(keep_alive_packet)
 
+        if packet.packet_name == "player position and look":
+            position_response = PositionAndLookPacket()
+            position_response.x = packet.x
+            position_response.feet_y = packet.y
+            position_response.z = packet.z
+            position_response.yaw = packet.yaw
+            position_response.pitch = packet.pitch
+            position_response.on_ground = True
+
+            self.connection.write_packet(position_response)
+
+        if packet.packet_name == "disconnect":
+            print(packet.json_data)  # TODO: handle propagating this back
+
 
 class StatusReactor(PacketReactor):
     clientbound_packets = state_status_clientbound

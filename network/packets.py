@@ -55,7 +55,20 @@ class Packet(object):
                 data = getattr(self, var_name)
                 data_type.send(data, packet_buffer)
 
-        # TODO: implement compression
+        # compression_threshold of -1 means compression is disabled
+        if compression_threshold != -1:
+            if len(packet_buffer.get_writable()) > compression_threshold:
+                # compress the current payload
+                compressed_data = compress(packet_buffer.get_writable())
+                packet_buffer.reset()
+                # write out the length of the compressed payload
+                VarInt.send(len(compressed_data), packet_buffer)
+                # write the compressed payload itself
+                packet_buffer.send(compressed_data)
+            else:
+                # write out a 0 to indicate uncompressed data
+                packet_buffer.reset()
+                VarInt.send(0, packet_buffer)
 
         VarInt.send(len(packet_buffer.get_writable()), socket)  # Packet Size
         socket.send(packet_buffer.get_writable())  # Packet Payload
@@ -203,6 +216,26 @@ class JoinGamePacket(Packet):
         {'reduced_debug_info': Boolean}]
 
 
+class PlayerPositionAndLookPacket(Packet):
+    id = 0x08
+    packet_name = "player position and look"
+    definition = [
+        {'x': Double},
+        {'y': Double},
+        {'z': Double},
+        {'yaw': Float},
+        {'pitch': Float},
+        {'flags': Byte}]
+
+
+class DisconnectPacketPlayState(Packet):
+    id = 0x40
+    packet_name = "disconnect"
+
+    definition = [
+        {'json_data': String}]
+
+
 class SetCompressionPacketPlayState(Packet):
     id = 0x46
     packet_name = "set compression"
@@ -213,9 +246,24 @@ class SetCompressionPacketPlayState(Packet):
 state_playing_clientbound = {
     0x00: KeepAlivePacket,
     0x01: JoinGamePacket,
+    0x08: PlayerPositionAndLookPacket,
+    0x40: DisconnectPacketPlayState,
     0x46: SetCompressionPacketPlayState
 }
 
-state_playing_serverbound = {
 
+class PositionAndLookPacket(Packet):
+    id = 0x06
+    packet_name = "position and look"
+    definition = [
+        {'x': Double},
+        {'feet_y': Double},
+        {'z': Double},
+        {'yaw': Float},
+        {'pitch': Float},
+        {'on_ground': Boolean}]
+
+state_playing_serverbound = {
+    0x00: KeepAlivePacket,
+    0x06: PositionAndLookPacket
 }
