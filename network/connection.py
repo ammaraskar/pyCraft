@@ -96,7 +96,6 @@ class Connection(object):
             return False
         else:
             packet = self._outgoing_packet_queue.popleft()
-            print "Writing out: " + hex(packet.id) + " / " + packet.packet_name
             if self.options.compression_enabled:
                 packet.write(self.socket, self.options.compression_threshold)
             else:
