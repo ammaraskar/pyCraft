@@ -52,9 +52,20 @@ def main():
     connection = Connection(address, port, login_response)
     connection.connect()
 
+    def print_chat(chat_packet):
+        print "Position: " + str(chat_packet.position)
+        print "Data: " + chat_packet.json_data
+
+    from network.packets import ChatMessagePacket
+    connection.register_packet_listener(print_chat, ChatMessagePacket)
+
+    from network.packets import ChatPacket
     while True:
         try:
             text = raw_input()
+            packet = ChatPacket()
+            packet.message = text
+            connection.write_packet(packet)
         except KeyboardInterrupt:
             print "Bye!"
             sys.exit()

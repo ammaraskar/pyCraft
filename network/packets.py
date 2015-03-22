@@ -29,6 +29,22 @@ class PacketBuffer(object):
         return self.b.getvalue()
 
 
+class PacketListener(object):
+
+    packets_to_listen = []
+
+    def __init__(self, callback, *args):
+        self.callback = callback
+        for arg in args:
+            if issubclass(arg, Packet):
+                self.packets_to_listen.append(arg)
+
+    def call_packet(self, packet):
+        for packet_type in self.packets_to_listen:
+            if isinstance(packet, packet_type):
+                self.callback(packet)
+
+
 class Packet(object):
 
     packet_name = "base"
@@ -216,6 +232,14 @@ class JoinGamePacket(Packet):
         {'reduced_debug_info': Boolean}]
 
 
+class ChatMessagePacket(Packet):
+    id = 0x02
+    packet_name = "chat message"
+    definition = [
+        {'json_data': String},
+        {'position': Byte}]
+
+
 class PlayerPositionAndLookPacket(Packet):
     id = 0x08
     packet_name = "player position and look"
@@ -246,10 +270,18 @@ class SetCompressionPacketPlayState(Packet):
 state_playing_clientbound = {
     0x00: KeepAlivePacket,
     0x01: JoinGamePacket,
+    0x02: ChatMessagePacket,
     0x08: PlayerPositionAndLookPacket,
     0x40: DisconnectPacketPlayState,
     0x46: SetCompressionPacketPlayState
 }
+
+
+class ChatPacket(Packet):
+    id = 0x01
+    packet_name = "chat"
+    definition = [
+        {'message': String}]
 
 
 class PositionAndLookPacket(Packet):
@@ -265,5 +297,6 @@ class PositionAndLookPacket(Packet):
 
 state_playing_serverbound = {
     0x00: KeepAlivePacket,
+    0x01: ChatPacket,
     0x06: PositionAndLookPacket
 }

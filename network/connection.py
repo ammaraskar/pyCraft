@@ -31,6 +31,11 @@ class Connection(object):
     _write_lock = Lock()
     networking_thread = None
     options = ConnectionOptions()
+    packet_listeners = []
+
+    # The reactor handles all the default responses to packets,
+    # it should be changed per networking state
+    reactor = None
     #: Indicates if this connection is spawned in the Minecraft game world
     spawned = False
 
@@ -70,6 +75,16 @@ class Connection(object):
             self._write_lock.release()
         else:
             self._outgoing_packet_queue.append(packet)
+
+    def register_packet_listener(self, method, *args):
+        """
+        Registers a listener method which will be notified when a packet of
+        a selected type is received
+
+        :param method: The method which will be called back with the packet
+        :param args: The packets to listen for
+        """
+        self.packet_listeners.append(PacketListener(method, *args))
 
     def _pop_packet(self):
         # Pops the topmost packet off the outgoing queue and writes it out through the socket
@@ -157,15 +172,20 @@ class NetworkingThread(threading.Thread):
                 num_packets += 1
 
                 self.connection.reactor.react(packet)
+                for listener in self.connection.packet_listeners:
+                    listener.call_packet(packet)
+
                 if num_packets >= 50:
                     break
-
                 packet = self.connection.reactor.read_packet(self.connection.file_object)
 
             time.sleep(0.05)
 
 
 class PacketReactor(object):
+    """
+    Reads and reacts to packets
+    """
     state_name = None
     clientbound_packets = None
 
@@ -174,11 +194,6 @@ class PacketReactor(object):
     def __init__(self, connection):
         self.connection = connection
 
-    # Design objectives:
-    #
-    # Avoid buffering data as much as possible
-    # Wherever possible, read directly from the network stream
-    # Minimize any overheads, reading packets should be simple
     def read_packet(self, stream):
         ready_to_read, _, __ = select.select([self.connection.socket], [], [], self.TIME_OUT)
 
@@ -202,8 +217,6 @@ class PacketReactor(object):
                     packet_data.reset_cursor()
 
             packet_id = VarInt.read(packet_data)
-
-            print "Reading packet: " + str(packet_id) + " / " + hex(packet_id) + " (Size: " + str(length) + ") (Actual Size: " + str(len(packet_data.get_writable())) + ")"
 
             # If we know the structure of the packet, attempt to parse it
             # otherwise just skip it
