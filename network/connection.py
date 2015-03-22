@@ -31,6 +31,8 @@ class Connection(object):
     _write_lock = Lock()
     networking_thread = None
     options = ConnectionOptions()
+    #: Indicates if this connection is spawned in the Minecraft game world
+    spawned = False
 
     def __init__(self, address, port, login_response):
         """Sets up an instance of this object to be able to connect to a minecraft server.
@@ -291,6 +293,7 @@ class PlayingReactor(PacketReactor):
             position_response.on_ground = True
 
             self.connection.write_packet(position_response)
+            self.connection.spawned = True
 
         if packet.packet_name == "disconnect":
             print(packet.json_data)  # TODO: handle propagating this back
