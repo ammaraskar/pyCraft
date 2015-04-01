@@ -2,7 +2,7 @@ import getpass
 import sys
 from optparse import OptionParser
 
-from minecraft.networking import authentication
+from minecraft import authentication
 from minecraft.networking.connection import Connection
 from minecraft.networking.packets import ChatMessagePacket, ChatPacket
 
