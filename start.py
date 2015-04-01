@@ -2,7 +2,9 @@ import getpass
 import sys
 from optparse import OptionParser
 
-import authentication
+from minecraft.networking import authentication
+from minecraft.networking.connection import Connection
+from minecraft.networking.packets import ChatMessagePacket, ChatPacket
 
 
 def main():
@@ -47,8 +49,6 @@ def main():
         address = options.server
         port = 25565
 
-    from network.connection import Connection
-
     connection = Connection(address, port, login_response)
     connection.connect()
 
@@ -56,10 +56,7 @@ def main():
         print "Position: " + str(chat_packet.position)
         print "Data: " + chat_packet.json_data
 
-    from network.packets import ChatMessagePacket
     connection.register_packet_listener(print_chat, ChatMessagePacket)
-
-    from network.packets import ChatPacket
     while True:
         try:
             text = raw_input()
