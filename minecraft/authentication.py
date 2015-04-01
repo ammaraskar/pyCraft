@@ -73,9 +73,19 @@ class AuthenticationToken(object):
         Attribute which is ``True`` when the token is authenticated and
         ``False`` when it isn't.
         """
-        # TODO
+        if not self.username:
+            return False
+
+        if not self.access_token:
+            return False
+
+        if not self.client_token:
+            return False
+
+        if not self.profile:
+            return False
+
         return True
- 
 
     def authenticate(self, username, password):
         """
@@ -183,7 +193,8 @@ class AuthenticationToken(object):
         `username` and `password`.
 
         Parameters:
-            TODO
+            username - ``str`` containing the username
+            password - ``str`` containing the password
 
         Returns:
             Returns `True` if sign out was successful.
@@ -204,12 +215,19 @@ class AuthenticationToken(object):
         the `AuthenticationToken`.
 
         Returns:
-            TODO
+            ``True`` if tokens were successfully invalidated.
 
         Raises:
-            TODO
+            :class:`minecraft.exceptions.YggdrasilError`
         """
-        pass
+        req = _make_request(AUTHSERVER, "invalidate",
+                            {"accessToken": self.access_token,
+                             "clientToken": self.client_token})
+
+        if status_code == requests.codes.ok and not req.text:
+            return True
+        else:
+            raise YggdrasilError("Failed to invalidate tokens.")
 
     def join(self, server_id):
         """
@@ -226,6 +244,10 @@ class AuthenticationToken(object):
             :class:`minecraft.exceptions.YggdrasilError`
 
         """
+        if not self.authenticated:
+            err = "AuthenticationToken hasn't been authenticated yet!"
+            raise YggdrasilError(err)
+
         req = _make_request(SESSIONSERVER, "join",
                             {"accessToken": self.access_token,
                              "selectedProfile": self.profile.to_dict(),
@@ -234,9 +256,7 @@ class AuthenticationToken(object):
         if req.status_code == requests.codes.ok:
             return True
         else:
-            return req
-            err = "Failed to join game. Status code: {}"
-            raise YggdrasilError(err.format(str(req.status_code)))
+            raise YggdrasilError("Failed to join game.")
 
 
 def _make_request(server, endpoint, data):
