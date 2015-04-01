@@ -60,7 +60,7 @@ class Packet(object):
                 value = data_type.read(file_object)
                 setattr(self, var_name, value)
 
-    def write(self, socket, compression_threshold=-1):
+    def write(self, socket, compression_threshold=None):
         # buffer the data since we need to know the length of each packet's payload
         packet_buffer = PacketBuffer()
         # write packet's id right off the bat in the header
@@ -71,8 +71,8 @@ class Packet(object):
                 data = getattr(self, var_name)
                 data_type.send(data, packet_buffer)
 
-        # compression_threshold of -1 means compression is disabled
-        if compression_threshold != -1:
+        # compression_threshold of None means compression is disabled
+        if compression_threshold is not None:
             if len(packet_buffer.get_writable()) > compression_threshold:
                 # compress the current payload
                 compressed_data = compress(packet_buffer.get_writable())
