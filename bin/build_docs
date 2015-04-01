@@ -1,0 +1,7 @@
+#!/bin/bash
+
+set -e 
+cd docs
+rm -rf _build*
+make html
+cd ..
