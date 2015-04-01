@@ -1,106 +1,277 @@
-import urllib2
+"""
+Handles authentication with the Mojang authentication server.
+"""
+import requests
 import json
+from .exceptions import YggdrasilError
+import collections
 
-#: The base url for Yggdrasil requests
-BASE_URL = 'https://authserver.mojang.com/'
-AGENT_INFO = {"name": "Minecraft", "version": 1}
+AUTHSERVER = "https://authserver.mojang.com"
+SESSIONSERVER = "https://sessionserver.mojang.com/session/minecraft"
+# Need this content type, or authserver will complain
+CONTENT_TYPE = "application/json"
+HEADERS = {"content-type": CONTENT_TYPE}
 
 
-class YggdrasilError(Exception):
-    """Signals some sort of problem while handling a request to
-    the Yggdrasil service
-
-    :ivar human_error: A human readable description of the problem
-    :ivar error: A short description of the problem
+class Profile(object):
     """
-
-    def __init__(self, error, human_readable_error):
-        self.error = error
-        self.human_readable_error = human_readable_error
-
-
-def make_request(url, payload):
-    """Makes an http request to the Yggdrasil authentication service
-    If there is an error then it will raise a :exc:`.YggdrasilError`
-
-    :param url: The fully formed url to the Yggdrasil endpoint, for example:
-                https://authserver.mojang.com/authenticate
-                You may use the :attr:`.BASE_URL` constant here as a shortcut
-    :param payload: The payload to send with the request, will be interpreted
-                as a JSON object so be careful.
-                Example: {"username": username, "password": password, "agent": AGENT_INFO}
-    :return: A :class:`.Response` object.
+    Container class for a MineCraft Selected profile.
+    See: `<http://wiki.vg/Authentication>`_
     """
-    response = Response()
+    def __init__(self, id_=None, name=None):
+        self.id = id_
+        self.name = name
 
-    try:
-        header = {'Content-Type': 'application/json'}
-        data = json.dumps(payload)
+    def to_dict(self):
+        """
+        Returns ``self`` in dictionary-form, which can be serialized by json.
+        """
+        if self:
+            return {"id": self.id,
+                    "name": self.name}
+        else:
+            raise AttributeError("Profile is not yet populated.")
 
-        req = urllib2.Request(url, data, header)
-        opener = urllib2.build_opener()
-        http_response = opener.open(req, None, 10)
-        http_response = http_response.read()
+    def __bool__(self):
+        bool_state = self.id is not None and self.name is not None
+        return bool_state
 
-    except urllib2.HTTPError, e:
-        error = e.read()
-        error = json.loads(error)
-
-        response.human_error = error['errorMessage']
-        response.error = error['error']
-        raise YggdrasilError(error['error'], error['errorMessage'])
-
-    except urllib2.URLError, e:
-        raise YggdrasilError(e.reason, e.reason)
-
-    # ohey, everything didn't end up crashing and burning
-    if http_response == "":
-        http_response = "{}"
-    try:
-        json_response = json.loads(http_response)
-    except ValueError, e:
-        raise YggdrasilError(e.message, "JSON parsing exception on data: " + http_response)
-
-    response.payload = json_response
-    return response
+    # Python 2 support
+    def __nonzero__(self):
+        return self.__bool__()
 
 
-class Response(object):
-    """Class to hold responses from Yggdrasil
-
-    :ivar payload: The raw payload returned by Yggdrasil
+class AuthenticationToken(object):
     """
-    payload = None
+    Represents an authentication token.
 
-
-class LoginResponse(object):
-    """A container class to hold information received from Yggdrasil
-    upon logging into an account.
-
-    :ivar username: The actual in game username of the user
-    :ivar access_token: The access token of the user, used in place of the password
-    :ivar profile_id: The selected profile id
+    See http://wiki.vg/Authentication.
     """
-    pass
+    AGENT_NAME = "Minecraft"
+    AGENT_VERSION = 1
+
+    def __init__(self, username=None, access_token=None, client_token=None):
+        """
+        Constructs an `AuthenticationToken` based on `access_token` and
+        `client_token`.
+
+        Parameters:
+            access_token - An `str` object containing the `access_token`.
+            client_token - An `str` object containing the `client_token`.
+
+        Returns:
+            A `AuthenticationToken` with `access_token` and `client_token` set.
+        """
+        self.username = username
+        self.access_token = access_token
+        self.client_token = client_token
+        self.profile = Profile()
+
+    @property
+    def authenticated(self):
+        """
+        Attribute which is ``True`` when the token is authenticated and
+        ``False`` when it isn't.
+        """
+        # TODO
+        return True
+ 
+
+    def authenticate(self, username, password):
+        """
+        Authenticates the user against https://authserver.mojang.com using
+        `username` and `password` parameters.
+
+        Parameters:
+            username - An `str` object with the username (unmigrated accounts)
+                or email address for a Mojang account.
+            password - An `str` object with the password.
+
+        Returns:
+            Returns `True` if successful.
+            Otherwise it will raise an exception.
+
+        Raises:
+            minecraft.exceptions.YggdrasilError
+        """
+        payload = {
+            "agent": {
+                "name": self.AGENT_NAME,
+                "version": self.AGENT_VERSION
+            },
+            "username": username,
+            "password": password
+        }
+
+        req = _make_request(AUTHSERVER, "authenticate", payload)
+
+        _raise_from_request(req)
+
+        json_resp = req.json()
+
+        self.username = username
+        self.access_token = json_resp["accessToken"]
+        self.client_token = json_resp["clientToken"]
+        self.profile.id = json_resp["selectedProfile"]["id"]
+        self.profile.name = json_resp["selectedProfile"]["name"]
+
+        return True
+
+    def refresh(self):
+        """
+        Refreshes the `AuthenticationToken`. Used to keep a user logged in
+        between sessions and is preferred over storing a user's password in a
+        file.
+
+        Returns:
+            Returns `True` if `AuthenticationToken` was successfully refreshed.
+            Otherwise it raises an exception.
+
+        Raises:
+            minecraft.exceptions.YggdrasilError
+            ValueError - if `AuthenticationToken.access_token` or
+                `AuthenticationToken.client_token` isn't set.
+        """
+        if self.access_token is None:
+            raise ValueError("'access_token' not set!'")
+
+        if self.client_token is None:
+            raise ValueError("'client_token' is not set!")
+
+        req = _make_request(AUTHSERVER,
+                            "refresh", {"accessToken": self.access_token,
+                                        "clientToken": self.client_token})
+
+        _raise_from_request(req)
+
+        json_resp = req.json()
+
+        self.access_token = json_resp["accessToken"]
+        self.client_token = json_resp["clientToken"]
+        self.profile.id = json_resp["selectedProfile"]["id"]
+        self.profile.name = json_resp["selectedProfile"]["name"]
+
+        return True
+
+    def validate(self):
+        """
+        Validates the AuthenticationToken.
+
+        `AuthenticationToken.access_token` must be set!
+
+        Returns:
+            Returns `True` if `AuthenticationToken` is valid.
+            Otherwise it will raise an exception.
+
+        Raises:
+            minecraft.exceptions.YggdrasilError
+            ValueError - if `AuthenticationToken.access_token` is not set.
+        """
+        if self.access_token is None:
+            raise ValueError("'access_token' not set!")
+
+        req = _make_request(AUTHSERVER, "validate",
+                            {"accessToken": self.access_token})
+
+        if _raise_from_request(req) is None:
+            return True
+
+    @staticmethod
+    def sign_out(username, password):
+        """
+        Invalidates `access_token`s using an account's
+        `username` and `password`.
+
+        Parameters:
+            TODO
+
+        Returns:
+            Returns `True` if sign out was successful.
+            Otherwise it will raise an exception.
+
+        Raises:
+            minecraft.exceptions.YggdrasilError
+        """
+        req = _make_request(AUTHSERVER, "signout", {"username": username,
+                                                    "password": password})
+
+        if _raise_from_request(req) is None:
+            return True
+
+    def invalidate(self):
+        """
+        Invalidates `access_token`s using the token pair stored in
+        the `AuthenticationToken`.
+
+        Returns:
+            TODO
+
+        Raises:
+            TODO
+        """
+        pass
+
+    def join(self, server_id):
+        """
+        Informs the Mojang session-server that we're joining the
+        MineCraft server with id ``server_id``.
+
+        Parameters:
+            server_id - ``str`` with the server id
+
+        Returns:
+            ``True`` if no errors occured
+
+        Raises:
+            :class:`minecraft.exceptions.YggdrasilError`
+
+        """
+        req = _make_request(SESSIONSERVER, "join",
+                            {"accessToken": self.access_token,
+                             "selectedProfile": self.profile.to_dict(),
+                             "serverId": server_id})
+
+        if req.status_code == requests.codes.ok:
+            return True
+        else:
+            return req
+            err = "Failed to join game. Status code: {}"
+            raise YggdrasilError(err.format(str(req.status_code)))
 
 
-def login_to_minecraft(username, password):
+def _make_request(server, endpoint, data):
     """
-    Logs in to a minecraft account
-    Will raise a :exc:`.YggdrasilError` on failure
+    Fires a POST with json-packed data to the given endpoint and returns
+    response.
 
-    :param username: The mojang account username
-    :param password: The password for the account
-    :return: A :class:`.LoginResponse` object
+    Parameters:
+        endpoint - An `str` object with the endpoint, e.g. "authenticate"
+        data - A `dict` containing the payload data.
+
+    Returns:
+        A `requests.Request` object.
     """
-    payload = {"username": username, "password": password, "agent": AGENT_INFO}
-    response = make_request(BASE_URL + "authenticate", payload)
+    req = requests.post(server + "/" + endpoint, data=json.dumps(data),
+                        headers=HEADERS)
+    return req
 
-    login_response = LoginResponse()
-    payload = response.payload
 
-    login_response.access_token = payload["accessToken"]
-    login_response.profile_id = payload["selectedProfile"]["id"]
-    login_response.username = payload["selectedProfile"]["name"]
+def _raise_from_request(req):
+    """
+    Raises an appropriate `YggdrasilError` based on the `status_code` and
+    `json` of a `requests.Request` object.
+    """
+    if req.status_code == requests.codes.ok:
+        return None
 
-    return login_response
+    json_resp = req.json()
+
+    if "error" not in json_resp and "errorMessage" not in json_resp:
+        raise YggdrasilError("Malformed error message.")
+
+    message = "[{status_code}] {error}: '{error_message}'"
+    message = message.format(status_code=str(req.status_code),
+                             error=json_resp["error"],
+                             error_message=json_resp["errorMessage"])
+
+    raise YggdrasilError(message)

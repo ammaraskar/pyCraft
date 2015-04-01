@@ -39,17 +39,17 @@ class Connection(object):
     #: Indicates if this connection is spawned in the Minecraft game world
     spawned = False
 
-    def __init__(self, address, port, login_response):
+    def __init__(self, address, port, auth_token):
         """Sets up an instance of this object to be able to connect to a minecraft server.
         The connect method needs to be called in order to actually begin the connection
 
         :param address: address of the server to connect to
         :param port(int): port of the server to connect to
-        :param login_response: :class:`authentication.LoginResponse` object as obtained from the authentication package
+        :param auth_token: :class:`authentication.AuthenticationToken` object.
         """
         self.options.address = address
         self.options.port = port
-        self.login_response = login_response
+        self.auth_token = auth_token
         self.reactor = PacketReactor(self)
 
     def _start_network_thread(self):
@@ -120,7 +120,7 @@ class Connection(object):
         self.reactor = LoginReactor(self)
         self._start_network_thread()
         login_start_packet = LoginStartPacket()
-        login_start_packet.name = self.login_response.username
+        login_start_packet.name = self.auth_token.username
         self.write_packet(login_start_packet)
 
     def _connect(self):
@@ -246,14 +246,10 @@ class LoginReactor(PacketReactor):
 
             # A server id of '-' means the server is in offline mode
             if packet.server_id != '-':
-                url = "https://sessionserver.mojang.com/session/minecraft/join"
                 server_id = encryption.generate_verification_hash(packet.server_id, secret, packet.public_key)
-                payload = {'accessToken': self.connection.login_response.access_token,
-                           'selectedProfile': self.connection.login_response.profile_id,
-                           'serverId': server_id}
-
-                authentication.make_request(url, payload)
-
+                
+                self.connection.auth_token.join(server_id)
+                
             encryption_response = EncryptionResponsePacket()
             encryption_response.shared_secret = encrypted_secret
             encryption_response.verify_token = encrypted_token

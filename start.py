@@ -2,12 +2,15 @@ import getpass
 import sys
 from optparse import OptionParser
 
+from pprint import pprint
+
 from minecraft import authentication
+from minecraft.exceptions import YggdrasilError
 from minecraft.networking.connection import Connection
 from minecraft.networking.packets import ChatMessagePacket, ChatPacket
 
 
-def main():
+def get_options():
     parser = OptionParser()
 
     parser.add_option("-u", "--username", dest="username", default=None,
@@ -27,34 +30,38 @@ def main():
     if not options.password:
         options.password = getpass.getpass("Enter your password: ")
 
-    try:
-        login_response = authentication.login_to_minecraft(options.username, options.password)
-        from pprint import pprint  # TODO: remove debug
-
-        pprint(vars(login_response))  # TODO: remove debug
-    except authentication.YggdrasilError as e:
-        print e.human_readable_error
-        return
-
-    print("Logged in as " + login_response.username)
-
     if not options.server:
         options.server = raw_input("Please enter server address (including port): ")
     # Try to split out port and address
     if ':' in options.server:
         server = options.server.split(":")
-        address = server[0]
-        port = int(server[1])
+        options.address = server[0]
+        options.port = int(server[1])
     else:
-        address = options.server
-        port = 25565
+        options.address = options.server
+        options.port = 25565
 
-    connection = Connection(address, port, login_response)
+    return options
+
+
+def main():
+    options = get_options()
+
+    auth_token = authentication.AuthenticationToken()
+    try:
+        auth_token.authenticate(options.username, options.password)
+    except YggdrasilError as e:
+        print(e.error)
+        sys.exit()
+
+    print("Logged in as " + auth_token.username)
+
+    connection = Connection(options.address, options.port, auth_token)
     connection.connect()
 
     def print_chat(chat_packet):
-        print "Position: " + str(chat_packet.position)
-        print "Data: " + chat_packet.json_data
+        print("Position: " + str(chat_packet.position))
+        print("Data: " + chat_packet.json_data)
 
     connection.register_packet_listener(print_chat, ChatMessagePacket)
     while True:
@@ -64,7 +71,7 @@ def main():
             packet.message = text
             connection.write_packet(packet)
         except KeyboardInterrupt:
-            print "Bye!"
+            print("Bye!")
             sys.exit()
 
 
