@@ -1,0 +1,6 @@
+#!/bin/bash
+
+rm -v coverage.xml
+rm -v MANIFEST
+rm -v nosetests.xml
+rm -rv build
