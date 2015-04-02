@@ -120,7 +120,7 @@ class ResponsePacket(Packet):
         {'json_response': String}]
 
 
-class PingPacket(Packet):
+class PingPacketResponse(Packet):
     id = 0x01
     packet_name = "ping"
     definition = [
@@ -129,7 +129,7 @@ class PingPacket(Packet):
 
 STATE_STATUS_CLIENTBOUND = {
     0x00: ResponsePacket,
-    0x01: PingPacket
+    0x01: PingPacketResponse
 }
 
 

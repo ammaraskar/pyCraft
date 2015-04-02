@@ -280,7 +280,7 @@ def _raise_from_request(req):
     Raises an appropriate `YggdrasilError` based on the `status_code` and
     `json` of a `requests.Request` object.
     """
-    if req.status_code == requests.codes.ok:
+    if req.status_code == requests.codes['ok']:
         return None
 
     try:

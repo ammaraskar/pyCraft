@@ -6,13 +6,14 @@ import socket
 import time
 import select
 
-import packets
-from types import VarInt
+import encryption
 
+from .types import VarInt
+from . import packets
 from .. import PROTOCOL_VERSION
 
 
-class ConnectionOptions(object):
+class _ConnectionOptions(object):
     # TODO: allow these options to be overriden from a constructor below
     address = None
     port = None
@@ -28,7 +29,7 @@ class Connection(object):
     _outgoing_packet_queue = deque()
     _write_lock = Lock()
     networking_thread = None
-    options = ConnectionOptions()
+    options = _ConnectionOptions()
     packet_listeners = []
 
     # The reactor handles all the default responses to packets,
@@ -251,7 +252,6 @@ class LoginReactor(PacketReactor):
 
     def react(self, packet):
         if packet.packet_name == "encryption request":
-            import encryption
 
             secret = encryption.generate_shared_secret()
             token, encrypted_secret = encryption.encrypt_token_and_secret(
