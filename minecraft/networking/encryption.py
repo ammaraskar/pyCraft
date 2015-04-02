@@ -54,6 +54,11 @@ def minecraft_sha1_hash_digest(sha1_hash):
 
 
 def _number_from_bytes(b, signed=False):
+    try:
+        return int.from_bytes(b, byteorder='big', signed=signed)
+    except AttributeError:
+        pass
+
     if len(b) == 0:
         b = b'\x00'
     num = int(str(b).encode('hex'), 16)

@@ -9,7 +9,7 @@ import select
 import packets
 from types import VarInt
 
-from minecraft import PROTOCOL_VERSION
+from .. import PROTOCOL_VERSION
 
 
 class ConnectionOptions(object):
@@ -173,7 +173,7 @@ class NetworkingThread(threading.Thread):
                     break
             self.connection._write_lock.release()
 
-            # Read and react to as many as 50 packets 
+            # Read and react to as many as 50 packets
             num_packets = 0
             packet = self.connection.reactor.read_packet(
                 self.connection.file_object)
@@ -205,8 +205,8 @@ class PacketReactor(object):
         self.connection = connection
 
     def read_packet(self, stream):
-        ready_to_read, _, __ = select.select([self.connection.socket], [], [],
-                                             self.TIME_OUT)
+        ready_to_read = select.select([self.connection.socket], [], [],
+                                      self.TIME_OUT)[0]
 
         if self.connection.socket in ready_to_read:
             length = VarInt.read_socket(self.connection.socket)
@@ -278,8 +278,9 @@ class LoginReactor(PacketReactor):
             decryptor = cipher.decryptor()
             self.connection.socket = encryption.EncryptedSocketWrapper(
                 self.connection.socket, encryptor, decryptor)
-            self.connection.file_object = encryption.EncryptedFileObjectWrapper(
-                self.connection.file_object, decryptor)
+            self.connection.file_object = \
+                encryption.EncryptedFileObjectWrapper(
+                    self.connection.file_object, decryptor)
 
         if packet.packet_name == "disconnect":
             print(packet.json_data)  # TODO: handle propagating this back
@@ -328,7 +329,7 @@ class StatusReactor(PacketReactor):
         if packet.id == packets.ResponsePacket.id:
             import json
 
-            print json.loads(packet.json_response)
+            print(json.loads(packet.json_response))
 
             ping_packet = packets.PingPacket()
             ping_packet.time = int(time.time())

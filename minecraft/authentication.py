@@ -4,10 +4,9 @@ Handles authentication with the Mojang authentication server.
 import requests
 import json
 from .exceptions import YggdrasilError
-import collections
 
-AUTHSERVER = "https://authserver.mojang.com"
-SESSIONSERVER = "https://sessionserver.mojang.com/session/minecraft"
+AUTH_SERVER = "https://authserver.mojang.com"
+SESSION_SERVER = "https://sessionserver.mojang.com/session/minecraft"
 # Need this content type, or authserver will complain
 CONTENT_TYPE = "application/json"
 HEADERS = {"content-type": CONTENT_TYPE}
@@ -113,7 +112,7 @@ class AuthenticationToken(object):
             "password": password
         }
 
-        req = _make_request(AUTHSERVER, "authenticate", payload)
+        req = _make_request(AUTH_SERVER, "authenticate", payload)
 
         _raise_from_request(req)
 
@@ -148,7 +147,7 @@ class AuthenticationToken(object):
         if self.client_token is None:
             raise ValueError("'client_token' is not set!")
 
-        req = _make_request(AUTHSERVER,
+        req = _make_request(AUTH_SERVER,
                             "refresh", {"accessToken": self.access_token,
                                         "clientToken": self.client_token})
 
@@ -180,7 +179,7 @@ class AuthenticationToken(object):
         if self.access_token is None:
             raise ValueError("'access_token' not set!")
 
-        req = _make_request(AUTHSERVER, "validate",
+        req = _make_request(AUTH_SERVER, "validate",
                             {"accessToken": self.access_token})
 
         if _raise_from_request(req) is None:
@@ -203,8 +202,8 @@ class AuthenticationToken(object):
         Raises:
             minecraft.exceptions.YggdrasilError
         """
-        req = _make_request(AUTHSERVER, "signout", {"username": username,
-                                                    "password": password})
+        req = _make_request(AUTH_SERVER, "signout",
+                            {"username": username, "password": password})
 
         if _raise_from_request(req) is None:
             return True
@@ -220,11 +219,11 @@ class AuthenticationToken(object):
         Raises:
             :class:`minecraft.exceptions.YggdrasilError`
         """
-        req = _make_request(AUTHSERVER, "invalidate",
+        req = _make_request(AUTH_SERVER, "invalidate",
                             {"accessToken": self.access_token,
                              "clientToken": self.client_token})
 
-        if status_code == requests.codes.ok and not req.text:
+        if not req.raise_for_status() and not req.text:
             return True
         else:
             raise YggdrasilError("Failed to invalidate tokens.")
@@ -248,7 +247,7 @@ class AuthenticationToken(object):
             err = "AuthenticationToken hasn't been authenticated yet!"
             raise YggdrasilError(err)
 
-        req = _make_request(SESSIONSERVER, "join",
+        req = _make_request(SESSION_SERVER, "join",
                             {"accessToken": self.access_token,
                              "selectedProfile": self.profile.to_dict(),
                              "serverId": server_id})

@@ -115,24 +115,24 @@ class VarInt(Type):
 
     @staticmethod
     def size(value):
-        for max_value, size in VARINT_SIZE_TABLE.iteritems():
+        for max_value, size in VARINT_SIZE_TABLE.items():
             if value < max_value:
                 return size
 
 # Maps (maximum integer value -> size of VarInt in bytes)
 VARINT_SIZE_TABLE = {
-    2**7: 1,
-    2**14: 2,
-    2**21: 3,
-    2**28: 4,
-    2**35: 5,
-    2**42: 6,
-    2**49: 7,
-    2**56: 8,
-    2**63: 9,
-    2**70: 10,
-    2**77: 11,
-    2**84: 12
+    2 ** 7: 1,
+    2 ** 14: 2,
+    2 ** 21: 3,
+    2 ** 28: 4,
+    2 ** 35: 5,
+    2 ** 42: 6,
+    2 ** 49: 7,
+    2 ** 56: 8,
+    2 ** 63: 9,
+    2 ** 70: 10,
+    2 ** 77: 11,
+    2 ** 84: 12
 }
 
 
@@ -168,9 +168,8 @@ class Double(Type):
 
 class ShortPrefixedByteArray(Type):
     @staticmethod
-    def read(file_object, length=None):
-        if length is None:
-            length = Short.read(file_object)
+    def read(file_object):
+        length = Short.read(file_object)
         return struct.unpack(str(length) + "s", file_object.read(length))[0]
 
     @staticmethod
@@ -181,9 +180,8 @@ class ShortPrefixedByteArray(Type):
 
 class VarIntPrefixedByteArray(Type):
     @staticmethod
-    def read(file_object, length=None):
-        if length is None:
-            length = VarInt.read(file_object)
+    def read(file_object):
+        length = VarInt.read(file_object)
         return struct.unpack(str(length) + "s", file_object.read(length))[0]
 
     @staticmethod
@@ -196,10 +194,10 @@ class String(Type):
     @staticmethod
     def read(file_object):
         length = VarInt.read(file_object)
-        return unicode(file_object.read(length), "utf-8")
+        return file_object.read(length).decode("utf-8")
 
     @staticmethod
     def send(value, socket):
-        value = unicode(value).encode('utf-8')
+        value = str(value).encode('utf-8')
         VarInt.send(len(value), socket)
         socket.send(value)

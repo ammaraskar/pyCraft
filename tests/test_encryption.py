@@ -9,8 +9,7 @@ class Hashing(unittest.TestCase):
                  'simon': '88e16a1019277b15d58faf0541e11910eb756f6'}
 
     def test_hashing(self):
-        for input_value in self.test_data.iterkeys():
+        for input_value, result in self.test_data.items():
             sha1_hash = hashlib.sha1()
-            sha1_hash.update(input_value)
-            self.assertEquals(minecraft_sha1_hash_digest(sha1_hash),
-                              self.test_data[input_value])
+            sha1_hash.update(input_value.encode('utf-8'))
+            self.assertEquals(minecraft_sha1_hash_digest(sha1_hash), result)

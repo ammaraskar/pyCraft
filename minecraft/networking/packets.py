@@ -1,36 +1,37 @@
 from io import BytesIO
 from zlib import compress
 
-from types import *
+from .types import (
+    VarInt, Integer, Float, Double, UnsignedShort, Long, Byte, UnsignedByte,
+    String, VarIntPrefixedByteArray, Boolean
+)
 
 
 class PacketBuffer(object):
-
     def __init__(self):
-        self.b = BytesIO()
+        self.bytes = BytesIO()
 
     def send(self, value):
         """
         Writes the given bytes to the buffer, designed to emulate socket.send
         :param value: The bytes to write
         """
-        self.b.write(value)
+        self.bytes.write(value)
 
     def read(self, length):
-        return self.b.read(length)
+        return self.bytes.read(length)
 
     def reset(self):
-        self.b = BytesIO()
+        self.bytes = BytesIO()
 
     def reset_cursor(self):
-        self.b.seek(0)
+        self.bytes.seek(0)
 
     def get_writable(self):
-        return self.b.getvalue()
+        return self.bytes.getvalue()
 
 
 class PacketListener(object):
-
     packets_to_listen = []
 
     def __init__(self, callback, *args):
@@ -46,7 +47,6 @@ class PacketListener(object):
 
 
 class Packet(object):
-
     packet_name = "base"
     id = -0x01
     definition = []
@@ -61,7 +61,8 @@ class Packet(object):
                 setattr(self, var_name, value)
 
     def write(self, socket, compression_threshold=None):
-        # buffer the data since we need to know the length of each packet's payload
+        # buffer the data since we need to know the length of each packet's
+        # payload
         packet_buffer = PacketBuffer()
         # write packet's id right off the bat in the header
         VarInt.send(self.id, packet_buffer)
@@ -125,6 +126,7 @@ class PingPacket(Packet):
     definition = [
         {'time': Long}]
 
+
 STATE_STATUS_CLIENTBOUND = {
     0x00: ResponsePacket,
     0x01: PingPacket
@@ -142,6 +144,7 @@ class PingPacket(Packet):
     packet_name = "ping"
     definition = [
         {'time': Long}]
+
 
 STATE_STATUS_SERVERBOUND = {
     0x00: RequestPacket,
@@ -181,6 +184,7 @@ class SetCompressionPacket(Packet):
     definition = [
         {'threshold': VarInt}]
 
+
 STATE_LOGIN_CLIENTBOUND = {
     0x00: DisconnectPacket,
     0x01: EncryptionRequestPacket,
@@ -202,6 +206,7 @@ class EncryptionResponsePacket(Packet):
     definition = [
         {'shared_secret': VarIntPrefixedByteArray},
         {'verify_token': VarIntPrefixedByteArray}]
+
 
 STATE_LOGIN_SERVERBOUND = {
     0x00: LoginStartPacket,
@@ -294,6 +299,7 @@ class PositionAndLookPacket(Packet):
         {'yaw': Float},
         {'pitch': Float},
         {'on_ground': Boolean}]
+
 
 STATE_PLAYING_SERVERBOUND = {
     0x00: KeepAlivePacket,
