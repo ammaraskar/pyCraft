@@ -67,6 +67,10 @@ target/
 *.tmPreferences.cache
 *.stTheme.cache
 
+# pyCharm/Intellij
+*.iml
+.idea/
+
 # workspace files are user-specific
 *.sublime-workspace
 
