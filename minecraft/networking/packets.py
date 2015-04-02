@@ -102,10 +102,10 @@ class HandShakePacket(Packet):
         {'next_state': VarInt}]
 
 
-state_handshake_clientbound = {
+STATE_HANDSHAKE_CLIENTBOUND = {
 
 }
-state_handshake_serverbound = {
+STATE_HANDSHAKE_SERVERBOUND = {
     0x00: HandShakePacket
 }
 
@@ -125,7 +125,7 @@ class PingPacket(Packet):
     definition = [
         {'time': Long}]
 
-state_status_clientbound = {
+STATE_STATUS_CLIENTBOUND = {
     0x00: ResponsePacket,
     0x01: PingPacket
 }
@@ -143,7 +143,7 @@ class PingPacket(Packet):
     definition = [
         {'time': Long}]
 
-state_status_serverbound = {
+STATE_STATUS_SERVERBOUND = {
     0x00: RequestPacket,
     0x01: PingPacket
 }
@@ -181,7 +181,7 @@ class SetCompressionPacket(Packet):
     definition = [
         {'threshold': VarInt}]
 
-state_login_clientbound = {
+STATE_LOGIN_CLIENTBOUND = {
     0x00: DisconnectPacket,
     0x01: EncryptionRequestPacket,
     0x02: LoginSuccessPacket,
@@ -203,7 +203,7 @@ class EncryptionResponsePacket(Packet):
         {'shared_secret': VarIntPrefixedByteArray},
         {'verify_token': VarIntPrefixedByteArray}]
 
-state_login_serverbound = {
+STATE_LOGIN_SERVERBOUND = {
     0x00: LoginStartPacket,
     0x01: EncryptionResponsePacket
 }
@@ -267,7 +267,7 @@ class SetCompressionPacketPlayState(Packet):
         {'threshold': VarInt}]
 
 
-state_playing_clientbound = {
+STATE_PLAYING_CLIENTBOUND = {
     0x00: KeepAlivePacket,
     0x01: JoinGamePacket,
     0x02: ChatMessagePacket,
@@ -295,7 +295,7 @@ class PositionAndLookPacket(Packet):
         {'pitch': Float},
         {'on_ground': Boolean}]
 
-state_playing_serverbound = {
+STATE_PLAYING_SERVERBOUND = {
     0x00: KeepAlivePacket,
     0x01: ChatPacket,
     0x06: PositionAndLookPacket

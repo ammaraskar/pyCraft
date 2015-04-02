@@ -12,12 +12,14 @@ def generate_shared_secret():
 
 
 def create_AES_cipher(shared_secret):
-    cipher = Cipher(algorithms.AES(shared_secret), modes.CFB8(shared_secret), backend=default_backend())
+    cipher = Cipher(algorithms.AES(shared_secret), modes.CFB8(shared_secret),
+                    backend=default_backend())
     return cipher
 
 
 def encrypt_token_and_secret(pubkey, verification_token, shared_secret):
-    """Encrypts the verification token and shared secret with the server's public key
+    """Encrypts the verification token and shared secret
+    with the server's public key.
 
     :param pubkey: The RSA public key provided by the server
     :param verification_token: The verification token provided by the server
@@ -45,8 +47,8 @@ def generate_verification_hash(server_id, shared_secret, public_key):
 
 
 def minecraft_sha1_hash_digest(sha1_hash):
-    # Minecraft first parses the sha1 bytes as a signed number and then spits outs
-    # its hex representation
+    # Minecraft first parses the sha1 bytes as a signed number and then
+    # spits outs its hex representation
     number_representation = _number_from_bytes(sha1_hash.digest(), signed=True)
     return format(number_representation, 'x')
 
