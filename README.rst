@@ -1,6 +1,7 @@
 pyCraft
 =======
 .. image:: https://travis-ci.org/ammaraskar/pyCraft.svg
+    :target: https://travis-ci.org/ammaraskar/pyCraft
 
 
 Minecraft Python Client Library!

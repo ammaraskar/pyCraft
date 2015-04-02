@@ -12,5 +12,10 @@ env:
   - TOX_ENV=verify-manifest
 install:
   - pip install tox
+  - pip install python-coveralls
 script:
   - tox -e $TOX_ENV
+after_success:
+  - coveralls
+notifications:
+  email: false
