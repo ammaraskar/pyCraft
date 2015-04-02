@@ -16,6 +16,6 @@ install:
 script:
   - tox -e $TOX_ENV
 after_success:
-  - coveralls
+  - if [ "$TOX_ENV" = "cover" ]; then coveralls; fi
 notifications:
   email: false
