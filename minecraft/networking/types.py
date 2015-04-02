@@ -104,14 +104,14 @@ class VarInt(Type):
 
     @staticmethod
     def send(value, socket):
-        o = ""
+        out = ""
         while True:
-            b = value & 0x7F
+            byte = value & 0x7F
             value >>= 7
-            o += struct.pack("B", b | (0x80 if value > 0 else 0))
+            out += struct.pack("B", byte | (0x80 if value > 0 else 0))
             if value == 0:
                 break
-        socket.send(o)
+        socket.send(out)
 
     @staticmethod
     def size(value):
