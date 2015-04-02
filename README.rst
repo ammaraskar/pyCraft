@@ -2,6 +2,8 @@ pyCraft
 =======
 .. image:: https://travis-ci.org/ammaraskar/pyCraft.svg
     :target: https://travis-ci.org/ammaraskar/pyCraft
+.. image:: https://readthedocs.org/projects/pycraft/badge/?version=latest
+    :target: https://pycraft.readthedocs.org/en/latest
 .. image:: https://coveralls.io/repos/ammaraskar/pyCraft/badge.svg?branch=master 
     :target: https://coveralls.io/r/ammaraskar/pyCraft?branch=master
 
