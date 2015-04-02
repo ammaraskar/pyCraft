@@ -1,0 +1,16 @@
+language: python
+python: 2.7
+env:
+  - TOX_ENV=py27
+  - TOX_ENV=py33
+  - TOX_ENV=py34
+  - TOX_ENV=pypy
+  - TOX_ENV=cover
+  - TOX_ENV=flake8
+  - TOX_ENV=pylint-errors
+  - TOX_ENV=pylint-full
+  - TOX_ENV=verify-manifest
+install:
+  - pip install tox
+script:
+  - tox -e $TOX_ENV
