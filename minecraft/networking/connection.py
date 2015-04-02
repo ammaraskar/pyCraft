@@ -120,7 +120,7 @@ class Connection(object):
         self.reactor = LoginReactor(self)
         self._start_network_thread()
         login_start_packet = LoginStartPacket()
-        login_start_packet.name = self.auth_token.username
+        login_start_packet.name = self.auth_token.profile.name
         self.write_packet(login_start_packet)
 
     def _connect(self):

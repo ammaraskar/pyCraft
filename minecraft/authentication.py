@@ -253,10 +253,10 @@ class AuthenticationToken(object):
                              "selectedProfile": self.profile.to_dict(),
                              "serverId": server_id})
 
-        if req.status_code == requests.codes.ok:
+        if not req.raise_for_status():
             return True
         else:
-            raise YggdrasilError("Failed to join game.")
+            _raise_from_request(req)
 
 
 def _make_request(server, endpoint, data):
@@ -284,14 +284,17 @@ def _raise_from_request(req):
     if req.status_code == requests.codes.ok:
         return None
 
-    json_resp = req.json()
+    try:
+        json_resp = req.json()
 
-    if "error" not in json_resp and "errorMessage" not in json_resp:
-        raise YggdrasilError("Malformed error message.")
+        if "error" not in json_resp and "errorMessage" not in json_resp:
+            raise YggdrasilError("Malformed error message.")
 
-    message = "[{status_code}] {error}: '{error_message}'"
-    message = message.format(status_code=str(req.status_code),
-                             error=json_resp["error"],
-                             error_message=json_resp["errorMessage"])
+        message = "[{status_code}] {error}: '{error_message}'"
+        message = message.format(status_code=str(req.status_code),
+                                 error=json_resp["error"],
+                                 error_message=json_resp["errorMessage"])
+    except ValueError:
+        message = "Unknwon requests error: " + str(req.status_code)
 
     raise YggdrasilError(message)
