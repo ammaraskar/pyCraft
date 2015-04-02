@@ -41,10 +41,14 @@ def generate_verification_hash(server_id, shared_secret, public_key):
     verification_hash.update(shared_secret)
     verification_hash.update(public_key)
 
+    return minecraft_sha1_hash_digest(verification_hash)
+
+
+def minecraft_sha1_hash_digest(sha1_hash):
     # Minecraft first parses the sha1 bytes as a signed number and then spits outs
     # its hex representation
-    number = _number_from_bytes(verification_hash.digest(), signed=True)
-    return format(number, 'x')
+    number_representation = _number_from_bytes(sha1_hash.digest(), signed=True)
+    return format(number_representation, 'x')
 
 
 def _number_from_bytes(b, signed=False):

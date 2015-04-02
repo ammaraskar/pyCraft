@@ -80,27 +80,27 @@ class Integer(Type):
 
 class VarInt(Type):
     @staticmethod
-    def read_socket(s):
-        d = 0
+    def read_socket(socket):
+        number = 0
         for i in range(5):
-            b = s.recv(1)
-            if b == "":
+            byte = socket.recv(1)
+            if byte == "":
                 raise RuntimeError("Socket disconnected")
-            b = ord(b)
-            d |= (b & 0x7F) << 7 * i
-            if not b & 0x80:
+            byte = ord(byte)
+            number |= (byte & 0x7F) << 7 * i
+            if not byte & 0x80:
                 break
-        return d
+        return number
 
     @staticmethod
     def read(file_object):
-        d = 0
+        number = 0
         for i in range(5):
-            b = ord(file_object.read(1))
-            d |= (b & 0x7F) << 7 * i
-            if not b & 0x80:
+            byte = ord(file_object.read(1))
+            number |= (byte & 0x7F) << 7 * i
+            if not byte & 0x80:
                 break
-        return d
+        return number
 
     @staticmethod
     def send(value, socket):
@@ -115,12 +115,12 @@ class VarInt(Type):
 
     @staticmethod
     def size(value):
-        for max_value, size in VarInt_size_table.iteritems():
+        for max_value, size in VARINT_SIZE_TABLE.iteritems():
             if value < max_value:
                 return size
 
 # Maps (maximum integer value -> size of VarInt in bytes)
-VarInt_size_table = {
+VARINT_SIZE_TABLE = {
     2**7: 1,
     2**14: 2,
     2**21: 3,
