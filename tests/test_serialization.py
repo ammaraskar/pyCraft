@@ -1,10 +1,16 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 import unittest
+import string
+from random import choice
+from zlib import decompress
 from minecraft.networking.types import (
     Type, Boolean, UnsignedByte, Byte, Short, UnsignedShort,
     Integer, VarInt, Long, Float, Double, ShortPrefixedByteArray,
-    VarIntPrefixedByteArray, String
+    VarIntPrefixedByteArray, String as StringType
 )
-from minecraft.networking.packets import PacketBuffer
+from minecraft.networking.packets import PacketBuffer, ChatPacket
+
 
 TEST_DATA = {
     Boolean: [True, False],
@@ -19,7 +25,7 @@ TEST_DATA = {
     Double: [36.004002],
     ShortPrefixedByteArray: [bytes(245)],
     VarIntPrefixedByteArray: [bytes(1234)],
-    String: ["hello world"]
+    StringType: ["hello world"]
 }
 
 
@@ -40,3 +46,59 @@ class SerializationTest(unittest.TestCase):
                         self.assertAlmostEquals(test_data, deserialized, 3)
                     else:
                         self.assertEqual(test_data, deserialized)
+
+    def test_varint(self):
+        self.assertEqual(VarInt.size(2), 1)
+        self.assertEqual(VarInt.size(1250), 2)
+
+        packet_buffer = PacketBuffer()
+        VarInt.send(50000, packet_buffer)
+        packet_buffer.reset_cursor()
+
+        self.assertEqual(VarInt.read_socket(packet_buffer), 50000)
+
+    def test_packet(self):
+        packet = ChatPacket()
+        packet.message = u"κόσμε"
+
+        packet_buffer = PacketBuffer()
+        packet.write(packet_buffer)
+
+        packet_buffer.reset_cursor()
+        # Read the length and packet id
+        VarInt.read(packet_buffer)
+        packet_id = VarInt.read(packet_buffer)
+        self.assertEqual(packet_id, packet.id)
+
+        deserialized = ChatPacket()
+        deserialized.read(packet_buffer)
+
+        self.assertEqual(packet.message, deserialized.message)
+
+    def test_compressed_packet(self):
+        msg = ''.join(choice(string.ascii_lowercase) for i in range(500))
+
+        packet = ChatPacket()
+        packet.message = msg
+
+        packet_buffer = PacketBuffer()
+        packet.write(packet_buffer, compression_threshold=20)
+
+        packet_buffer.reset_cursor()
+
+        VarInt.read(packet_buffer)
+        compressed_size = VarInt.read(packet_buffer)
+
+        if compressed_size > 0:
+            decompressed = decompress(packet_buffer.read(compressed_size))
+            packet_buffer.reset()
+            packet_buffer.send(decompressed)
+            packet_buffer.reset_cursor()
+
+        packet_id = VarInt.read(packet_buffer)
+        self.assertEqual(packet_id, packet.id)
+
+        deserialized = ChatPacket()
+        deserialized.read(packet_buffer)
+
+        self.assertEqual(packet.message, deserialized.message)

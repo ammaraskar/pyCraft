@@ -21,6 +21,9 @@ class PacketBuffer(object):
     def read(self, length):
         return self.bytes.read(length)
 
+    def recv(self, length):
+        return self.read(length)
+
     def reset(self):
         self.bytes = BytesIO()
 
@@ -56,7 +59,7 @@ class Packet(object):
 
     def read(self, file_object):
         for field in self.definition:
-            for var_name, data_type in field.iteritems():
+            for var_name, data_type in field.items():
                 value = data_type.read(file_object)
                 setattr(self, var_name, value)
 
@@ -68,7 +71,7 @@ class Packet(object):
         VarInt.send(self.id, packet_buffer)
 
         for field in self.definition:
-            for var_name, data_type in field.iteritems():
+            for var_name, data_type in field.items():
                 data = getattr(self, var_name)
                 data_type.send(data, packet_buffer)
 

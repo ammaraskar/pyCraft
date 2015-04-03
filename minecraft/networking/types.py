@@ -198,6 +198,6 @@ class String(Type):
 
     @staticmethod
     def send(value, socket):
-        value = str(value).encode('utf-8')
+        value = value.encode('utf-8')
         VarInt.send(len(value), socket)
         socket.send(value)
