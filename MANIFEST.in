@@ -4,6 +4,7 @@ include requirements.txt
 include tox.ini
 include start.py
 recursive-include tests *.py
+recursive-include tests *.bin
 recursive-include minecraft *.py
 recursive-include docs *.rst
 include docs/Makefile

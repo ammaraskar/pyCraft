@@ -104,7 +104,7 @@ class VarInt(Type):
 
     @staticmethod
     def send(value, socket):
-        out = ""
+        out = bytes()
         while True:
             byte = value & 0x7F
             value >>= 7
