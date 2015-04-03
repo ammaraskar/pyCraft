@@ -6,10 +6,9 @@ import socket
 import time
 import select
 
-import encryption
-
 from .types import VarInt
 from . import packets
+from . import encryption
 from .. import PROTOCOL_VERSION
 
 
