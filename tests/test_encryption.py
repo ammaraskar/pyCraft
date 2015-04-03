@@ -9,6 +9,7 @@ from minecraft.networking.encryption import (
     generate_verification_hash,
     create_AES_cipher,
     EncryptedFileObjectWrapper,
+    EncryptedSocketWrapper
 )
 
 from cryptography.hazmat.backends import default_backend
@@ -55,7 +56,7 @@ class Encryption(unittest.TestCase):
         self.assertEquals(self.token, decrypted_token)
         self.assertEquals(secret, decrypted_secret)
 
-    def generate_hash_test(self):
+    def test_generate_hash(self):
         verification_hash = generate_verification_hash(
             b"", "secret".encode('utf-8'),  self.public_key)
         self.assertEquals("1f142e737a84a974a5f2a22f6174a78d80fd97f5",
@@ -76,4 +77,50 @@ class Encryption(unittest.TestCase):
 
         self.assertEqual(test_data, decrypted_data)
 
-    # TODO: test for the socket wrapper
+    def test_socket_wrapper(self):
+        secret = generate_shared_secret()
+
+        cipher = create_AES_cipher(secret)
+        encryptor = cipher.encryptor()
+        decryptor = cipher.decryptor()
+
+        server_cipher = create_AES_cipher(secret)
+        server_encryptor = server_cipher.encryptor()
+        server_decryptor = server_cipher.decryptor()
+
+        mock_socket = MockSocket(server_encryptor, server_decryptor)
+        wrapper = EncryptedSocketWrapper(mock_socket, encryptor, decryptor)
+
+        self.assertEqual(wrapper.fileno(), 0)
+
+        # Ensure that the 12 bytes we receive are the same as the 12 bytes
+        # sent by the server, after undergoing encryption
+        self.assertEqual(wrapper.recv(12), mock_socket.raw_data[:12])
+
+        # Ensure that hello reaches the server properly after undergoing
+        # encryption
+        test_data = "hello".encode('utf-8')
+        wrapper.send(test_data)
+        self.assertEqual(test_data, mock_socket.received)
+
+
+class MockSocket(object):
+
+    def __init__(self, encryptor, decryptor):
+        self.raw_data = os.urandom(100)
+        self.encryptor = encryptor
+        self.decryptor = decryptor
+        self.received = None
+
+    # when we receive data from the server
+    # it'll be encrypted
+    def recv(self, length):
+        return self.encryptor.update(self.raw_data[:length])
+
+    # decrypt the data as it reaches
+    # the server side
+    def send(self, data):
+        self.received = self.decryptor.update(data)
+
+    def fileno(self):
+        return 0

@@ -77,12 +77,16 @@ class SerializationTest(unittest.TestCase):
 
     def test_compressed_packet(self):
         msg = ''.join(choice(string.ascii_lowercase) for i in range(500))
-
         packet = ChatPacket()
         packet.message = msg
 
+        self.write_read_packet(packet, 20)
+        self.write_read_packet(packet, -1)
+
+    def write_read_packet(self, packet, compression_threshold):
+
         packet_buffer = PacketBuffer()
-        packet.write(packet_buffer, compression_threshold=20)
+        packet.write(packet_buffer, compression_threshold)
 
         packet_buffer.reset_cursor()
 

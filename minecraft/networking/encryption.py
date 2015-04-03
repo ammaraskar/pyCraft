@@ -1,7 +1,6 @@
 import os
 from hashlib import sha1
 from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.asymmetric.padding import PKCS1v15
 from cryptography.hazmat.primitives.serialization import load_der_public_key
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
@@ -28,9 +27,6 @@ def encrypt_token_and_secret(pubkey, verification_token, shared_secret):
     """
     pubkey = load_der_public_key(pubkey, default_backend())
 
-    if not isinstance(pubkey, rsa.RSAPublicKey):
-        raise RuntimeError("Public key provided by server not an RSA key")
-
     encrypted_token = pubkey.encrypt(verification_token, PKCS1v15())
     encrypted_secret = pubkey.encrypt(shared_secret, PKCS1v15())
     return encrypted_token, encrypted_secret
@@ -56,15 +52,14 @@ def minecraft_sha1_hash_digest(sha1_hash):
 def _number_from_bytes(b, signed=False):
     try:
         return int.from_bytes(b, byteorder='big', signed=signed)
-    except AttributeError:
-        pass
-
-    if len(b) == 0:
-        b = b'\x00'
-    num = int(str(b).encode('hex'), 16)
-    if signed and (ord(b[0]) & 0x80):
-        num -= 2 ** (len(b) * 8)
-    return num
+    except AttributeError:  # pragma: no cover
+        # py-2 compatibility
+        if len(b) == 0:
+            b = b'\x00'
+        num = int(str(b).encode('hex'), 16)
+        if signed and (ord(b[0]) & 0x80):
+            num -= 2 ** (len(b) * 8)
+        return num
 
 
 class EncryptedFileObjectWrapper(object):

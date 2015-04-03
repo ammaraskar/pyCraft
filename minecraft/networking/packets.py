@@ -77,7 +77,7 @@ class Packet(object):
 
         # compression_threshold of None means compression is disabled
         if compression_threshold is not None:
-            if len(packet_buffer.get_writable()) > compression_threshold:
+            if len(packet_buffer.get_writable()) > compression_threshold != -1:
                 # compress the current payload
                 compressed_data = compress(packet_buffer.get_writable())
                 packet_buffer.reset()
@@ -87,8 +87,10 @@ class Packet(object):
                 packet_buffer.send(compressed_data)
             else:
                 # write out a 0 to indicate uncompressed data
+                packet_data = packet_buffer.get_writable()
                 packet_buffer.reset()
                 VarInt.send(0, packet_buffer)
+                packet_buffer.send(packet_data)
 
         VarInt.send(len(packet_buffer.get_writable()), socket)  # Packet Size
         socket.send(packet_buffer.get_writable())  # Packet Payload
