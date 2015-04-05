@@ -7,11 +7,13 @@ this program will exit with exit code 1.
 
 __doc__ = DOCSTR
 
-from sh import pylint
-from sh import ErrorReturnCode
+import subprocess
+import os
 import sys
 import re
 import argparse
+
+os.chdir("..")  # leave bin/
 
 parser = argparse.ArgumentParser(DOCSTR)
 
@@ -22,20 +24,32 @@ parser.add_argument("--min-eval", dest="min_eval", type=float, default=10.00,
 
 args = parser.parse_args()
 
-PYLINT_ARGS = ("minecraft", "--disable=E")
+PYLINT = ("pylint", "minecraft", "--disable=E")
+EVAL_PATTERN = (r"Global evaluation\n-----------------\n"
+                r"Your code has been rated at (\d*\.\d+)/10")
 
-try:
-    output = pylint(*PYLINT_ARGS)
-except ErrorReturnCode as e:
-    output = e.stdout
-output = output.decode()
 
-global_eval_pattern = re.compile(r"Global evaluation\n-----------------\n"
-                                 r"Your code has been rated at (\d*\.\d+)/10")
+def get_evaluation_score_and_output():
+    """
+    Returns a tuple containing ``(output, eval_score)`` where:
+        ``output`` is a ``str`` with the pylint output.
+        ``eval_score`` is a ``float`` with the pylint evaluation score
+    """
+    try:
+        output = subprocess.check_output(PYLINT)
+    except subprocess.CalledProcessError as e:
+        output = e.output
+    output = output.decode()
 
-match = global_eval_pattern.search(output)
-evaluation = float(match.group(1))
+    global_eval_pattern = re.compile(EVAL_PATTERN)
 
+    match = global_eval_pattern.search(output)
+
+    evaluation = float(match.group(1))
+
+    return (output, evaluation)
+
+output, evaluation = get_evaluation_score_and_output()
 print(output)  # We want to appear as if we're pylint
 
 if evaluation < args.min_eval:
