@@ -24,7 +24,7 @@ parser.add_argument("--min-eval", dest="min_eval", type=float, default=10.00,
 
 args = parser.parse_args()
 
-PYLINT = ("pylint", "minecraft", "--disable=E")
+PYLINT = ("pylint", "-f", "colorized", "minecraft", "--disable=E")
 EVAL_PATTERN = (r"Global evaluation\n-----------------\n"
                 r"Your code has been rated at (\d*\.\d+)/10")
 
