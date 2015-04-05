@@ -294,6 +294,7 @@ def _raise_from_request(req):
                                  error=json_resp["error"],
                                  error_message=json_resp["errorMessage"])
     except ValueError:
-        message = "Unknwon requests error: " + str(req.status_code)
+        message = "Unknown requests error. Status code: {}"
+        message.format(str(req.status_code))
 
     raise YggdrasilError(message)
