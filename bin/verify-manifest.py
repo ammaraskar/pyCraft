@@ -1,34 +1,32 @@
-import subprocess
+"""
+Exits with exit code 0 if manifest was verified.
+"""
+
+from sh import check_manifest
+from sh import ErrorReturnCode_1
 import sys
 
 EXPECTED_OUTPUT = "lists of files in version control and sdist match"
 
 
-def check_manifest():
+def verify_manifest():
     """
-    Returns a tuple containing ``(output, status)``.
-
-    Status is:
-        ``True`` if ``output`` was as expected (no errors),
-        ``False`` otherwise.
+    Returns a ``str`` containing output from ``check-manifest``.
     """
-    output = subprocess.check_output(["check-manifest"]).decode()
-    if EXPECTED_OUTPUT == output.strip():
-        status = True
-    else:
-        status = False
+    try:
+        output = check_manifest().decode()
+    except ErrorReturnCode_1 as e:
+        output = e.stderr.decode() + e.stdout.decode()
 
-    return (output, status)
+    return output
 
 if __name__ == '__main__':
-    output, verified = check_manifest()
+    output = verify_manifest()
 
-    if not verified:
-        print("Check-manifest didn't match.")
-        print("OUTPUT: {}".format(output))
-        print("EXPECTED_OUTPUT: {}".format(EXPECTED_OUTPUT))
-        sys.exit(1)
+    print(output)
+
+    if output == EXPECTED_OUTPUT:
+        sys.exit(0)
 
     else:
-        print("Manifest verified.")
-        sys.exit(0)
+        sys.exit(1)
