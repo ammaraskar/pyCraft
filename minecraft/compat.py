@@ -11,9 +11,9 @@ both Python2 and Python3 while using the same codebase.
 # Hi, I'm pylint, and sometimes I act silly, at which point my programmer
 # overlords need to correct me.
 
-# pylint: disable=undefined-variable
+# pylint: disable=undefined-variable,redefined-builtin,invalid-name
 try:
     input = raw_input
 except NameError:
     pass
-# pylint: enable=undefined-variable
+# pylint: enable=undefined-variable,redefined-builtin,invalid-name

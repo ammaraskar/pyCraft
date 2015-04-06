@@ -18,7 +18,7 @@ class Profile(object):
     See: `<http://wiki.vg/Authentication>`_
     """
     def __init__(self, id_=None, name=None):
-        self.id = id_
+        self.id_ = id_
         self.name = name
 
     def to_dict(self):
@@ -26,13 +26,13 @@ class Profile(object):
         Returns ``self`` in dictionary-form, which can be serialized by json.
         """
         if self:
-            return {"id": self.id,
+            return {"id": self.id_,
                     "name": self.name}
         else:
             raise AttributeError("Profile is not yet populated.")
 
     def __bool__(self):
-        bool_state = self.id is not None and self.name is not None
+        bool_state = self.id_ is not None and self.name is not None
         return bool_state
 
     # Python 2 support
@@ -121,7 +121,7 @@ class AuthenticationToken(object):
         self.username = username
         self.access_token = json_resp["accessToken"]
         self.client_token = json_resp["clientToken"]
-        self.profile.id = json_resp["selectedProfile"]["id"]
+        self.profile.id_ = json_resp["selectedProfile"]["id"]
         self.profile.name = json_resp["selectedProfile"]["name"]
 
         return True
