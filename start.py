@@ -51,7 +51,7 @@ def main():
     try:
         auth_token.authenticate(options.username, options.password)
     except YggdrasilError as e:
-        print(e.error)
+        print(e)
         sys.exit()
 
     print("Logged in as " + auth_token.username)
