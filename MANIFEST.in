@@ -2,6 +2,7 @@ include README.rst
 include LICENSE
 include requirements.txt
 include tox.ini
+include pylintrc
 include start.py
 recursive-include tests *.py
 recursive-include tests *.bin
