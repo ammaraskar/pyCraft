@@ -2,12 +2,11 @@ import getpass
 import sys
 from optparse import OptionParser
 
-from pprint import pprint
-
 from minecraft import authentication
 from minecraft.exceptions import YggdrasilError
 from minecraft.networking.connection import Connection
 from minecraft.networking.packets import ChatMessagePacket, ChatPacket
+from minecraft.compat import input
 
 
 def get_options():
@@ -25,13 +24,14 @@ def get_options():
     (options, args) = parser.parse_args()
 
     if not options.username:
-        options.username = raw_input("Enter your username: ")
+        options.username = input("Enter your username: ")
 
     if not options.password:
         options.password = getpass.getpass("Enter your password: ")
 
     if not options.server:
-        options.server = raw_input("Please enter server address (including port): ")
+        options.server = input("Please enter server address"
+                               " (including port): ")
     # Try to split out port and address
     if ':' in options.server:
         server = options.server.split(":")
@@ -66,7 +66,7 @@ def main():
     connection.register_packet_listener(print_chat, ChatMessagePacket)
     while True:
         try:
-            text = raw_input()
+            text = input()
             packet = ChatPacket()
             packet.message = text
             connection.write_packet(packet)
