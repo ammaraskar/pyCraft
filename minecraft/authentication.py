@@ -157,7 +157,7 @@ class AuthenticationToken(object):
 
         self.access_token = json_resp["accessToken"]
         self.client_token = json_resp["clientToken"]
-        self.profile.id = json_resp["selectedProfile"]["id"]
+        self.profile.id_ = json_resp["selectedProfile"]["id"]
         self.profile.name = json_resp["selectedProfile"]["name"]
 
         return True
