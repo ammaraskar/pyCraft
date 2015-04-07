@@ -30,7 +30,10 @@ We aim to be compatible with the following python versions:
 
 Requirements
 ------------
-- `cryptography <https://github.com/pyca/cryptography#cryptography>`_ (Also in ``requirements.txt``)
+- `cryptography <https://github.com/pyca/cryptography#cryptography>`_ 
+- `requests <http://docs.python-requests.org/en/latest/>`_
+
+The requirements are also stored in ``requirements.txt``
 
 See the installation instructions for the cryptography library here: `<https://cryptography.io/en/latest/installation/>`_
 but essentially ``pip install -r requirements.txt`` should cover everything.
