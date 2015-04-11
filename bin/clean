@@ -4,3 +4,7 @@ rm -v coverage.xml
 rm -v MANIFEST
 rm -v nosetests.xml
 rm -rv build
+
+find . -type f -name '*.py[co]' -delete
+find . -path '*/__pycache__/*' -delete
+find . -type d -name "__pycache__" -delete
