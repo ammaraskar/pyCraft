@@ -15,5 +15,5 @@ both Python2 and Python3 while using the same codebase.
 try:
     input = raw_input
 except NameError:
-    pass
+    input = input
 # pylint: enable=undefined-variable,redefined-builtin,invalid-name

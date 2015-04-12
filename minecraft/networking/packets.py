@@ -54,8 +54,13 @@ class Packet(object):
     id = -0x01
     definition = []
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         pass
+
+    def set_values(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+        return self
 
     def read(self, file_object):
         for field in self.definition:
