@@ -37,12 +37,26 @@ class Datatype(object):
         ``data``. This does somewhat go against the Duck-typing principle.
 
         The same applies for ``ALLOWED_DESERIALIZATION_TYPES``.
+
+    .. note::
+        If ``DISALLOWED_SERIALIZATION_TYPES`` is not empty, only the types
+        found in ``DISALLOWED_SERIALIZATION_TYPES`` are allowed as
+        serialization ``data``. This does somewhat go against the
+        Duck-typing principle.
+
+        ``DISALLOWED_SERIALIZATION_TYPES`` exists as a way to exclude certain
+        subclasses of a given type.
+
+        The same applies for ``DISALLOWED_DESERIALIZATION_TYPES``.
     """
     FORMAT = ""
     SIZE = 0
 
     ALLOWED_SERIALIZATION_TYPES = tuple()
     ALLOWED_DESERIALIZATION_TYPES = tuple()
+
+    DISALLOWED_SERIALIZATION_TYPES = tuple()
+    DISALLOWED_SERIALIZATION_TYPES = tuple()
 
     @classmethod
     def read(cls, fileobject):
@@ -76,14 +90,17 @@ class Datatype(object):
         :rtype: ``None``
         :raises: ``TypeError``, ``ValueError``
         """
+        error_message = "'data's type ('{}') is not an allowed type."
+        error_message = error_message.format(type(data).__name__)
         if (cls.ALLOWED_SERIALIZATION_TYPES and
             not any([isinstance(data, type_) for type_
                     in cls.ALLOWED_SERIALIZATION_TYPES])):
 
-            e = "'data's type ('{}') is not an allowed type."
-            e = e.format(type(data).__name__)
+            raise TypeError(error_message)
 
-            raise TypeError(e)
+        for type_ in cls.DISALLOWED_SERIALIZATION_TYPES:
+            if isinstance(data, type_):
+                raise TypeError(error_message)
 
         cls._raise_serialization_value_error_data(data)
 
@@ -138,6 +155,9 @@ class Boolean(Datatype):
 class Byte(Datatype):
     FORMAT = "b"
     SIZE = 1
+
+    ALLOWED_SERIALIZATION_TYPES = (int,)
+    DISALLOWED_SERIALIZATION_TYPES = (bool,)
 
     @staticmethod
     def _raise_serialization_value_error_data(data):

@@ -64,6 +64,7 @@ class BaseDatatypeTester(unittest.TestCase):
     def test_invalid_data_serialization_values(self):
         for value, exception in self.TEST_DATA_INVALID_SERIALIZATION_VALUES:
             with self.assertRaises(exception):
+                print(value)
                 self.DATATYPE_CLS.serialize(value)
 
     def test_invalid_data_deserialization_values(self):
@@ -121,7 +122,16 @@ class ByteTest(BaseDatatypeTester):
         (-500, ValueError),
         (128, ValueError),
         (1024, ValueError),
+        ("", TypeError),
+        ("Test", TypeError),
+        (b"\x00", TypeError),
+        (b"\x80", TypeError),
+        (True, TypeError),
+        (False, TypeError),
+    ]
 
+    TEST_DATA_INVALID_DESERIALIZATION_VALUES = [
+        
     ]
 
 # def _bin(binstr):
