@@ -27,21 +27,21 @@ import unittest
 class BaseDatatypeTester(unittest.TestCase):
     DATATYPE_CLS = Datatype  # We use Datatype as a an example here.
 
-    # TEST_DATA_VALID_VALUES should have the following format:
+    # VALID_VALUES should have the following format:
     # [(DESERIALIZED_VALUE, SERIALIZED_VALUE), ...]
     #
     # So that DESERIALIZED_VALUE is SERIALIZED_VALUE when serialized
     # and vice versa.
 
-    TEST_DATA_VALID_VALUES = []
+    VALID_VALUES = []
 
-    # TEST_DATA_INVALID_SERIALIZATION_VALUES should be a list of tuples
+    # INVALID_SERIALIZATION_VALUES should be a list of tuples
     # containing the value and the expected exception.
-    TEST_DATA_INVALID_SERIALIZATION_VALUES = []
+    INVALID_SERIALIZATION_VALUES = []
 
-    # TEST_DATA_INVALID_DESERIALIZATION_VALUES should be a list of tuples
+    # INVALID_DESERIALIZATION_VALUES should be a list of tuples
     # containing the value and the expected exception.
-    TEST_DATA_INVALID_DESERIALIZATION_VALUES = []
+    INVALID_DESERIALIZATION_VALUES = []
 
     def test_init(self):
         d = self.DATATYPE_CLS()  # noqa
@@ -52,40 +52,84 @@ class BaseDatatypeTester(unittest.TestCase):
             d = self.DATATYPE_CLS("This is a positional argument...")  # noqa
 
     def test_valid_data_serialization_values(self):
-        for deserialized_val, serialized_val in self.TEST_DATA_VALID_VALUES:
+        for deserialized_val, serialized_val in self.VALID_VALUES:
             self.assertEqual(self.DATATYPE_CLS.serialize(deserialized_val),
                              serialized_val)
 
     def test_valid_data_deserialization_values(self):
-        for deserialized_val, serialized_val in self.TEST_DATA_VALID_VALUES:
+        for deserialized_val, serialized_val in self.VALID_VALUES:
             self.assertEqual(self.DATATYPE_CLS.deserialize(serialized_val),
                              deserialized_val)
 
     def test_invalid_data_serialization_values(self):
-        for value, exception in self.TEST_DATA_INVALID_SERIALIZATION_VALUES:
+        for value, exception in self.INVALID_SERIALIZATION_VALUES:
             with self.assertRaises(exception):
-                print(value)
                 self.DATATYPE_CLS.serialize(value)
 
     def test_invalid_data_deserialization_values(self):
-        for value, exception in self.TEST_DATA_INVALID_DESERIALIZATION_VALUES:
+        for value, exception in self.INVALID_DESERIALIZATION_VALUES:
             with self.assertRaises(exception):
                 self.DATATYPE_CLS.deserialize(value)
+
+
+class BaseNumberDatatypeTester(BaseDatatypeTester):
+    BASE_NUMBER_INVALID_SERIALIZATION_VALUES = [
+        ("", TypeError),
+        ("Test", TypeError),
+        (b"\x00", TypeError),
+        (b"\x80", TypeError),
+        (True, TypeError),
+        (False, TypeError)
+    ]
+
+    def base_number_invalid_data_serialization_values(self):
+        values_to_test = BASE_INVALID_SERIALIZATION_VALUES
+        values_to_test.extend([
+            (self.DATATYPE_CLS.MIN_NUMBER_VALUE - 1, ValueError),
+            (self.DATATYPE_CLS.MAX_NUMBER_VALUE + 1, ValueError)
+        ])
+
+        for value, exception in values_to_test:
+            with self.assertRaises(exception):
+                self.DATATYPE_CLS.serialize(value)
+
+
+class BaseStringDatatypeTester(BaseDatatypeTester):
+    pass
+
+
+BASE_INVALID_DESERIALIZATION_VALUES = [
+    (-1, TypeError),
+    (0, TypeError),
+    (1, TypeError),
+    ("", ValueError),
+    ("Test", ValueError),
+    (True, TypeError),
+    (False, TypeError)
+]
 
 
 class DatatypeTest(BaseDatatypeTester):
     DATATYPE_CLS = Datatype
 
 
+class NumberDatatypeTest(BaseNumberDatatypeTester):
+    DATATYPE_CLS = NumberDatatype
+
+
+class StringDatatypeTest(BaseStringDatatypeTester):
+    DATATYPE_CLS = StringDatatype
+
+
 class BooleanTest(BaseDatatypeTester):
     DATATYPE_CLS = Boolean
 
-    TEST_DATA_VALID_VALUES = [
+    VALID_VALUES = [
         (True, b"\x01"),
         (False, b"\x00")
     ]
 
-    TEST_DATA_INVALID_SERIALIZATION_VALUES = [
+    INVALID_SERIALIZATION_VALUES = [
         ("\x00", TypeError),
         ("\x01", TypeError),
         ("\x02", TypeError),
@@ -96,21 +140,19 @@ class BooleanTest(BaseDatatypeTester):
         ("Test", TypeError)
     ]
 
-    TEST_DATA_INVALID_DESERIALIZATION_VALUES = [
-        (-1, TypeError),
-        (0, TypeError),
-        (1, TypeError),
-        ("", TypeError),
-        ("Test", TypeError),
-        (True, TypeError),
-        (False, TypeError)
-    ]
+    # Use list(BASE_INVALID_DESERIALIZATION_VALUES) instead of
+    # just = BASE_INVALID_DESERIALIZATION_VALUES, cause we want a COPY 
+    # of the list, NOT a reference (that we'll later extend!)
+    INVALID_DESERIALIZATION_VALUES = list(BASE_INVALID_DESERIALIZATION_VALUES)
+    INVALID_DESERIALIZATION_VALUES.extend([
+        (b"\x00\x01", ValueError)
+    ])
 
 
-class ByteTest(BaseDatatypeTester):
+class ByteTest(BaseNumberDatatypeTester):
     DATATYPE_CLS = Byte
 
-    TEST_DATA_VALID_VALUES = [
+    VALID_VALUES = [
         (-128, b"\x80"),
         (-22, b"\xea"),
         (0, b"\x00"),
@@ -118,21 +160,53 @@ class ByteTest(BaseDatatypeTester):
         (127, b"\x7f")
     ]
 
-    TEST_DATA_INVALID_SERIALIZATION_VALUES = [
-        (-500, ValueError),
-        (128, ValueError),
-        (1024, ValueError),
-        ("", TypeError),
-        ("Test", TypeError),
-        (b"\x00", TypeError),
-        (b"\x80", TypeError),
-        (True, TypeError),
-        (False, TypeError),
+    INVALID_DESERIALIZATION_VALUES = list(BASE_INVALID_DESERIALIZATION_VALUES)
+    INVALID_DESERIALIZATION_VALUES.extend([
+        (b"\x01\x20", ValueError),
+    ])
+
+
+class UnsignedByteTest(BaseNumberDatatypeTester):
+    DATATYPE_CLS = UnsignedByte
+
+    VALID_VALUES = [
+        (0, b"\x00"),
+        (127, b"\x7f"),
+        (255, b"\xff")
     ]
 
-    TEST_DATA_INVALID_DESERIALIZATION_VALUES = [
-        
+    INVALID_DESERIALIZATION_VALUES = ByteTest.INVALID_DESERIALIZATION_VALUES
+
+
+class ShortTest(BaseNumberDatatypeTester):
+    DATATYPE_CLS = Short
+
+    VALID_VALUES = [
+        (-32768, b"\x80\x00"),
+        (-10000, b"\xd8\xf0"),
+        (0, b"\x00\x00"),
+        (5000, b"\x13\x88"),
+        (32767, b"\x7f\xff")
     ]
+
+    INVALID_DESERIALIZATION_VALUES = list(BASE_INVALID_DESERIALIZATION_VALUES)
+    INVALID_DESERIALIZATION_VALUES.extend([
+        (b"\xff", ValueError),
+        (b"\xff\x01\x6e", ValueError)
+    ])
+
+
+class UnsignedShortTest(BaseNumberDatatypeTester):
+    DATATYPE_CLS = UnsignedShort
+
+    VALID_VALUES = [
+        (0, b"\x00\x00"),
+        (10000, b"'\x10"),
+        (32767, b"\x7f\xff"),
+        (65535, b"\xff\xff")
+    ]
+
+    INVALID_DESERIALIZATION_VALUES = ShortTest.INVALID_DESERIALIZATION_VALUES
 
 # def _bin(binstr):
 #     """

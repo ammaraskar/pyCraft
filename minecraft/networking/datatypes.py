@@ -6,7 +6,7 @@ These datatypes are used by the packet definitions.
 """
 
 __all__ = ["ENDIANNESS",
-           "Datatype",
+           "Datatype", "NumberDatatype", "StringDatatype",
            "Boolean",
            "Byte", "UnsignedByte",
            "Short", "UnsignedShort",
@@ -92,6 +92,7 @@ class Datatype(object):
         """
         error_message = "'data's type ('{}') is not an allowed type."
         error_message = error_message.format(type(data).__name__)
+
         if (cls.ALLOWED_SERIALIZATION_TYPES and
             not any([isinstance(data, type_) for type_
                     in cls.ALLOWED_SERIALIZATION_TYPES])):
@@ -106,8 +107,8 @@ class Datatype(object):
 
         return None
 
-    @staticmethod
-    def _raise_serialization_value_error_data(data):
+    @classmethod
+    def _raise_serialization_value_error_data(cls, data):
         """
         Raises a ValueError if ``data`` is not valid.
 
@@ -137,11 +138,49 @@ class Datatype(object):
 
         if cls.SIZE != len(data):
             err = "'data' must have a length of {}, not {}"
-            err = err.format(str(cls.SIZE), len(data))
+            err = err.format(str(cls.SIZE), str(len(data)))
 
-            raise TypeError(err)
+            raise ValueError(err)
 
         return None
+
+
+class NumberDatatype(Datatype):
+    """
+    Base abstract class for all number-like minecraft networking datatypes.
+
+    .. note::
+        Numbers to be serialized must be between this classes
+        ``MIN_NUMBER_VALUE`` and ``MAX_NUMBER_VALUE``, or a ``ValueError`` will
+        be raised.
+
+        If ``MIN_NUMBER_VALUE`` or ``MAX_NUMBER_VALUE`` are ``None``
+        (as in the case of float), checking is left to the ``struct`` module.
+    """
+
+    MIN_NUMBER_VALUE = None
+    MAX_NUMBER_VALUE = None
+
+    ALLOWED_SERIALIZATION_TYPES = (int,)
+    DISALLOWED_SERIALIZATION_TYPES = (bool,)
+
+    @classmethod
+    def _raise_serialization_value_error_data(cls, data):
+        if (cls.MIN_NUMBER_VALUE is not None
+                and cls.MAX_NUMBER_VALUE is not None):
+
+            if not cls.MIN_NUMBER_VALUE <= data <= cls.MAX_NUMBER_VALUE:
+                err = "'data' must be an integer with value between {} and {}."
+                err = err.format(str(cls.MIN_NUMBER_VALUE),
+                                 str(cls.MAX_NUMBER_VALUE))
+
+                raise ValueError(err)
+
+        return None
+
+
+class StringDatatype(Datatype):
+    pass
 
 
 class Boolean(Datatype):
@@ -152,76 +191,97 @@ class Boolean(Datatype):
     ALLOWED_DESERIALIZATION_TYPES = (collections.Sequence,)
 
 
-class Byte(Datatype):
+class Byte(NumberDatatype):
     FORMAT = "b"
     SIZE = 1
 
-    ALLOWED_SERIALIZATION_TYPES = (int,)
-    DISALLOWED_SERIALIZATION_TYPES = (bool,)
-
-    @staticmethod
-    def _raise_serialization_value_error_data(data):
-        if not -128 <= data <= 127:
-            e = "'data' must be an integer with value between -128 and 127."
-            raise ValueError(e)
+    MIN_NUMBER_VALUE = -128
+    MAX_NUMBER_VALUE = 127
 
 
-class UnsignedByte(Datatype):
+class UnsignedByte(NumberDatatype):
     FORMAT = "B"
     SIZE = 1
 
+    MIN_NUMBER_VALUE = 0
+    MAX_NUMBER_VALUE = 255
 
-class Short(Datatype):
+
+class Short(NumberDatatype):
     FORMAT = "h"
     SIZE = 2
 
+    MIN_NUMBER_VALUE = -32768
+    MAX_NUMBER_VALUE = 32767
 
-class UnsignedShort(Datatype):
+
+class UnsignedShort(NumberDatatype):
     FORMAT = "H"
     SIZE = 2
 
+    MIN_NUMBER_VALUE = 0
+    MAX_NUMBER_VALUE = 65535
 
-class Integer(Datatype):
+
+class Integer(NumberDatatype):
     FORMAT = "i"
     SIZE = 4
 
+    MIN_NUMBER_VALUE = -2147483648
+    MAX_NUMBER_VALUE = 2147483647
 
-class UnsignedInteger(Datatype):
+
+class UnsignedInteger(NumberDatatype):
     FORMAT = "I"
     SIZE = 4
 
+    MIN_NUMBER_VALUE = 0
+    MAX_NUMBER_VALUE = 4294967295
 
-class Long(Datatype):
+
+class Long(NumberDatatype):
     FORMAT = "l"
     SIZE = 4
 
+    MIN_NUMBER_VALUE = -2147483648
+    MAX_NUMBER_VALUE = 2147483647
 
-class UnsignedLong(Datatype):
+
+class UnsignedLong(NumberDatatype):
     FORMAT = "L"
     SIZE = 4
 
+    MIN_NUMBER_VALUE = 0
+    MAX_NUMBER_VALUE = 4294967295
 
-class LongLong(Datatype):
+
+class LongLong(NumberDatatype):
     FORMAT = "q"
     SIZE = 8
 
+    MIN_NUMBER_VALUE = -9223372036854775808
+    MAX_NUMBER_VALUE = 9223372036854775807
 
-class UnsignedLongLong(Datatype):
+
+class UnsignedLongLong(NumberDatatype):
     FORMAT = "Q"
     SIZE = 8
 
+    MIN_NUMBER_VALUE = 0
+    MAX_NUMBER_VALUE = 18446744073709551615
 
-class Float(Datatype):
+
+class Float(NumberDatatype):
     FORMAT = "f"
     SIZE = 4
 
 
-class Double(Datatype):
+class Double(NumberDatatype):
     FORMAT = "d"
     SIZE = 8
 
 
-class VarInt(Datatype):
+class VarInt(NumberDatatype):
     # See: https://developers.google.com/protocol-buffers/docs/encoding#varints
     # See: https://github.com/ammaraskar/pyCraft/blob/7e8df473520d57ca22fb57888681f51705128cdc/network/types.py#l123  # noqa
     # See: https://github.com/google/protobuf/blob/0c59f2e6fc0a2cb8e8e3b4c7327f650e8586880a/python/google/protobuf/internal/decoder.py#l107  # noqa
