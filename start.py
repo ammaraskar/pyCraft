@@ -6,7 +6,7 @@ from minecraft import authentication
 from minecraft.exceptions import YggdrasilError
 from minecraft.networking.connection import Connection
 from minecraft.networking.packets import ChatMessagePacket, ChatPacket
-from minecraft.compat import input
+from six.moves import input
 
 
 def get_options():
