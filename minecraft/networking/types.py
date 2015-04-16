@@ -166,6 +166,16 @@ class Double(Type):
         socket.send(struct.pack('>d', value))
 
 
+class ByteArray(Type):
+    @staticmethod
+    def read(file_object):
+        return b""
+
+    @staticmethod
+    def send(value, socket):
+        socket.send(value)
+
+
 class ShortPrefixedByteArray(Type):
     @staticmethod
     def read(file_object):

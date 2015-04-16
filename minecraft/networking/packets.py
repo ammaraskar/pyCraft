@@ -3,7 +3,7 @@ from zlib import compress
 
 from .types import (
     VarInt, Integer, Float, Double, UnsignedShort, Long, Byte, UnsignedByte,
-    String, VarIntPrefixedByteArray, Boolean
+    String, VarIntPrefixedByteArray, Boolean, Short, ByteArray
 )
 
 
@@ -83,8 +83,8 @@ class Packet(object):
         # compression_threshold of None means compression is disabled
         if compression_threshold is not None:
             if len(packet_buffer.get_writable()) > compression_threshold != -1:
-                # compress the current payload
-                compressed_data = compress(packet_buffer.get_writable())
+                # compress the current payload, level of 9 for max compression
+                compressed_data = compress(packet_buffer.get_writable(), 9)
                 packet_buffer.reset()
                 # write out the length of the compressed payload
                 VarInt.send(len(compressed_data), packet_buffer)
@@ -311,8 +311,25 @@ class PositionAndLookPacket(Packet):
         {'on_ground': Boolean}]
 
 
+class BlockPlacementPacket(Packet):
+    id = 0x08
+    packet_name = "block placement"
+    definition = [
+        {'position': Double},
+        {'face': Byte},
+        {'held_item_id': Short},
+        {'held_item_count': Byte},
+        {'held_item_damage': Short},
+        {'held_item_nbt': ByteArray},
+        {'cursor_position_x': Byte},
+        {'cursor_position_y': Byte},
+        {'cursor_position_z': Byte}
+    ]
+
+
 STATE_PLAYING_SERVERBOUND = {
     0x00: KeepAlivePacket,
     0x01: ChatPacket,
-    0x06: PositionAndLookPacket
+    0x06: PositionAndLookPacket,
+    0x08: BlockPlacementPacket
 }
