@@ -1,5 +1,4 @@
-from minecraft.networking.datatypes import *
-from minecraft.exceptions import DeserializationError
+from minecraft.networking.datatypes import *  # noqa undefined-names
 
 import unittest
 
