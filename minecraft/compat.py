@@ -8,5 +8,5 @@ import six
 # ### LONG ###
 if six.PY3:
     long = int
-else:
+else:  # pragma: no cover
     long = long
