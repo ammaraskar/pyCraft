@@ -103,7 +103,6 @@ BASE_INVALID_DESERIALIZATION_VALUES = [
     (0, TypeError),
     (1, TypeError),
     ("", ValueError),
-    ("Test", ValueError),
     (True, TypeError),
     (False, TypeError)
 ]
@@ -141,7 +140,7 @@ class BooleanTest(BaseDatatypeTester):
     ]
 
     # Use list(BASE_INVALID_DESERIALIZATION_VALUES) instead of
-    # just = BASE_INVALID_DESERIALIZATION_VALUES, cause we want a COPY 
+    # just = BASE_INVALID_DESERIALIZATION_VALUES, cause we want a COPY
     # of the list, NOT a reference (that we'll later extend!)
     INVALID_DESERIALIZATION_VALUES = list(BASE_INVALID_DESERIALIZATION_VALUES)
     INVALID_DESERIALIZATION_VALUES.extend([
@@ -207,6 +206,39 @@ class UnsignedShortTest(BaseNumberDatatypeTester):
     ]
 
     INVALID_DESERIALIZATION_VALUES = ShortTest.INVALID_DESERIALIZATION_VALUES
+
+
+class IntegerTest(BaseNumberDatatypeTester):
+    DATATYPE_CLS = Integer
+
+    VALID_VALUES = [
+        (-2147483648, b"\x80\x00\x00\x00"),
+        (-1000000, b"\xff\xf0\xbd\xc0"),
+        (0, b"\x00\x00\x00\x00"),
+        (10000000, b"\x00\x98\x96\x80"),
+        (2147483647, b"\x7f\xff\xff\xff")
+    ]
+
+    INVALID_DESERIALIZATION_VALUES = list(BASE_INVALID_DESERIALIZATION_VALUES)
+    INVALID_DESERIALIZATION_VALUES.extend([
+        (b"\xff", ValueError),
+        (b"\x00\x01", ValueError),
+        (b"\x76\x80\x80\x10\xff", ValueError)
+    ])
+
+
+class UnsignedIntegerTest(BaseNumberDatatypeTester):
+    DATATYPE_CLS = UnsignedInteger
+
+    VALID_VALUES = [
+        (0, "\x00\x00\x00\x00"),
+        (10000000, "\x00\x98\x96\x80"),
+        (2147483647, b"\x7f\xff\xff\xff"),
+        (4294967295, "\xff\xff\xff\xff")
+    ]
+
+    INVALID_DESERIALIZATION_VALUES = IntegerTest.INVALID_DESERIALIZATION_VALUES
+
 
 # def _bin(binstr):
 #     """
