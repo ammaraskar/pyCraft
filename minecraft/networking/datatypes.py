@@ -19,6 +19,7 @@ __all__ = ["ENDIANNESS",
            "String"]
 
 from minecraft.exceptions import DeserializationError, SerializationError
+from minecraft.compat import long
 from io import BytesIO
 import struct
 import collections
@@ -161,7 +162,7 @@ class NumberDatatype(Datatype):
     MIN_NUMBER_VALUE = None
     MAX_NUMBER_VALUE = None
 
-    ALLOWED_SERIALIZATION_TYPES = (int,)
+    ALLOWED_SERIALIZATION_TYPES = (int, long)
     DISALLOWED_SERIALIZATION_TYPES = (bool,)
 
     @classmethod

@@ -248,6 +248,40 @@ class UnsignedLongTest(UnsignedInteger):
     DATATYPE_CLS = UnsignedLong
 
 
+class LongLongTest(BaseNumberDatatypeTester):
+    DATATYPE_CLS = LongLong
+
+    VALID_VALUES = [
+        (-9223372036854775808, b"\x80\x00\x00\x00\x00\x00\x00\x00"),
+        (-1000000, b"\xff\xff\xff\xff\xff\xf0\xbd\xc0"),
+        (0, b"\x00\x00\x00\x00\x00\x00\x00\x00"),
+        (10000000, b"\x00\x00\x00\x00\x00\x98\x96\x80"),
+        (9223372036854775807, b"\x7f\xff\xff\xff\xff\xff\xff\xff")
+    ]
+
+    INVALID_DESERIALIZATION_VALUES = list(BASE_INVALID_DESERIALIZATION_VALUES)
+    INVALID_DESERIALIZATION_VALUES.extend([
+        (b"\xff", ValueError),
+        (b"\x00\x01", ValueError),
+        (b"\x76\x80\x80\x10\xff", ValueError),
+        (b"\x55\x44\x33\x22\x11\x66\x77\x88\x99", ValueError)
+    ])
+
+
+class UnsignedLongLongTest(BaseNumberDatatypeTester):
+    DATATYPE_CLS = UnsignedLongLong
+
+    VALID_VALUES = [
+        (0, b"\x00\x00\x00\x00\x00\x00\x00\x00"),
+        (10000000, b"\x00\x00\x00\x00\x00\x98\x96\x80"),
+        (9223372036854775807, b"\x7f\xff\xff\xff\xff\xff\xff\xff"),
+        (18446744073709551615, b"\xff\xff\xff\xff\xff\xff\xff\xff")
+    ]
+
+    INVALID_DESERIALIZATION_VALUES = \
+        LongLongTest.INVALID_DESERIALIZATION_VALUES
+
+
 # def _bin(binstr):
 #     """
 #     Accepts a pretty looking string of binary numbers and
