@@ -8,11 +8,11 @@ import struct
 class Type(object):
     @staticmethod
     def read(file_object):
-        pass
+        raise NotImplementedError("Base data type not serializable")
 
     @staticmethod
     def send(value, socket):
-        pass
+        raise NotImplementedError("Base data type not serializable")
 
 
 # =========================================================
@@ -84,7 +84,7 @@ class VarInt(Type):
         number = 0
         for i in range(5):
             byte = socket.recv(1)
-            if byte == "":
+            if byte == "" or len(byte) == 0:
                 raise RuntimeError("Socket disconnected")
             byte = ord(byte)
             number |= (byte & 0x7F) << 7 * i
