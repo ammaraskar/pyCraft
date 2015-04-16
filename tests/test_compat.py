@@ -1,8 +1,5 @@
 from minecraft import compat  # noqa unused-import
 
-import unittest
+import unittest  # noqa unused-import
 
-
-class TestCompatInput(unittest.TestCase):
-    def test_import_input(self):
-        from minecraft.compat import input  # noqa unused-import
+# Currently empty, eventually it should grow.
