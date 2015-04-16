@@ -276,8 +276,11 @@ class Float(NumberDatatype):
     FORMAT = "f"
     SIZE = 4
 
+    ALLOWED_SERIALIZATION_TYPES = (int, long, float)
+    DISALLOWED_SERIALIZATION_TYPES = (bool,)
 
-class Double(NumberDatatype):
+
+class Double(Float):
     FORMAT = "d"
     SIZE = 8
 

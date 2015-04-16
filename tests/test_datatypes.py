@@ -43,6 +43,13 @@ class BaseDatatypeTester(unittest.TestCase):
     # containing the value and the expected exception.
     INVALID_DESERIALIZATION_VALUES = []
 
+    def dynamic_assert_equal(self, first, second):
+        """
+        Overriden by floating point datatypes in order to handle
+        the floating point issue.
+        """
+        return self.assertEqual(first, second)
+
     def test_init(self):
         d = self.DATATYPE_CLS()  # noqa
 
@@ -53,13 +60,15 @@ class BaseDatatypeTester(unittest.TestCase):
 
     def test_valid_data_serialization_values(self):
         for deserialized_val, serialized_val in self.VALID_VALUES:
-            self.assertEqual(self.DATATYPE_CLS.serialize(deserialized_val),
-                             serialized_val)
+            self.dynamic_assert_equal(
+                self.DATATYPE_CLS.serialize(deserialized_val),
+                serialized_val)
 
     def test_valid_data_deserialization_values(self):
         for deserialized_val, serialized_val in self.VALID_VALUES:
-            self.assertEqual(self.DATATYPE_CLS.deserialize(serialized_val),
-                             deserialized_val)
+            self.dynamic_assert_equal(
+                self.DATATYPE_CLS.deserialize(serialized_val),
+                deserialized_val)
 
     def test_invalid_data_serialization_values(self):
         for value, exception in self.INVALID_SERIALIZATION_VALUES:
@@ -84,10 +93,14 @@ class BaseNumberDatatypeTester(BaseDatatypeTester):
 
     def base_number_invalid_data_serialization_values(self):
         values_to_test = BASE_INVALID_SERIALIZATION_VALUES
-        values_to_test.extend([
-            (self.DATATYPE_CLS.MIN_NUMBER_VALUE - 1, ValueError),
-            (self.DATATYPE_CLS.MAX_NUMBER_VALUE + 1, ValueError)
-        ])
+
+        if (cls.MIN_NUMBER_VALUE is not None
+                and cls.MAX_NUMBER_VALUE is not None):
+
+            values_to_test.extend([
+                (self.DATATYPE_CLS.MIN_NUMBER_VALUE - 1, ValueError),
+                (self.DATATYPE_CLS.MAX_NUMBER_VALUE + 1, ValueError)
+            ])
 
         for value, exception in values_to_test:
             with self.assertRaises(exception):
@@ -280,6 +293,28 @@ class UnsignedLongLongTest(BaseNumberDatatypeTester):
 
     INVALID_DESERIALIZATION_VALUES = \
         LongLongTest.INVALID_DESERIALIZATION_VALUES
+
+
+class FloatTest(BaseNumberDatatypeTester):
+    DATATYPE_CLS = Float
+
+    VALID_VALUES = [
+        (-100.5467, b"\xc2\xc9\x17\xe9"),
+        (0.00000, b"\x00\x00\x00\x00"),
+        (5000.72, b"E\x9cE\xc3"),
+        (65.123565787856342347, b"B\x82?D"),
+    ]
+
+    INVALID_DESERIALIZATION_VALUES = list(BASE_INVALID_DESERIALIZATION_VALUES)
+    INVALID_DESERIALIZATION_VALUES.extend([
+        (b"\xff", ValueError),
+        (b"\x00\x01", ValueError),
+        (b"\x76\x80\x80\x10\xff", ValueError),
+        (b"\x55\x44\x33\x22\x11\x66\x77\x88\x99", ValueError)
+    ])
+
+    def dynamic_assert_equal(self, first, second):
+        return self.assertAlmostEqual(first, second, places=3)
 
 
 # def _bin(binstr):
