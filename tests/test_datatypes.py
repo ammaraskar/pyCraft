@@ -317,6 +317,18 @@ class FloatTest(BaseNumberDatatypeTester):
         return self.assertAlmostEqual(first, second, places=3)
 
 
+class DoubleTest(FloatTest):
+    DATATYPE_CLS = Double
+
+    VALID_VALUES = [
+        (-10000560.86432, b"\xc1c\x13\x16\x1b\xa8\x82k"),
+        (-56.672345756870345754623, b"\xc0LV\x0fl\xfe\xaef"),
+        (0.00000, b"\x00\x00\x00\x00\x00\x00\x00\x00"),
+        (5000.72, b"@\xb3\x88\xb8Q\xeb\x85\x1f"),
+        (65.123565787856342347, b"@PG\xe8\x80zo\xd6"),
+        (5324342541.72123, b"A\xf3\xd5\xb0P\xdb\x8a(")
+    ]
+
 # def _bin(binstr):
 #     """
 #     Accepts a pretty looking string of binary numbers and
