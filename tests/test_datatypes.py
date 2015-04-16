@@ -4,26 +4,6 @@ from minecraft.exceptions import DeserializationError
 import unittest
 
 
-# # Note, we use the actual classes as keys.
-# # Format: DATATYPE_OBJ = (LIST_OF_VALID_VALUES, LIST_OF_INVALID_VALUES)
-# TEST_DATA = {
-#     Boolean: [True, False],
-#     Byte: [-127, -25, 0, 125],
-#     UnsignedByte: [0, 125],
-#     Byte: [-22, 22],
-#     Short: [-340, 22, 350],
-#     UnsignedShort: [0, 400],
-#     Integer: [-1000, 1000],
-#     VarInt: [1, 250, 50000, 10000000],
-#     Long: [50000000],
-#     Float: [21.000301],
-#     Double: [36.004002],
-#     ShortPrefixedByteArray: [bytes(245)],
-#     VarIntPrefixedByteArray: [bytes(1234)],
-#     StringType: ["hello world"]
-# }
-
-
 class BaseDatatypeTester(unittest.TestCase):
     DATATYPE_CLS = Datatype  # We use Datatype as a an example here.
 
@@ -344,9 +324,3 @@ class DoubleTest(FloatTest):
 #     num = int("0b" + binstr, 2)
 
 #     return num
-
-
-# class VarIntTests(unittest.TestCase):
-#     def test1(self):
-#         self.assertEqual(VarInt.deserialize(_bin("0000 0001")), 1)
-#         self.assertEqual(VarInt.deserialize(_bin("1010 1100 0000 0010")), 300)
