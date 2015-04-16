@@ -308,6 +308,12 @@ class DoubleTest(FloatTest):
         (5324342541.72123, b"A\xf3\xd5\xb0P\xdb\x8a(")
     ]
 
+
+class VarIntTest(BaseNumberDatatypeTester):
+    DATATYPE_CLS = VarInt
+
+    INVALID_DESERIALIZATION_VALUES = BASE_INVALID_DESERIALIZATION_VALUES
+
 # def _bin(binstr):
 #     """
 #     Accepts a pretty looking string of binary numbers and

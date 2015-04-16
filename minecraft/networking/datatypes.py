@@ -18,18 +18,51 @@ __all__ = ["ENDIANNESS",
            "VarInt", "VarLong",
            "String"]
 
-from minecraft.exceptions import DeserializationError, SerializationError
+from minecraft.exceptions import DeserializationError
 from minecraft.compat import long
 from io import BytesIO
 import struct
 import collections
+import numbers
 
 ENDIANNESS = "!"  # Network, big-endian
+
+
+def raise_serialization_data(func):
+    """
+    A decorator to be used on a ``Datatype``.serialize definition.
+
+    Must be placed before a classmethod decorator.
+    """
+    def wrapped(cls, data):
+        cls.raise_serialization_data(data)
+
+        return func(cls, data)
+
+    return wrapped
+
+
+def raise_deserialization_data(func):
+    """
+    A decorator to be used on a ``Datatype``.serialize definition.
+
+    Must be placed before a classmethod decorator.
+    """
+    def wrapped(cls, data):
+        cls.raise_deserialization_data(data)
+
+        return func(cls, data)
+
+    return wrapped
 
 
 class Datatype(object):
     """
     Base object for all `pyminecraft` networking datatypes.
+
+    ``Datatype``.SIZE can be either a number, specifying an exact required size
+    of data to be deserialized, or it can be a tuple like this:
+    ``(MIN_SIZE, MAX_SIZE)``
 
 
     .. note::
@@ -65,9 +98,8 @@ class Datatype(object):
         return cls.deserialize(bin_data)
 
     @classmethod
+    @raise_deserialization_data
     def deserialize(cls, data):
-        cls.raise_deserialization_data(data)
-
         deserialized_data = struct.unpack(ENDIANNESS + cls.FORMAT, data)[0]
         return deserialized_data
 
@@ -76,9 +108,8 @@ class Datatype(object):
         return fileobject.write(cls.serialize(data))
 
     @classmethod
+    @raise_serialization_data
     def serialize(cls, data):
-        cls.raise_serialization_data(data)
-
         serialized_data = struct.pack(ENDIANNESS + cls.FORMAT, data)
         return serialized_data
 
@@ -137,11 +168,23 @@ class Datatype(object):
 
             raise TypeError(err)
 
-        if cls.SIZE != len(data):
-            err = "'data' must have a length of {}, not {}"
-            err = err.format(str(cls.SIZE), str(len(data)))
+        if isinstance(cls.SIZE, numbers.Number):
+            if cls.SIZE != len(data):
+                err = "'data' must have a length of {}, not {}"
+                err = err.format(str(cls.SIZE), str(len(data)))
 
-            raise ValueError(err)
+                raise ValueError(err)
+
+        elif isinstance(cls.SIZE, collections.Sequence):
+            if not cls.SIZE[0] <= len(data) <= cls.SIZE[1]:
+                err = "'data' must have a length between {} and {}, not {}"
+                err = err.format(str(cls.SIZE[0]), str(cls.SIZE[1]),
+                                 str(len(data)))
+
+                raise ValueError(err)
+
+        else:
+            raise TypeError("'cls.SIZE' must be a number or a sequence.")
 
         return None
 
@@ -304,6 +347,8 @@ class VarInt(NumberDatatype):
     # Largest element in SIZE_TABLE, assuming largest element is last.
     MAX_SIZE = list(SIZE_TABLE.items())[-1][-1]
 
+    SIZE = (1, MAX_SIZE)
+
     @classmethod
     def read(cls, fileobject):
         number = 0  # The decoded number
@@ -329,16 +374,18 @@ class VarInt(NumberDatatype):
         return number
 
     @classmethod
+    @raise_deserialization_data
     def deserialize(cls, data):
         data_fileobject = BytesIO(bytes(data))
         return cls.read(data_fileobject)
 
     @classmethod
+    @raise_serialization_data
     def serialize(cls, data):
         if data > cls.SIZE_TABLE[-1][0]:
             name_of_self = str(type(cls))
             e = "Number too big to serialize as {}".format(name_of_self)
-            raise SerializationError(e)
+            raise ValueError(e)
 
         result = bytes()  # Where we store the serialized number
 
@@ -369,6 +416,8 @@ class VarLong(VarInt):
     )
 
     MAX_SIZE = list(SIZE_TABLE.items())[-1][-1]
+
+    SIZE = (1, MAX_SIZE)
 
 
 class String(Datatype):
