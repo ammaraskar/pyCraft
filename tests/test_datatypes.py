@@ -231,13 +231,21 @@ class UnsignedIntegerTest(BaseNumberDatatypeTester):
     DATATYPE_CLS = UnsignedInteger
 
     VALID_VALUES = [
-        (0, "\x00\x00\x00\x00"),
-        (10000000, "\x00\x98\x96\x80"),
+        (0, b"\x00\x00\x00\x00"),
+        (10000000, b"\x00\x98\x96\x80"),
         (2147483647, b"\x7f\xff\xff\xff"),
-        (4294967295, "\xff\xff\xff\xff")
+        (4294967295, b"\xff\xff\xff\xff")
     ]
 
     INVALID_DESERIALIZATION_VALUES = IntegerTest.INVALID_DESERIALIZATION_VALUES
+
+
+class LongTest(IntegerTest):
+    DATATYPE_CLS = Long
+
+
+class UnsignedLongTest(UnsignedInteger):
+    DATATYPE_CLS = UnsignedLong
 
 
 # def _bin(binstr):
