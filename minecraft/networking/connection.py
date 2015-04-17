@@ -143,7 +143,7 @@ class Connection(object):
         # the server.
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.connect((self.options.address, self.options.port))
-        self.file_object = self.socket.makefile()
+        self.file_object = self.socket.makefile("rb")
 
     def _handshake(self, next_state=2):
         handshake = packets.HandShakePacket()

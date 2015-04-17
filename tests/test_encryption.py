@@ -58,7 +58,7 @@ class Encryption(unittest.TestCase):
 
     def test_generate_hash(self):
         verification_hash = generate_verification_hash(
-            b"", "secret".encode('utf-8'),  self.public_key)
+            u"", "secret".encode('utf-8'),  self.public_key)
         self.assertEquals("1f142e737a84a974a5f2a22f6174a78d80fd97f5",
                           verification_hash)
 
