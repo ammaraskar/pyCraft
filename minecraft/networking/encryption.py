@@ -35,7 +35,7 @@ def encrypt_token_and_secret(pubkey, verification_token, shared_secret):
 def generate_verification_hash(server_id, shared_secret, public_key):
     verification_hash = sha1()
 
-    verification_hash.update(server_id)
+    verification_hash.update(server_id.encode('utf-8'))
     verification_hash.update(shared_secret)
     verification_hash.update(public_key)
 
