@@ -281,8 +281,10 @@ class LoginReactor(PacketReactor):
                 encryption.EncryptedFileObjectWrapper(
                     self.connection.file_object, decryptor)
 
+        '''
         if packet.packet_name == "disconnect":
             print(packet.json_data)  # TODO: handle propagating this back
+        '''
 
         if packet.packet_name == "login success":
             self.connection.reactor = PlayingReactor(self.connection)
@@ -317,9 +319,10 @@ class PlayingReactor(PacketReactor):
             self.connection.write_packet(position_response)
             self.connection.spawned = True
 
+        '''
         if packet.packet_name == "disconnect":
             print(packet.json_data)  # TODO: handle propagating this back
-
+        '''
 
 class StatusReactor(PacketReactor):
     clientbound_packets = packets.STATE_STATUS_CLIENTBOUND
