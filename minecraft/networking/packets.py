@@ -35,10 +35,9 @@ class PacketBuffer(object):
 
 
 class PacketListener(object):
-    packets_to_listen = []
-
     def __init__(self, callback, *args):
         self.callback = callback
+        self.packets_to_listen = []
         for arg in args:
             if issubclass(arg, Packet):
                 self.packets_to_listen.append(arg)
