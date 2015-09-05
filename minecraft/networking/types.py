@@ -3,6 +3,7 @@ Each type has a method which is used to read and write it.
 These definitions and methods are used by the packet definitions
 """
 import struct
+import uuid
 
 
 class Type(object):
@@ -201,3 +202,8 @@ class String(Type):
         value = value.encode('utf-8')
         VarInt.send(len(value), socket)
         socket.send(value)
+
+class UUID(Type):
+    @staticmethod
+    def read(file_object):
+        return str(uuid.UUID(bytes=file_object.read(16)))
