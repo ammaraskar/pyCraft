@@ -199,7 +199,7 @@ class PacketReactor(object):
     state_name = None
     clientbound_packets = None
 
-    TIME_OUT = 1
+    TIME_OUT = 0
 
     def __init__(self, connection):
         self.connection = connection
