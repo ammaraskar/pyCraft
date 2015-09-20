@@ -405,11 +405,81 @@ class PlayerListItemPacket(Packet):
     def write(self, socket, compression_threshold=None):
         raise NotImplementedError
 
+class MapPacket(Packet):
+    id = 0x34
+    packet_name = 'map'
+    
+    class MapIcon(object):
+        __slots__ = 'type', 'direction', 'location'
+        def __init__(self, type, direction, (x, z)):
+            self.type = type
+            self.direction = direction
+            self.location = (x, z)
+
+    class Map(object):
+        __slots__ = 'id', 'scale', 'icons', 'pixels', 'width', 'height'
+        def __init__(self, id=None, scale=None, width=128, height=128):
+            self.id = id
+            self.scale = scale
+            self.icons = []
+            self.width = width
+            self.height = height
+            self.pixels = bytearray(0 for i in range(width*height))
+
+    class MapSet(object):
+        __slots__ = 'maps_by_id'
+        def __init__(self):
+            self.maps_by_id = dict()
+
+    def read(self, file_object):
+        self.map_id = VarInt.read(file_object)
+        self.scale = Byte.read(file_object)
+        icon_count = VarInt.read(file_object)
+        self.icons = []
+        for i in range(icon_count):
+            direction, type = divmod(UnsignedByte.read(file_object), 16)
+            x = UnsignedByte.read(file_object)
+            z = UnsignedByte.read(file_object)
+            icon = MapPacket.MapIcon(type, direction, (x, z))
+            self.icons.append(icon)
+        self.width = UnsignedByte.read(file_object)
+        if self.width:
+            self.height = UnsignedByte.read(file_object)
+            x = UnsignedByte.read(file_object)
+            z = UnsignedByte.read(file_object)
+            self.offset = (x, z)
+            self.pixels = VarIntPrefixedByteArray.read(file_object)
+        else:
+            self.height = 0
+            self.offset = None
+            self.pixels = None
+
+    def apply_to_map(self, map):
+        map.id = self.map_id
+        map.scale = self.scale
+        map.icons[:] = self.icons
+        if self.pixels is not None:
+            for i in range(len(self.pixels)):
+                x = self.offset[0] + i % self.width
+                z = self.offset[1] + i / self.width
+                map.pixels[x + map.width * z] = self.pixels[i]
+    
+    def apply_to_map_set(self, map_set):
+        map = map_set.maps_by_id.get(self.map_id)
+        if map is None:
+            map = MapPacket.Map(self.map_id)
+            map_set.maps_by_id[self.map_id] = map
+        self.apply_to_map(map)
+
+    def write(self, socket, compression_threshold=None):
+        raise NotImplementedError
+
 STATE_PLAYING_CLIENTBOUND = {
     0x00: KeepAlivePacket,
     0x01: JoinGamePacket,
     0x02: ChatMessagePacket,
     0x08: PlayerPositionAndLookPacket,
+    0x34: MapPacket,
     0x38: PlayerListItemPacket,
     0x40: DisconnectPacketPlayState,
     0x46: SetCompressionPacketPlayState
