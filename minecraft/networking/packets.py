@@ -415,6 +415,11 @@ class MapPacket(Packet):
             self.type = type
             self.direction = direction
             self.location = (x, z)
+        def __repr__(self):
+            return ('MapIcon(type=%s, direction=%s, location=%s)'
+                % (self.type, self.direction, self.location))
+        def __str__(self):
+            return self.__repr__()
 
     class Map(object):
         __slots__ = 'id', 'scale', 'icons', 'pixels', 'width', 'height'
@@ -425,11 +430,20 @@ class MapPacket(Packet):
             self.width = width
             self.height = height
             self.pixels = bytearray(0 for i in range(width*height))
+        def __repr__(self):
+            return ('Map(id=%s, scale=%s, icons=%s, width=%s, height=%s)'
+                % (self.id, self.scale, self.icons, self.width, self.height))
+        def __str__(self):
+            return self.__repr__()
 
     class MapSet(object):
         __slots__ = 'maps_by_id'
         def __init__(self):
             self.maps_by_id = dict()
+        def __repr__(self):
+            return 'MapSet(%s)' % ', '.join(self.maps_by_id.itervalues())
+        def __str__(self):
+            return self.__repr__()
 
     def read(self, file_object):
         self.map_id = VarInt.read(file_object)
@@ -437,16 +451,16 @@ class MapPacket(Packet):
         icon_count = VarInt.read(file_object)
         self.icons = []
         for i in range(icon_count):
-            direction, type = divmod(UnsignedByte.read(file_object), 16)
-            x = UnsignedByte.read(file_object)
-            z = UnsignedByte.read(file_object)
+            type, direction = divmod(UnsignedByte.read(file_object), 16)
+            x = Byte.read(file_object)
+            z = Byte.read(file_object)
             icon = MapPacket.MapIcon(type, direction, (x, z))
             self.icons.append(icon)
         self.width = UnsignedByte.read(file_object)
         if self.width:
             self.height = UnsignedByte.read(file_object)
-            x = UnsignedByte.read(file_object)
-            z = UnsignedByte.read(file_object)
+            x = Byte.read(file_object)
+            z = Byte.read(file_object)
             self.offset = (x, z)
             self.pixels = VarIntPrefixedByteArray.read(file_object)
         else:
@@ -473,6 +487,14 @@ class MapPacket(Packet):
 
     def write(self, socket, compression_threshold=None):
         raise NotImplementedError
+
+    def __repr__(self):
+        return 'MapPacket(%s)' % ', '.join(
+            '%s=%r' % (k, v)
+            for (k,v) in self.__dict__.iteritems()
+            if k != 'pixels')
+    def __str__(self):
+        return self.__repr__()
 
 STATE_PLAYING_CLIENTBOUND = {
     0x00: KeepAlivePacket,
