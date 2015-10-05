@@ -149,7 +149,6 @@ class Connection(object):
 
         self.write_packet(handshake)
 
-
 class NetworkingThread(threading.Thread):
     interrupt = False
 
@@ -160,6 +159,12 @@ class NetworkingThread(threading.Thread):
         self.daemon = True
 
     def run(self):
+        try:
+            self._run()
+        except Exception as e:
+            self.connection.exception = e
+
+    def _run(self):
         while True:
             if self.interrupt:
                 break
