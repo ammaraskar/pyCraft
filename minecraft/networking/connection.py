@@ -5,6 +5,7 @@ import threading
 import socket
 import time
 import select
+import sys
 
 from .types import VarInt
 from . import packets
@@ -13,11 +14,16 @@ from .. import PROTOCOL_VERSION
 
 
 class _ConnectionOptions(object):
-    # TODO: allow these options to be overriden from a constructor below
-    address = None
-    port = None
-    compression_threshold = -1
-    compression_enabled = False
+    def __init__(self,
+        address=None,
+        port=None,
+        compression_threshold=-1,
+        compression_enabled=False
+    ):
+        self.address = address
+        self.port = port
+        self.compression_threshold = compression_threshold
+        self.compression_enabled = compression_enabled
 
 
 class Connection(object):
@@ -25,18 +31,6 @@ class Connection(object):
     server, it handles everything from connecting, sending packets to
     handling default network behaviour
     """
-    _outgoing_packet_queue = deque()
-    _write_lock = Lock()
-    networking_thread = None
-    options = _ConnectionOptions()
-    packet_listeners = []
-
-    # The reactor handles all the default responses to packets,
-    # it should be changed per networking state
-    reactor = None
-    #: Indicates if this connection is spawned in the Minecraft game world
-    spawned = False
-
     def __init__(self, address, port, auth_token):
         """Sets up an instance of this object to be able to connect to a
         minecraft server.
@@ -48,9 +42,22 @@ class Connection(object):
         :param port(int): port of the server to connect to
         :param auth_token: :class:`authentication.AuthenticationToken` object.
         """
+
+        self._outgoing_packet_queue = deque()
+        self._write_lock = Lock()
+        self.networking_thread = None
+        self.packet_listeners = []
+    
+        #: Indicates if this connection is spawned in the Minecraft game world
+        self.spawned = False
+
+        self.options = _ConnectionOptions()
         self.options.address = address
         self.options.port = port
         self.auth_token = auth_token
+
+        # The reactor handles all the default responses to packets,
+        # it should be changed per networking state
         self.reactor = PacketReactor(self)
 
     def _start_network_thread(self):
@@ -150,10 +157,9 @@ class Connection(object):
         self.write_packet(handshake)
 
 class NetworkingThread(threading.Thread):
-    interrupt = False
-
     def __init__(self, connection):
         threading.Thread.__init__(self)
+        self.interrupt = False
         self.connection = connection
         self.name = "Networking Thread"
         self.daemon = True
@@ -161,8 +167,10 @@ class NetworkingThread(threading.Thread):
     def run(self):
         try:
             self._run()
-        except Exception as e:
-            self.connection.exception = e
+        except:
+            ty, ex, tb = sys.exc_info()
+            ex.exc_info = ty, ex, tb
+            self.connection.exception = ex
 
     def _run(self):
         while True:
@@ -203,7 +211,6 @@ class PacketReactor(object):
     """
     state_name = None
     clientbound_packets = None
-
     TIME_OUT = 0
 
     def __init__(self, connection):
