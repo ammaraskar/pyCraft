@@ -1,4 +1,5 @@
 from collections import deque
+from collections import namedtuple
 from threading import Lock
 from zlib import decompress
 import threading
@@ -10,8 +11,7 @@ import sys
 from .types import VarInt
 from . import packets
 from . import encryption
-from .. import PROTOCOL_VERSION
-
+from .. import SUPPORTED_PROTOCOL_VERSIONS
 
 class _ConnectionOptions(object):
     def __init__(self,
@@ -25,13 +25,22 @@ class _ConnectionOptions(object):
         self.compression_threshold = compression_threshold
         self.compression_enabled = compression_enabled
 
+ConnectionContext = namedtuple('ConnectionContext', (
+    'protocol_version'
+))
 
 class Connection(object):
     """This class represents a connection to a minecraft
     server, it handles everything from connecting, sending packets to
     handling default network behaviour
     """
-    def __init__(self, address, port, auth_token):
+    def __init__(
+        self,
+        address,
+        port,
+        auth_token,
+        protocol_version=max(SUPPORTED_PROTOCOL_VERSIONS)
+    ):
         """Sets up an instance of this object to be able to connect to a
         minecraft server.
 
@@ -56,6 +65,10 @@ class Connection(object):
         self.options.port = port
         self.auth_token = auth_token
 
+        self.context = ConnectionContext(
+            protocol_version = protocol_version
+        )
+
         # The reactor handles all the default responses to packets,
         # it should be changed per networking state
         self.reactor = PacketReactor(self)
@@ -76,6 +89,7 @@ class Connection(object):
         :param packet: The :class:`network.packets.Packet` to write
         :param force(bool): Specifies if the packet write should be immediate
         """
+        packet.context = self.context
         if force:
             self._write_lock.acquire()
             if self.options.compression_enabled:
@@ -149,7 +163,7 @@ class Connection(object):
 
     def _handshake(self, next_state=2):
         handshake = packets.HandShakePacket()
-        handshake.protocol_version = PROTOCOL_VERSION
+        handshake.protocol_version = self.context.protocol_version
         handshake.server_address = self.options.address
         handshake.server_port = self.options.port
         handshake.next_state = next_state
@@ -210,11 +224,16 @@ class PacketReactor(object):
     Reads and reacts to packets
     """
     state_name = None
-    clientbound_packets = None
     TIME_OUT = 0
+
+    get_clientbound_packets = staticmethod(lambda context: set())
 
     def __init__(self, connection):
         self.connection = connection
+        context = self.connection.context
+        self.clientbound_packets = {
+            packet.get_id(context): packet
+            for packet in self.__class__.get_clientbound_packets(context)}
 
     def read_packet(self, stream):
         ready_to_read = select.select([self.connection.socket], [], [],
@@ -247,10 +266,11 @@ class PacketReactor(object):
             # otherwise just skip it
             if packet_id in self.clientbound_packets:
                 packet = self.clientbound_packets[packet_id]()
+                packet.context = self.connection.context
                 packet.read(packet_data)
                 return packet
             else:
-                return packets.Packet()
+                return packets.Packet(context=self.connection.context)
         else:
             return None
 
@@ -259,7 +279,7 @@ class PacketReactor(object):
 
 
 class LoginReactor(PacketReactor):
-    clientbound_packets = packets.STATE_LOGIN_CLIENTBOUND
+    get_clientbound_packets = staticmethod(packets.state_login_clientbound)
 
     def react(self, packet):
         if packet.packet_name == "encryption request":
@@ -307,7 +327,7 @@ class LoginReactor(PacketReactor):
 
 
 class PlayingReactor(PacketReactor):
-    clientbound_packets = packets.STATE_PLAYING_CLIENTBOUND
+    get_clientbound_packets = staticmethod(packets.state_playing_clientbound)
 
     def react(self, packet):
         if packet.packet_name == "set compression":
@@ -337,10 +357,10 @@ class PlayingReactor(PacketReactor):
         '''
 
 class StatusReactor(PacketReactor):
-    clientbound_packets = packets.STATE_STATUS_CLIENTBOUND
+    get_clientbound_packets = staticmethod(packets.state_status_clientbound)
 
     def react(self, packet):
-        if packet.id == packets.ResponsePacket.id:
+        if packet.id == packets.ResponsePacket.get_id(self.connection.context):
             import json
 
             print(json.loads(packet.json_response))

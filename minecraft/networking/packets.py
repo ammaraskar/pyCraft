@@ -50,11 +50,34 @@ class PacketListener(object):
 
 class Packet(object):
     packet_name = "base"
-    id = -0x01
-    definition = []
+    id = None
+    definition = None
 
-    def __init__(self, **kwargs):
-        pass
+    # To define the packet ID, either:
+    #  1. Define the attribute `id', of type int, in a subclass; or
+    #  2. Override `get_id' in a subclass and return the correct packet ID
+    #     for the given ConnectionContext. This is necessary if the packet ID
+    #     has changed across protocol versions, for example.
+    @classmethod
+    def get_id(cls, context):
+        return cls.id
+
+    # To define the network data layout of a packet, either:
+    #  1. Define the attribute `definition', a list of fields, each of which
+    #     is a dict mapping attribute names to data types; or
+    #  2. Override `get_definition' in a subclass and return the correct
+    #     definition for the given ConnectionContext. This may be necessary
+    #     if the layout has changed across protocol versions, for example; or
+    #  3. Override the methods `read' and/or `write' in a subclass. This may be
+    #     necessary if the packet layout cannot be described as a list of fields.
+    @classmethod
+    def get_definition(cls, context):
+        return cls.definition
+
+    def __init__(self, context=None, **kwargs):
+        self.context = context
+        self.id = self.get_id(context)
+        self.definition = self.get_definition(context)
 
     def set_values(self, **kwargs):
         for key, value in kwargs.items():
@@ -112,13 +135,14 @@ class HandShakePacket(Packet):
         {'next_state': VarInt}]
 
 
-STATE_HANDSHAKE_CLIENTBOUND = {
-
-}
-STATE_HANDSHAKE_SERVERBOUND = {
-    0x00: HandShakePacket
-}
-
+def state_handshake_clientbound(context):
+    return {
+        
+    }
+def state_handshake_serverbound(context):
+    return {
+        HandShakePacket
+    }
 
 # Status State
 # ==============
@@ -136,10 +160,11 @@ class PingPacketResponse(Packet):
         {'time': Long}]
 
 
-STATE_STATUS_CLIENTBOUND = {
-    0x00: ResponsePacket,
-    0x01: PingPacketResponse
-}
+def state_status_clientbound(context):
+    return {
+        ResponsePacket,
+        PingPacketResponse
+    }
 
 
 class RequestPacket(Packet):
@@ -155,10 +180,11 @@ class PingPacket(Packet):
         {'time': Long}]
 
 
-STATE_STATUS_SERVERBOUND = {
-    0x00: RequestPacket,
-    0x01: PingPacket
-}
+def state_status_serverbound(context):
+    return {
+        RequestPacket,
+        PingPacket
+    }
 
 
 # Login State
@@ -194,12 +220,13 @@ class SetCompressionPacket(Packet):
         {'threshold': VarInt}]
 
 
-STATE_LOGIN_CLIENTBOUND = {
-    0x00: DisconnectPacket,
-    0x01: EncryptionRequestPacket,
-    0x02: LoginSuccessPacket,
-    0x03: SetCompressionPacket
-}
+def state_login_clientbound(context):
+    return {
+        DisconnectPacket,
+        EncryptionRequestPacket,
+        LoginSuccessPacket,
+        SetCompressionPacket
+    }
 
 
 class LoginStartPacket(Packet):
@@ -217,10 +244,11 @@ class EncryptionResponsePacket(Packet):
         {'verify_token': VarIntPrefixedByteArray}]
 
 
-STATE_LOGIN_SERVERBOUND = {
-    0x00: LoginStartPacket,
-    0x01: EncryptionResponsePacket
-}
+def state_login_serverbound(context):
+    return {
+        LoginStartPacket,
+        EncryptionResponsePacket
+    }
 
 
 # Playing State
@@ -496,16 +524,17 @@ class MapPacket(Packet):
     def __str__(self):
         return self.__repr__()
 
-STATE_PLAYING_CLIENTBOUND = {
-    0x00: KeepAlivePacket,
-    0x01: JoinGamePacket,
-    0x02: ChatMessagePacket,
-    0x08: PlayerPositionAndLookPacket,
-    0x34: MapPacket,
-    0x38: PlayerListItemPacket,
-    0x40: DisconnectPacketPlayState,
-    0x46: SetCompressionPacketPlayState
-}
+def state_playing_clientbound(context):
+    return {
+        KeepAlivePacket,
+        JoinGamePacket,
+        ChatMessagePacket,
+        PlayerPositionAndLookPacket,
+        MapPacket,
+        PlayerListItemPacket,
+        DisconnectPacketPlayState,
+        SetCompressionPacketPlayState
+    }
 
 
 class ChatPacket(Packet):
@@ -526,8 +555,10 @@ class PositionAndLookPacket(Packet):
         {'pitch': Float},
         {'on_ground': Boolean}]
 
-STATE_PLAYING_SERVERBOUND = {
-    0x00: KeepAlivePacket,
-    0x01: ChatPacket,
-    0x06: PositionAndLookPacket
-}
+
+def state_playing_serverbound(context):
+    return {
+        KeepAlivePacket,
+        ChatPacket,
+        PositionAndLookPacket
+    }
