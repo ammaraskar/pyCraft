@@ -410,7 +410,7 @@ class PlayingReactor(PacketReactor):
             self.connection.options.compression_enabled = True
 
         if packet.packet_name == "keep alive":
-            keep_alive_packet = packets.KeepAlivePacket()
+            keep_alive_packet = packets.KeepAlivePacketServerbound()
             keep_alive_packet.keep_alive_id = packet.keep_alive_id
             self.connection.write_packet(keep_alive_packet)
 

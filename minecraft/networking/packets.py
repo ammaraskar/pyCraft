@@ -76,8 +76,20 @@ class Packet(object):
 
     def __init__(self, context=None, **kwargs):
         self.context = context
-        self.id = self.get_id(context)
-        self.definition = self.get_definition(context)
+
+    @property
+    def context(self):
+        return self._context
+    
+    @context.setter
+    def context(self, _context):
+        self._context = _context
+        if _context is not None:
+            self.id = self.get_id(_context)
+            self.definition = self.get_definition(_context)
+        else:
+            self.id = None
+            self.definition = None
 
     def set_values(self, **kwargs):
         for key, value in kwargs.items():
@@ -255,14 +267,24 @@ def state_login_serverbound(context):
 # ==============
 
 class KeepAlivePacket(Packet):
-    id = 0x00
     packet_name = "keep alive"
     definition = [
         {'keep_alive_id': VarInt}]
 
+class KeepAlivePacketClientbound(KeepAlivePacket):
+     get_id = staticmethod(lambda context:
+        0x1F if context.protocol_version >= 107 else
+        0x00)
+
+class KeepAlivePacketServerbound(KeepAlivePacket):
+     get_id = staticmethod(lambda context:
+        0x0B if context.protocol_version >= 107 else
+        0x00)
 
 class JoinGamePacket(Packet):
-    id = 0x01
+    get_id = staticmethod(lambda context:
+        0x23 if context.protocol_version >= 107 else
+        0x01)
     packet_name = "join game"
     definition = [
         {'entity_id': Integer},
@@ -275,7 +297,9 @@ class JoinGamePacket(Packet):
 
 
 class ChatMessagePacket(Packet):
-    id = 0x02
+    get_id = staticmethod(lambda context:
+        0x0F if context.protocol_version >= 107 else
+        0x02)
     packet_name = "chat message"
     definition = [
         {'json_data': String},
@@ -283,19 +307,25 @@ class ChatMessagePacket(Packet):
 
 
 class PlayerPositionAndLookPacket(Packet):
-    id = 0x08
+    get_id = staticmethod(lambda context:
+        0x2E if context.protocol_version >= 107 else
+        0x08)
     packet_name = "player position and look"
-    definition = [
+    get_definition = staticmethod(lambda context: [
         {'x': Double},
         {'y': Double},
         {'z': Double},
         {'yaw': Float},
         {'pitch': Float},
-        {'flags': Byte}]
+        {'flags': Byte},
+        {'teleport_id': VarInt} if context.protocol_version >= 107 else {},
+    ])
 
 
 class DisconnectPacketPlayState(Packet):
-    id = 0x40
+    get_id = staticmethod(lambda context:
+        0x1A if context.protocol_version >= 107 else
+        0x40)
     packet_name = "disconnect"
 
     definition = [
@@ -303,13 +333,16 @@ class DisconnectPacketPlayState(Packet):
 
 
 class SetCompressionPacketPlayState(Packet):
+    # Note: removed between protocol versions 47 and 107. 
     id = 0x46
     packet_name = "set compression"
     definition = [
         {'threshold': VarInt}]
 
 class PlayerListItemPacket(Packet):
-    id = 0x38
+    get_id = staticmethod(lambda context:
+        0x2D if context.protocol_version >= 107 else
+        0x38)
     packet_name = "player list item"
 
     class PlayerList(object):
@@ -434,7 +467,9 @@ class PlayerListItemPacket(Packet):
         raise NotImplementedError
 
 class MapPacket(Packet):
-    id = 0x34
+    get_id = staticmethod(lambda context:
+        0x24 if context.protocol_version >= 107 else
+        0x34)
     packet_name = 'map'
     
     class MapIcon(object):
@@ -450,7 +485,8 @@ class MapPacket(Packet):
             return self.__repr__()
 
     class Map(object):
-        __slots__ = 'id', 'scale', 'icons', 'pixels', 'width', 'height'
+        __slots__ = ('id', 'scale', 'icons', 'pixels', 'width', 'height',
+                     'is_tracking_position')
         def __init__(self, id=None, scale=None, width=128, height=128):
             self.id = id
             self.scale = scale
@@ -458,6 +494,7 @@ class MapPacket(Packet):
             self.width = width
             self.height = height
             self.pixels = bytearray(0 for i in range(width*height))
+            self.is_tracking_position = True
         def __repr__(self):
             return ('Map(id=%s, scale=%s, icons=%s, width=%s, height=%s)'
                 % (self.id, self.scale, self.icons, self.width, self.height))
@@ -476,6 +513,12 @@ class MapPacket(Packet):
     def read(self, file_object):
         self.map_id = VarInt.read(file_object)
         self.scale = Byte.read(file_object)
+
+        if self.context.protocol_version >= 107:
+            self.is_tracking_position = Boolean.read(file_object)
+        else:
+            self.is_tracking_position = True
+
         icon_count = VarInt.read(file_object)
         self.icons = []
         for i in range(icon_count):
@@ -505,6 +548,7 @@ class MapPacket(Packet):
                 x = self.offset[0] + i % self.width
                 z = self.offset[1] + i / self.width
                 map.pixels[x + map.width * z] = self.pixels[i]
+        map.is_tracking_position = self.is_tracking_position
     
     def apply_to_map_set(self, map_set):
         map = map_set.maps_by_id.get(self.map_id)
@@ -525,27 +569,34 @@ class MapPacket(Packet):
         return self.__repr__()
 
 def state_playing_clientbound(context):
-    return {
-        KeepAlivePacket,
+    packets = {
+        KeepAlivePacketClientbound,
         JoinGamePacket,
         ChatMessagePacket,
         PlayerPositionAndLookPacket,
         MapPacket,
         PlayerListItemPacket,
         DisconnectPacketPlayState,
-        SetCompressionPacketPlayState
     }
+    if context.protocol_version <= 47: packets |= {
+        SetCompressionPacketPlayState,
+    }
+    return packets
 
 
 class ChatPacket(Packet):
-    id = 0x01
+    get_id = staticmethod(lambda context:
+        0x02 if context.protocol_version >= 107 else
+        0x01)
     packet_name = "chat"
     definition = [
         {'message': String}]
 
 
 class PositionAndLookPacket(Packet):
-    id = 0x06
+    get_id = staticmethod(lambda context:
+        0x0D if context.protocol_version >= 107 else
+        0x06)
     packet_name = "position and look"
     definition = [
         {'x': Double},
@@ -558,7 +609,7 @@ class PositionAndLookPacket(Packet):
 
 def state_playing_serverbound(context):
     return {
-        KeepAlivePacket,
+        KeepAlivePacketServerbound,
         ChatPacket,
         PositionAndLookPacket
     }
