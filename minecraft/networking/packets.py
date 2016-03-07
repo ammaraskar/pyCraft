@@ -163,7 +163,7 @@ class PingPacketResponse(Packet):
 def state_status_clientbound(context):
     return {
         ResponsePacket,
-        PingPacketResponse
+        PingPacketResponse,
     }
 
 

@@ -1,17 +1,32 @@
+from __future__ import print_function
+
 from collections import deque
 from collections import namedtuple
 from threading import Lock
 from zlib import decompress
+from itertools import *
 import threading
 import socket
 import time
 import select
 import sys
+import json
+import re
 
+from ..compat import unicode
 from .types import VarInt
 from . import packets
 from . import encryption
 from .. import SUPPORTED_PROTOCOL_VERSIONS
+from .. import SUPPORTED_MINECRAFT_VERSIONS
+
+class ConnectionContext(object):
+    """A ConnectionContext encapsulates the static configuration parameters
+    shared by the Connection class with other classes, such as Packet.
+    Importantly, it can be used without knowing the interface of Connection.
+    """
+    def __init__(self, **kwds):
+        self.protocol_version = kwds.get('protocol_version')
 
 class _ConnectionOptions(object):
     def __init__(self,
@@ -25,10 +40,6 @@ class _ConnectionOptions(object):
         self.compression_threshold = compression_threshold
         self.compression_enabled = compression_enabled
 
-ConnectionContext = namedtuple('ConnectionContext', (
-    'protocol_version'
-))
-
 class Connection(object):
     """This class represents a connection to a minecraft
     server, it handles everything from connecting, sending packets to
@@ -39,7 +50,8 @@ class Connection(object):
         address,
         port,
         auth_token,
-        protocol_version=max(SUPPORTED_PROTOCOL_VERSIONS)
+        initial_version=None, # A Minecraft version str or protocol version int.
+        allowed_versions=None # A set of versions as above.
     ):
         """Sets up an instance of this object to be able to connect to a
         minecraft server.
@@ -52,30 +64,47 @@ class Connection(object):
         :param auth_token: :class:`authentication.AuthenticationToken` object.
         """
 
-        self._outgoing_packet_queue = deque()
         self._write_lock = Lock()
         self.networking_thread = None
         self.packet_listeners = []
-    
-        #: Indicates if this connection is spawned in the Minecraft game world
-        self.spawned = False
+
+        def proto_version(version):
+            if isinstance(version, str):
+                proto_version = SUPPORTED_MINECRAFT_VERSIONS.get(version)
+            elif isinstance(version, int):
+                proto_version = version
+            else:
+                proto_version = None
+            if proto_version not in SUPPORTED_PROTOCOL_VERSIONS:
+                raise ValueError('Unsupported version number: %r.' % version)
+            return proto_version
+
+        if allowed_versions is None:
+            self.allowed_proto_versions = SUPPORTED_PROTOCOL_VERSIONS
+        else:
+            self.allowed_proto_versions = set(map(proto_version, allowed_versions))
+
+        if initial_version is None:
+            initial_proto_version = max(self.allowed_proto_versions)
+        else:
+            initial_proto_version = proto_version(initial_version)
+        self.context = ConnectionContext(
+            protocol_version=initial_proto_version)
 
         self.options = _ConnectionOptions()
         self.options.address = address
         self.options.port = port
         self.auth_token = auth_token
 
-        self.context = ConnectionContext(
-            protocol_version = protocol_version
-        )
-
         # The reactor handles all the default responses to packets,
         # it should be changed per networking state
         self.reactor = PacketReactor(self)
 
     def _start_network_thread(self):
-        self.networking_thread = NetworkingThread(self)
-        self.networking_thread.start()
+        """May safely be called multiple times."""
+        if self.networking_thread is None:
+            self.networking_thread = NetworkingThread(self)
+            self.networking_thread.start()
 
     def write_packet(self, packet, force=False):
         """Writes a packet to the server.
@@ -139,8 +168,14 @@ class Connection(object):
         self.write_packet(request_packet)
 
     def connect(self):
-        """Attempt to begin connecting to the server
         """
+        Attempt to begin connecting to the server.
+        May safely be called multiple times after the first, i.e. to reconnect.
+        """
+        self.spawned = False
+        with self._write_lock:
+            self._outgoing_packet_queue = deque()
+        
         self._connect()
         self._handshake()
 
@@ -207,9 +242,12 @@ class NetworkingThread(threading.Thread):
             while packet:
                 num_packets += 1
 
-                self.connection.reactor.react(packet)
-                for listener in self.connection.packet_listeners:
-                    listener.call_packet(packet)
+                try:
+                    self.connection.reactor.react(packet)
+                    for listener in self.connection.packet_listeners:
+                        listener.call_packet(packet)
+                except IgnorePacket:
+                    pass
 
                 if num_packets >= 50:
                     break
@@ -218,6 +256,15 @@ class NetworkingThread(threading.Thread):
 
             time.sleep(0.05)
 
+
+class IgnorePacket(Exception):
+    """
+    This exception may be raised from within a packet handler, such as
+    `PacketReactor.react' or a packet listener added with
+    `Connection.register_packet_listener', to stop any subsequent handlers from
+    being called on that particular packet.
+    """
+    pass
 
 class PacketReactor(object):
     """
@@ -313,10 +360,39 @@ class LoginReactor(PacketReactor):
                 encryption.EncryptedFileObjectWrapper(
                     self.connection.file_object, decryptor)
 
-        '''
         if packet.packet_name == "disconnect":
-            print(packet.json_data)  # TODO: handle propagating this back
-        '''
+            # Test for a disconnect packet indicating a version mismatch.
+            # (Note: it is known how the disconnect messages are formatted for
+            # official servers within SUPPORTED_MINECRAFT_VERSIONS, but in case
+            # new versions are added, this section may need to be updated.)
+            try: data = json.loads(packet.json_data)
+            except ValueError: pass
+            if isinstance(data, dict) and 'text' in data:
+                data = data['text']
+            if not isinstance(data, (str, unicode)): return
+            match = re.match(
+                r"(Outdated client! Please use"
+                r"|Outdated server! I'm still on) (?P<version>.*)", data)
+            if not match: return
+            version = match.group('version')
+            if version in SUPPORTED_MINECRAFT_VERSIONS:
+                new_version = SUPPORTED_MINECRAFT_VERSIONS[version]
+            elif data.startswith('Outdated client!'):
+                new_version = max(SUPPORTED_PROTOCOL_VERSIONS) 
+            elif data.startswith('Outdated server!'):
+                new_version = min(SUPPORTED_PROTOCOL_VERSIONS)
+            if (new_version != self.connection.context.protocol_version
+            and new_version in self.connection.allowed_proto_versions):
+                # Ignore this disconnect packet and reconnect with the new protocol
+                # version, making it appear (on the client side) as if the client
+                # had initially connected with the (hopefully) correct version.
+                old_version = self.connection.context.protocol_version
+                print('Warning: connection using protocol version %d refused with '
+                      'message "%s". Reconnecting with protocol version %d.'
+                      % (old_version, data, new_version), file=sys.stderr)
+                self.connection.context.protocol_version = new_version
+                self.connection.connect()
+                raise IgnorePacket
 
         if packet.packet_name == "login success":
             self.connection.reactor = PlayingReactor(self.connection)
@@ -324,7 +400,6 @@ class LoginReactor(PacketReactor):
         if packet.packet_name == "set compression":
             self.connection.options.compression_threshold = packet.threshold
             self.connection.options.compression_enabled = True
-
 
 class PlayingReactor(PacketReactor):
     get_clientbound_packets = staticmethod(packets.state_playing_clientbound)
@@ -360,7 +435,7 @@ class StatusReactor(PacketReactor):
     get_clientbound_packets = staticmethod(packets.state_status_clientbound)
 
     def react(self, packet):
-        if packet.id == packets.ResponsePacket.get_id(self.connection.context):
+        if packet.packet_name == "response":
             import json
 
             print(json.loads(packet.json_response))

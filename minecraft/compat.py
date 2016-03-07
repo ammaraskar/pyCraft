@@ -16,4 +16,9 @@ try:
     input = raw_input
 except NameError:
     input = input
+
+try:
+    unicode = unicode
+except NameError:
+    unicode = str
 # pylint: enable=undefined-variable,redefined-builtin,invalid-name
