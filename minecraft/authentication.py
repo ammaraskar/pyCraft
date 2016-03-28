@@ -123,6 +123,27 @@ class AuthenticationToken(object):
         self.client_token = json_resp["clientToken"]
         self.profile.id_ = json_resp["selectedProfile"]["id"]
         self.profile.name = json_resp["selectedProfile"]["name"]
+        self.online = True
+
+        return True
+
+    def fake_authenticate(self, username):
+        """
+        Do not contact the auth server, and instead create the auth token with fake values
+
+        Parameters:
+            username - anything you want
+
+        Returns:
+            True, always
+        """
+
+        self.username = username
+        self.access_token = "fake_access_token"
+        self.client_token = "fake_client_token"
+        self.profile.id_ = "fake_client_id"
+        self.profile.name = username
+        self.online = False
 
         return True
 
