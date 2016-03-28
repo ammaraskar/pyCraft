@@ -48,8 +48,9 @@ def main():
 
     auth_token = authentication.AuthenticationToken()
     try:
-        #auth_token.authenticate(options.username, options.password)
-        auth_token.fake_authenticate(options.username)
+        # Uncomment line to either authenticate to mojang, or create a fake auth token for offline servers.
+        auth_token.authenticate(options.username, options.password)
+        # auth_token.fake_authenticate(options.username)
     except YggdrasilError as e:
         print(e)
         sys.exit()
