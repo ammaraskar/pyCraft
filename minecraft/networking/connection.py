@@ -225,14 +225,19 @@ class NetworkingThread(threading.Thread):
         while True:
             if self.interrupt:
                 break
+
             # Attempt to write out as many as 300 packets as possible every
             # 0.05 seconds (20 ticks per second)
             num_packets = 0
             self.connection._write_lock.acquire()
-            while self.connection._pop_packet():
-                num_packets += 1
-                if num_packets >= 300:
-                    break
+            try:
+                while self.connection._pop_packet():
+                    num_packets += 1
+                    if num_packets >= 300:
+                        break
+                exc_info = None
+            except:
+                exc_info = sys.exc_info()
             self.connection._write_lock.release()
 
             # Read and react to as many as 50 packets
@@ -241,7 +246,6 @@ class NetworkingThread(threading.Thread):
                 self.connection.file_object)
             while packet:
                 num_packets += 1
-
                 try:
                     self.connection.reactor.react(packet)
                     for listener in self.connection.packet_listeners:
@@ -253,6 +257,9 @@ class NetworkingThread(threading.Thread):
                     break
                 packet = self.connection.reactor.read_packet(
                     self.connection.file_object)
+
+            if exc_info is not None:
+                raise exc_info[0], exc_info[1], exc_info[2]
 
             time.sleep(0.05)
 
@@ -415,6 +422,10 @@ class PlayingReactor(PacketReactor):
             self.connection.write_packet(keep_alive_packet)
 
         if packet.packet_name == "player position and look":
+            teleport_confirm = packets.TeleportConfirmPacket()
+            teleport_confirm.teleport_id = packet.teleport_id
+            self.connection.write_packet(teleport_confirm)
+            '''
             position_response = packets.PositionAndLookPacket()
             position_response.x = packet.x
             position_response.feet_y = packet.y
@@ -422,8 +433,8 @@ class PlayingReactor(PacketReactor):
             position_response.yaw = packet.yaw
             position_response.pitch = packet.pitch
             position_response.on_ground = True
-
             self.connection.write_packet(position_response)
+            '''
             self.connection.spawned = True
 
         '''

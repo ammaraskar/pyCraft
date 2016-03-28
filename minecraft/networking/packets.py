@@ -76,6 +76,7 @@ class Packet(object):
 
     def __init__(self, context=None, **kwargs):
         self.context = context
+        self.set_values(**kwargs)
 
     @property
     def context(self):
@@ -321,6 +322,32 @@ class PlayerPositionAndLookPacket(Packet):
         {'teleport_id': VarInt} if context.protocol_version >= 107 else {},
     ])
 
+    FLAG_REL_X     = 0x01
+    FLAG_REL_Y     = 0x02
+    FLAG_REL_Z     = 0x04
+    FLAG_REL_YAW   = 0x08
+    FLAG_REL_PITCH = 0x10
+
+    class PositionAndLook(object):
+        __slots__ = 'x', 'y', 'z', 'yaw', 'pitch'
+        def __init__(self, **kwds):
+            for attr in self.__slots__:
+                setattr(self, attr, kwds.get(attr))
+
+    # Update a PositionAndLook instance using this packet.
+    def apply(self, target):
+        if self.flags & self.FLAG_REL_X: target.x += self.x
+        else: target.x = self.x
+        if self.flags & self.FLAG_REL_Y: target.y += self.y
+        else: target.y = self.y
+        if self.flags & self.FLAG_REL_Z: target.z += self.z
+        else: target.z = self.z
+        if self.flags & self.FLAG_REL_YAW: target.yaw += self.yaw
+        else: target.yaw = self.yaw
+        if self.flags & self.FLAG_REL_PITCH: target.pitch += self.pitch
+        else: target.pitch = self.pitch
+        self.yaw %= 360
+        self.pitch %= 360
 
 class DisconnectPacketPlayState(Packet):
     get_id = staticmethod(lambda context:
@@ -606,10 +633,31 @@ class PositionAndLookPacket(Packet):
         {'pitch': Float},
         {'on_ground': Boolean}]
 
+class TeleportConfirmPacket(Packet):
+    # Note: added between protocol versions 47 and 107.
+    id = 0x00
+    packet_name = "teleport confirm"
+    definition = [
+        {'teleport_id': VarInt}]
+
+class AnimationPacketServerbound(Packet):
+    get_id = staticmethod(lambda context:
+        0x1A if context.protocol_version >= 107 else
+        0x0A)
+    packet_name = "animation"
+    get_definition = staticmethod(lambda context: [
+        {'hand': VarInt} if context.protocol_version >= 107 else {}])
+    HAND_MAIN = 0
+    HAND_OFF  = 1
 
 def state_playing_serverbound(context):
-    return {
+    packets = {
         KeepAlivePacketServerbound,
         ChatPacket,
-        PositionAndLookPacket
+        PositionAndLookPacket,
+        AnimationPacketServerbound,
     }
+    if context.protocol_version >= 107: packets |= {
+        TeleportConfirmPacket,
+    }
+    return packets
