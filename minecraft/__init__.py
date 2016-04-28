@@ -8,6 +8,8 @@ __version__ = "0.1.0"
 SUPPORTED_PROTOCOL_VERSIONS = (
     47,
     107,
+    108,
+    109,
 )
 
 SUPPORTED_MINECRAFT_VERSIONS = {
@@ -21,4 +23,6 @@ SUPPORTED_MINECRAFT_VERSIONS = {
     '1.8.7': 47,
     '1.8.8': 47,
     '1.9':   107,
+    '1.9.1': 108,
+    '1.9.2': 109,
 }

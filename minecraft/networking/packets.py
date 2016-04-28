@@ -287,14 +287,14 @@ class JoinGamePacket(Packet):
         0x23 if context.protocol_version >= 107 else
         0x01)
     packet_name = "join game"
-    definition = [
+    get_definition = staticmethod(lambda context: [
         {'entity_id': Integer},
         {'game_mode': UnsignedByte},
-        {'dimension': Byte},
+        {'dimension': Integer if context.protocol_version >= 108 else Byte},
         {'difficulty': UnsignedByte},
         {'max_players': UnsignedByte},
         {'level_type': String},
-        {'reduced_debug_info': Boolean}]
+        {'reduced_debug_info': Boolean}])
 
 
 class ChatMessagePacket(Packet):
