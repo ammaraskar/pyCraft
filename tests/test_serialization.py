@@ -53,8 +53,8 @@ class SerializationTest(unittest.TestCase):
             base_type.send(None, None)
 
         empty_socket = PacketBuffer()
-        with self.assertRaises(RuntimeError):
-            VarInt.read_socket(empty_socket)
+        with self.assertRaises(Exception):
+            VarInt.read(empty_socket)
 
     def test_varint(self):
         self.assertEqual(VarInt.size(2), 1)
@@ -64,4 +64,4 @@ class SerializationTest(unittest.TestCase):
         VarInt.send(50000, packet_buffer)
         packet_buffer.reset_cursor()
 
-        self.assertEqual(VarInt.read_socket(packet_buffer), 50000)
+        self.assertEqual(VarInt.read(packet_buffer), 50000)

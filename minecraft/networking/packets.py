@@ -401,6 +401,10 @@ class PlayerListItemPacket(Packet):
             self.uuid = UUID.read(file_object)
             self._read(file_object)
 
+        def _read(self, file_object):
+            raise NotImplementedError(
+                'This abstract method must be overridden in a subclass.')
+
         @classmethod
         def type_from_id(cls, action_id):
             subcls = {

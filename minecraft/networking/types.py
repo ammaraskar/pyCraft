@@ -84,7 +84,10 @@ class VarInt(Type):
     def read(file_object):
         number = 0
         for i in range(5):
-            byte = ord(file_object.read(1))
+            byte = file_object.read(1)
+            if len(byte) < 1:
+                raise RuntimeError("Unexpected end of message.")
+            byte = ord(byte)
             number |= (byte & 0x7F) << 7 * i
             if not byte & 0x80:
                 break

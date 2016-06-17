@@ -1,7 +1,6 @@
 from __future__ import print_function
 
 from collections import deque
-from collections import namedtuple
 from threading import Lock
 from zlib import decompress
 from itertools import *
