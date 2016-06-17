@@ -5,13 +5,6 @@ with a MineCraft server.
 
 __version__ = "0.1.0"
 
-SUPPORTED_PROTOCOL_VERSIONS = (
-    47,
-    107,
-    108,
-    109,
-)
-
 SUPPORTED_MINECRAFT_VERSIONS = {
     '1.8':   47,
     '1.8.1': 47,
@@ -25,4 +18,9 @@ SUPPORTED_MINECRAFT_VERSIONS = {
     '1.9':   107,
     '1.9.1': 108,
     '1.9.2': 109,
+    '1.9.3': 110,
+    '1.9.4': 110,
+    '1.10':  210,
 }
+
+SUPPORTED_PROTOCOL_VERSIONS = sorted(SUPPORTED_MINECRAFT_VERSIONS.values())
