@@ -1,2 +1,3 @@
 cryptography
 requests
+future

@@ -81,19 +81,6 @@ class Integer(Type):
 
 class VarInt(Type):
     @staticmethod
-    def read_socket(socket):
-        number = 0
-        for i in range(5):
-            byte = socket.recv(1)
-            if byte == "" or len(byte) == 0:
-                raise RuntimeError("Socket disconnected")
-            byte = ord(byte)
-            number |= (byte & 0x7F) << 7 * i
-            if not byte & 0x80:
-                break
-        return number
-
-    @staticmethod
     def read(file_object):
         number = 0
         for i in range(5):

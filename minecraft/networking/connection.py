@@ -13,6 +13,8 @@ import sys
 import json
 import re
 
+from future.utils import raise_
+
 from ..compat import unicode
 from .types import VarInt
 from . import packets
@@ -259,7 +261,7 @@ class NetworkingThread(threading.Thread):
                     self.connection.file_object)
 
             if exc_info is not None:
-                raise exc_info[0], exc_info[1], exc_info[2]
+                raise_(*exc_info)
 
             time.sleep(0.05)
 
@@ -290,11 +292,10 @@ class PacketReactor(object):
             for packet in self.__class__.get_clientbound_packets(context)}
 
     def read_packet(self, stream):
-        ready_to_read = select.select([self.connection.socket], [], [],
-                                      self.TIME_OUT)[0]
+        ready_to_read = select.select([stream], [], [], self.TIME_OUT)[0]
 
-        if self.connection.socket in ready_to_read:
-            length = VarInt.read_socket(self.connection.socket)
+        if stream in ready_to_read:
+            length = VarInt.read(stream)
 
             packet_data = packets.PacketBuffer()
             packet_data.send(stream.read(length))

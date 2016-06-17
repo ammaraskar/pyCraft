@@ -381,7 +381,7 @@ class PlayerListItemPacket(Packet):
         __slots__ = (
             'uuid', 'name', 'properties', 'gamemode', 'ping', 'display_name')
         def __init__(self, **kwds):
-            for key, val in kwds.iteritems():
+            for key, val in kwds.items():
                 setattr(self, key, val)
 
     class PlayerProperty(object):
@@ -501,10 +501,10 @@ class MapPacket(Packet):
     
     class MapIcon(object):
         __slots__ = 'type', 'direction', 'location'
-        def __init__(self, type, direction, (x, z)):
+        def __init__(self, type, direction, location):
             self.type = type
             self.direction = direction
-            self.location = (x, z)
+            self.location = location
         def __repr__(self):
             return ('MapIcon(type=%s, direction=%s, location=%s)'
                 % (self.type, self.direction, self.location))
@@ -533,7 +533,7 @@ class MapPacket(Packet):
         def __init__(self):
             self.maps_by_id = dict()
         def __repr__(self):
-            return 'MapSet(%s)' % ', '.join(self.maps_by_id.itervalues())
+            return 'MapSet(%s)' % ', '.join(self.maps_by_id.values())
         def __str__(self):
             return self.__repr__()
 
@@ -590,7 +590,7 @@ class MapPacket(Packet):
     def __repr__(self):
         return 'MapPacket(%s)' % ', '.join(
             '%s=%r' % (k, v)
-            for (k,v) in self.__dict__.iteritems()
+            for (k,v) in self.__dict__.items()
             if k != 'pixels')
     def __str__(self):
         return self.__repr__()

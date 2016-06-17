@@ -32,6 +32,7 @@ Requirements
 ------------
 - `cryptography <https://github.com/pyca/cryptography#cryptography>`_ 
 - `requests <http://docs.python-requests.org/en/latest/>`_
+- `future <http://python-future.org/>`_
 
 The requirements are also stored in ``requirements.txt``
 
