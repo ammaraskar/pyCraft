@@ -193,6 +193,7 @@ class String(Type):
         VarInt.send(len(value), socket)
         socket.send(value)
 
+
 class UUID(Type):
     @staticmethod
     def read(file_object):

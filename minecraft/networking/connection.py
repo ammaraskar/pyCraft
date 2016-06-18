@@ -3,7 +3,6 @@ from __future__ import print_function
 from collections import deque
 from threading import Lock
 from zlib import decompress
-from itertools import *
 import threading
 import socket
 import time
@@ -21,6 +20,7 @@ from . import encryption
 from .. import SUPPORTED_PROTOCOL_VERSIONS
 from .. import SUPPORTED_MINECRAFT_VERSIONS
 
+
 class ConnectionContext(object):
     """A ConnectionContext encapsulates the static configuration parameters
     shared by the Connection class with other classes, such as Packet.
@@ -29,17 +29,15 @@ class ConnectionContext(object):
     def __init__(self, **kwds):
         self.protocol_version = kwds.get('protocol_version')
 
+
 class _ConnectionOptions(object):
-    def __init__(self,
-        address=None,
-        port=None,
-        compression_threshold=-1,
-        compression_enabled=False
-    ):
+    def __init__(self, address=None, port=None, compression_threshold=-1,
+                 compression_enabled=False):
         self.address = address
         self.port = port
         self.compression_threshold = compression_threshold
         self.compression_enabled = compression_enabled
+
 
 class Connection(object):
     """This class represents a connection to a minecraft
@@ -50,9 +48,10 @@ class Connection(object):
         self,
         address,
         port,
-        auth_token,
-        initial_version=None, # A Minecraft version str or protocol version int.
-        allowed_versions=None # A set of versions as above.
+        auth_token=None,
+        username=None,
+        initial_version=None,
+        allowed_versions=None,
     ):
         """Sets up an instance of this object to be able to connect to a
         minecraft server.
@@ -63,6 +62,16 @@ class Connection(object):
         :param address: address of the server to connect to
         :param port(int): port of the server to connect to
         :param auth_token: :class:`authentication.AuthenticationToken` object.
+                           If None, no authentication is attempted and the
+                           server is assumed to be running in offline mode.
+        :param username: Username string; only applicable in offline mode.
+        :param initial_version: A Minecraft version string or protocol version
+                                number to use as a first guess when connecting
+                                to the server.
+        :param allowed_versions: A set of versions, each being a Minecraft
+                                 version string or protocol version number,
+                                 restricting the versions that the client may
+                                 use in connecting to the server.
         """
 
         self._write_lock = Lock()
@@ -83,7 +92,8 @@ class Connection(object):
         if allowed_versions is None:
             self.allowed_proto_versions = SUPPORTED_PROTOCOL_VERSIONS
         else:
-            self.allowed_proto_versions = set(map(proto_version, allowed_versions))
+            allowed_version = set(map(proto_version, allowed_versions))
+            self.allowed_proto_versions = allowed_version
 
         if initial_version is None:
             initial_proto_version = max(self.allowed_proto_versions)
@@ -96,6 +106,7 @@ class Connection(object):
         self.options.address = address
         self.options.port = port
         self.auth_token = auth_token
+        self.username = username
 
         # The reactor handles all the default responses to packets,
         # it should be changed per networking state
@@ -176,14 +187,17 @@ class Connection(object):
         self.spawned = False
         with self._write_lock:
             self._outgoing_packet_queue = deque()
-        
+
         self._connect()
         self._handshake()
 
         self.reactor = LoginReactor(self)
         self._start_network_thread()
         login_start_packet = packets.LoginStartPacket()
-        login_start_packet.name = self.auth_token.profile.name
+        if self.auth_token:
+            login_start_packet.name = self.auth_token.profile.name
+        else:
+            login_start_packet.name = self.username
         self.write_packet(login_start_packet)
 
     def _connect(self):
@@ -195,7 +209,7 @@ class Connection(object):
         # the server.
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.connect((self.options.address, self.options.port))
-        self.file_object = self.socket.makefile("rb")
+        self.file_object = self.socket.makefile("rb", 0)
 
     def _handshake(self, next_state=2):
         handshake = packets.HandShakePacket()
@@ -205,6 +219,7 @@ class Connection(object):
         handshake.next_state = next_state
 
         self.write_packet(handshake)
+
 
 class NetworkingThread(threading.Thread):
     def __init__(self, connection):
@@ -247,6 +262,15 @@ class NetworkingThread(threading.Thread):
                 self.connection.file_object)
             while packet:
                 num_packets += 1
+
+                # Do not raise an IOError if it occurred while a disconnect
+                # packet was received, as this may be part of an orderly
+                # disconnection.
+                if packet.packet_name == 'disconnect' and \
+                   exc_info is not None and \
+                   isinstance(exc_info[1], IOError):
+                    exc_info = None
+
                 try:
                     self.connection.reactor.react(packet)
                     for listener in self.connection.packet_listeners:
@@ -256,6 +280,7 @@ class NetworkingThread(threading.Thread):
 
                 if num_packets >= 50:
                     break
+
                 packet = self.connection.reactor.read_packet(
                     self.connection.file_object)
 
@@ -273,6 +298,7 @@ class IgnorePacket(Exception):
     being called on that particular packet.
     """
     pass
+
 
 class PacketReactor(object):
     """
@@ -293,7 +319,7 @@ class PacketReactor(object):
     def read_packet(self, stream):
         ready_to_read = select.select([stream], [], [], self.TIME_OUT)[0]
 
-        if stream in ready_to_read:
+        if ready_to_read:
             length = VarInt.read(stream)
 
             packet_data = packets.PacketBuffer()
@@ -346,8 +372,8 @@ class LoginReactor(PacketReactor):
             if packet.server_id != '-':
                 server_id = encryption.generate_verification_hash(
                     packet.server_id, secret, packet.public_key)
-
-                self.connection.auth_token.join(server_id)
+                if self.connection.auth_token is not None:
+                    self.connection.auth_token.join(server_id)
 
             encryption_response = packets.EncryptionResponsePacket()
             encryption_response.shared_secret = encrypted_secret
@@ -372,31 +398,32 @@ class LoginReactor(PacketReactor):
             # (Note: it is known how the disconnect messages are formatted for
             # official servers within SUPPORTED_MINECRAFT_VERSIONS, but in case
             # new versions are added, this section may need to be updated.)
-            try: data = json.loads(packet.json_data)
-            except ValueError: pass
+            try:
+                data = json.loads(packet.json_data)
+            except ValueError:
+                pass
             if isinstance(data, dict) and 'text' in data:
                 data = data['text']
-            if not isinstance(data, (str, unicode)): return
+            if not isinstance(data, (str, unicode)):
+                return
             match = re.match(
                 r"(Outdated client! Please use"
                 r"|Outdated server! I'm still on) (?P<version>.*)", data)
-            if not match: return
+            if not match:
+                return
             version = match.group('version')
             if version in SUPPORTED_MINECRAFT_VERSIONS:
                 new_version = SUPPORTED_MINECRAFT_VERSIONS[version]
             elif data.startswith('Outdated client!'):
-                new_version = max(SUPPORTED_PROTOCOL_VERSIONS) 
+                new_version = max(SUPPORTED_PROTOCOL_VERSIONS)
             elif data.startswith('Outdated server!'):
                 new_version = min(SUPPORTED_PROTOCOL_VERSIONS)
-            if (new_version != self.connection.context.protocol_version
-            and new_version in self.connection.allowed_proto_versions):
-                # Ignore this disconnect packet and reconnect with the new protocol
-                # version, making it appear (on the client side) as if the client
-                # had initially connected with the (hopefully) correct version.
-                old_version = self.connection.context.protocol_version
-                print('Warning: connection using protocol version %d refused with '
-                      'message "%s". Reconnecting with protocol version %d.'
-                      % (old_version, data, new_version), file=sys.stderr)
+            if new_version != self.connection.context.protocol_version \
+               and new_version in self.connection.allowed_proto_versions:
+                # Ignore this disconnect packet and reconnect with the new
+                # protocol version, making it appear (on the client side) as if
+                # the client had initially connected with the (hopefully)
+                # correct version.
                 self.connection.context.protocol_version = new_version
                 self.connection.connect()
                 raise IgnorePacket
@@ -407,6 +434,7 @@ class LoginReactor(PacketReactor):
         if packet.packet_name == "set compression":
             self.connection.options.compression_threshold = packet.threshold
             self.connection.options.compression_enabled = True
+
 
 class PlayingReactor(PacketReactor):
     get_clientbound_packets = staticmethod(packets.state_playing_clientbound)
@@ -442,13 +470,12 @@ class PlayingReactor(PacketReactor):
             print(packet.json_data)  # TODO: handle propagating this back
         '''
 
+
 class StatusReactor(PacketReactor):
     get_clientbound_packets = staticmethod(packets.state_status_clientbound)
 
     def react(self, packet):
         if packet.packet_name == "response":
-            import json
-
             print(json.loads(packet.json_response))
 
             ping_packet = packets.PingPacket()

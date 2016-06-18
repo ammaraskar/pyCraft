@@ -73,6 +73,7 @@ class EncryptedFileObjectWrapper(object):
     def fileno(self):
         return self.actual_file_object.fileno()
 
+
 class EncryptedSocketWrapper(object):
     def __init__(self, socket, encryptor, decryptor):
         self.actual_socket = socket
