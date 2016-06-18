@@ -3,6 +3,7 @@ from __future__ import print_function
 from collections import deque
 from threading import Lock
 from zlib import decompress
+import zlib
 import threading
 import socket
 import time

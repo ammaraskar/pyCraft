@@ -43,13 +43,14 @@ def get_options():
 
     return options
 
-
 def main():
     options = get_options()
 
     auth_token = authentication.AuthenticationToken()
     try:
+        # Uncomment line to either authenticate to mojang, or create a fake auth token for offline servers.
         auth_token.authenticate(options.username, options.password)
+        # auth_token.fake_authenticate(options.username)
     except YggdrasilError as e:
         print(e)
         sys.exit()
@@ -73,7 +74,6 @@ def main():
         except KeyboardInterrupt:
             print("Bye!")
             sys.exit()
-
 
 if __name__ == "__main__":
     main()
