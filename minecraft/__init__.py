@@ -3,7 +3,7 @@ A modern, Python3-compatible, well-documented library for communicating
 with a MineCraft server.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 SUPPORTED_MINECRAFT_VERSIONS = {
     '1.8':   47,
