@@ -21,12 +21,15 @@ def get_options():
     parser.add_option("-s", "--server", dest="server", default=None,
                       help="server to connect to")
 
+    parser.add_option("-o", "--offline", dest="offline", action="store_true",
+                      help="connect to a server in offline mode")
+
     (options, args) = parser.parse_args()
 
     if not options.username:
         options.username = input("Enter your username: ")
 
-    if not options.password:
+    if not options.password and not options.offline:
         options.password = getpass.getpass("Enter your password: ")
 
     if not options.server:
@@ -47,16 +50,21 @@ def get_options():
 def main():
     options = get_options()
 
-    auth_token = authentication.AuthenticationToken()
-    try:
-        auth_token.authenticate(options.username, options.password)
-    except YggdrasilError as e:
-        print(e)
-        sys.exit()
+    if options.offline:
+        print("Connecting in offline mode")
+        connection = Connection(
+            options.address, options.port, username=options.username)
+    else:
+        auth_token = authentication.AuthenticationToken()
+        try:
+            auth_token.authenticate(options.username, options.password)
+        except YggdrasilError as e:
+            print(e)
+            sys.exit()
+        print("Logged in as " + auth_token.username)
+        connection = Connection(
+            options.address, options.port, auth_token=auth_token)
 
-    print("Logged in as " + auth_token.username)
-
-    connection = Connection(options.address, options.port, auth_token)
     connection.connect()
 
     def print_chat(chat_packet):
