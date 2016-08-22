@@ -15,7 +15,6 @@ import socket
 import json
 import sys
 
-TEST_TIMEOUT_S = None
 VERSIONS = sorted(SUPPORTED_MINECRAFT_VERSIONS.items(), key=lambda i: i[1])
 
 
@@ -27,28 +26,28 @@ class _ConnectTest(unittest.TestCase):
             addr, port, username='User', initial_version=client_version)
 
         cond = threading.Condition()
-        with cond:
-            cond.exc_info = Ellipsis
+        try:
+            with cond:
+                server_thread = threading.Thread(
+                    name='test_connection server',
+                    target=self._test_connect_server,
+                    args=(server, cond))
+                server_thread.start()
 
-            server_thread = threading.Thread(
-                name='test_connection server',
-                target=self._test_connect_server,
-                args=(server, cond))
-            server_thread.daemon = True
-            server_thread.start()
+                client_thread = threading.Thread(
+                    name='test_connection client',
+                    target=self._test_connect_client,
+                    args=(client, cond))
+                client_thread.start()
 
-            client_thread = threading.Thread(
-                name='test_connection client',
-                target=self._test_connect_client,
-                args=(client, cond))
-            client_thread.daemon = True
-            client_thread.start()
-
-            cond.wait(TEST_TIMEOUT_S)
-            if cond.exc_info is Ellipsis:
-                self.fail('Timed out.')
-            elif cond.exc_info is not None:
-                raise_(*cond.exc_info)
+                cond.wait()
+                if cond.exc_info is not None:
+                    raise_(*cond.exc_info)
+        finally:
+            # Wait for all threads to exit.
+            for thread in server_thread, client_thread:
+                if thread.is_alive():
+                    thread.join()
 
     def _test_connect_client(self, client, cond):
         def handle_packet(packet):
@@ -166,7 +165,7 @@ class FakeServer(threading.Thread):
             max_players=255, level_type='default', reduced_debug_info=False)
         self.write_packet(packet, client_socket)
 
-        keep_alive_id = random.randrange(2**31)
+        keep_alive_id = 1076048782
         packet = packets.KeepAlivePacketClientbound(
             self.context, keep_alive_id=keep_alive_id)
         self.write_packet(packet, client_socket)
