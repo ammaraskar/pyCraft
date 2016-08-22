@@ -10,12 +10,12 @@ from future.utils import raise_
 import unittest
 import threading
 import logging
-import random
 import socket
 import json
 import sys
 
 VERSIONS = sorted(SUPPORTED_MINECRAFT_VERSIONS.items(), key=lambda i: i[1])
+THREAD_TIMEOUT_S = 5
 
 
 class _ConnectTest(unittest.TestCase):
@@ -47,7 +47,9 @@ class _ConnectTest(unittest.TestCase):
             # Wait for all threads to exit.
             for thread in server_thread, client_thread:
                 if thread.is_alive():
-                    thread.join()
+                    thread.join(THREAD_TIMEOUT_S)
+                if thread.is_alive():
+                    self.fail('Thread "%s" timed out.' % thread.name)
 
     def _test_connect_client(self, client, cond):
         def handle_packet(packet):
