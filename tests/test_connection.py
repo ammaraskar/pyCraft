@@ -32,12 +32,14 @@ class _ConnectTest(unittest.TestCase):
                     name='test_connection server',
                     target=self._test_connect_server,
                     args=(server, cond))
+                server_thread.daemon = True
                 server_thread.start()
 
                 client_thread = threading.Thread(
                     name='test_connection client',
                     target=self._test_connect_client,
                     args=(client, cond))
+                client_thread.daemon = True
                 client_thread.start()
 
                 cond.wait()
@@ -49,7 +51,11 @@ class _ConnectTest(unittest.TestCase):
                 if thread.is_alive():
                     thread.join(THREAD_TIMEOUT_S)
                 if thread.is_alive():
-                    self.fail('Thread "%s" timed out.' % thread.name)
+                    if cond.exc_info is None:
+                        self.fail('Thread "%s" timed out.' % thread.name)
+                    else:
+                        # Keep the earlier exception, if there is one.
+                        break
 
     def _test_connect_client(self, client, cond):
         def handle_packet(packet):
@@ -123,9 +129,22 @@ class FakeServer(threading.Thread):
         super(FakeServer, self).__init__()
 
     def run(self):
-        client_socket, addr = self.listen_socket.accept()
-        client_file = client_socket.makefile('rb', 0)
-        self.run_handshake(client_socket, client_file)
+        try:
+            self.run_accept()
+        finally:
+            self.listen_socket.close()
+
+    def run_accept(self):
+        running = True
+        while running:
+            client_socket, addr = self.listen_socket.accept()
+            client_file = client_socket.makefile('rb', 0)
+            try:
+                running = self.run_handshake(client_socket, client_file)
+            finally:
+                client_socket.shutdown(socket.SHUT_RDWR)
+                client_socket.close()
+                client_file.close()
 
     def run_handshake(self, client_socket, client_file):
         self.packets = self.packets_handshake
@@ -145,9 +164,7 @@ class FakeServer(threading.Thread):
             packet = packets.DisconnectPacket(
                 self.context, json_data=json.dumps({'text': msg}))
             self.write_packet(packet, client_socket)
-            client_socket.shutdown(socket.SHUT_RDWR)
-            client_socket.close()
-            self.run()
+            return True
 
     def run_login(self, client_socket, client_file):
         self.packets = self.packets_login
@@ -179,8 +196,7 @@ class FakeServer(threading.Thread):
         packet = packets.DisconnectPacketPlayState(
             self.context, json_data=json.dumps({'text': 'Test complete.'}))
         self.write_packet(packet, client_socket)
-        client_socket.shutdown(socket.SHUT_RDWR)
-        client_socket.close()
+        return False
 
     def read_packet_filtered(self, client_file):
         while True:
