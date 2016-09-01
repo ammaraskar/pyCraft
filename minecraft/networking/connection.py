@@ -184,21 +184,25 @@ class Connection(object):
         Attempt to begin connecting to the server.
         May safely be called multiple times after the first, i.e. to reconnect.
         """
-        self.spawned = False
         with self._write_lock:
+            # We hold the lock throughout, as connect() may be called by both
+            # the network thread and a parent thread simultaneously, during
+            # automatic version negotiation.
+
+            self.spawned = False
             self._outgoing_packet_queue = deque()
 
-        self._connect()
-        self._handshake()
+            self._connect()
+            self._handshake()
+            login_start_packet = packets.LoginStartPacket()
+            if self.auth_token:
+                login_start_packet.name = self.auth_token.profile.name
+            else:
+                login_start_packet.name = self.username
+            self.write_packet(login_start_packet)
 
-        self.reactor = LoginReactor(self)
-        self._start_network_thread()
-        login_start_packet = packets.LoginStartPacket()
-        if self.auth_token:
-            login_start_packet.name = self.auth_token.profile.name
-        else:
-            login_start_packet.name = self.username
-        self.write_packet(login_start_packet)
+            self.reactor = LoginReactor(self)
+            self._start_network_thread()
 
     def _connect(self):
         # Connect a socket to the server and create a file object from the
