@@ -86,9 +86,12 @@ class Packet(object):
     @context.setter
     def context(self, _context):
         self._context = _context
-        if _context is not None:
-            self.id = self.get_id(_context)
-            self.definition = self.get_definition(_context)
+        self._context_changed()
+
+    def _context_changed(self):
+        if self._context is not None:
+            self.id = self.get_id(self._context)
+            self.definition = self.get_definition(self._context)
         else:
             self.id = None
             self.definition = None
@@ -699,6 +702,16 @@ class ChatPacket(Packet):
     def get_id(context):
         return 0x02 if context.protocol_version >= 107 else \
                0x01
+
+    @staticmethod
+    def get_max_length(context):
+        return 256 if context.protocol_version >= 305 else \
+               100
+
+    @property
+    def max_length(self):
+        if self.context is not None:
+            return self.get_max_length(self.context)
 
     packet_name = "chat"
     definition = [
