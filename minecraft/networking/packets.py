@@ -18,10 +18,10 @@ class PacketBuffer(object):
         """
         self.bytes.write(value)
 
-    def read(self, length):
+    def read(self, length=None):
         return self.bytes.read(length)
 
-    def recv(self, length):
+    def recv(self, length=None):
         return self.read(length)
 
     def reset(self):
@@ -123,10 +123,11 @@ class Packet(object):
         if compression_threshold is not None:
             if len(packet_buffer.get_writable()) > compression_threshold != -1:
                 # compress the current payload
-                compressed_data = compress(packet_buffer.get_writable())
+                packet_data = packet_buffer.get_writable()
+                compressed_data = compress(packet_data)
                 packet_buffer.reset()
-                # write out the length of the compressed payload
-                VarInt.send(len(compressed_data), packet_buffer)
+                # write out the length of the uncompressed payload
+                VarInt.send(len(packet_data), packet_buffer)
                 # write the compressed payload itself
                 packet_buffer.send(compressed_data)
             else:

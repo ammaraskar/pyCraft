@@ -335,11 +335,12 @@ class PacketReactor(object):
             packet_data.reset_cursor()
 
             if self.connection.options.compression_enabled:
-                compressed_size = VarInt.read(packet_data)
-
-                if compressed_size > 0:
-                    decompressed_packet = decompress(
-                        packet_data.read(compressed_size))
+                decompressed_size = VarInt.read(packet_data)
+                if decompressed_size > 0:
+                    decompressed_packet = decompress(packet_data.read())
+                    assert len(decompressed_packet) == decompressed_size, \
+                        'decompressed length %d, but expected %d' % \
+                        (len(decompressed_packet), decompressed_size)
                     packet_data.reset()
                     packet_data.send(decompressed_packet)
                     packet_data.reset_cursor()
