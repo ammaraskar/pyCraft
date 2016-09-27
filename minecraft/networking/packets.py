@@ -706,7 +706,7 @@ class ChatPacket(Packet):
 
     @staticmethod
     def get_max_length(context):
-        return 256 if context.protocol_version >= 305 else \
+        return 256 if context.protocol_version >= 306 else \
                100
 
     @property
