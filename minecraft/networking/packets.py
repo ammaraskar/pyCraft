@@ -657,7 +657,7 @@ class MapPacket(Packet):
         if self.pixels is not None:
             for i in range(len(self.pixels)):
                 x = self.offset[0] + i % self.width
-                z = self.offset[1] + i / self.width
+                z = self.offset[1] + i // self.width
                 map.pixels[x + map.width * z] = self.pixels[i]
         map.is_tracking_position = self.is_tracking_position
 
