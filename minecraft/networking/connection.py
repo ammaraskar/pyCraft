@@ -90,7 +90,7 @@ class Connection(object):
             return proto_version
 
         if allowed_versions is None:
-            self.allowed_proto_versions = SUPPORTED_PROTOCOL_VERSIONS
+            self.allowed_proto_versions = set(SUPPORTED_PROTOCOL_VERSIONS)
         else:
             allowed_version = set(map(proto_version, allowed_versions))
             self.allowed_proto_versions = allowed_version
@@ -416,6 +416,10 @@ class LoginReactor(PacketReactor):
                 r"|Outdated server! I'm still on) (?P<version>.*)", data)
             if not match:
                 return
+
+            self.connection.allowed_proto_versions.remove(
+                self.connection.context.protocol_version)
+
             version = match.group('version')
             if version in SUPPORTED_MINECRAFT_VERSIONS:
                 new_version = SUPPORTED_MINECRAFT_VERSIONS[version]
@@ -423,8 +427,7 @@ class LoginReactor(PacketReactor):
                 new_version = max(SUPPORTED_PROTOCOL_VERSIONS)
             elif data.startswith('Outdated server!'):
                 new_version = min(SUPPORTED_PROTOCOL_VERSIONS)
-            if new_version != self.connection.context.protocol_version \
-               and new_version in self.connection.allowed_proto_versions:
+            if new_version in self.connection.allowed_proto_versions:
                 # Ignore this disconnect packet and reconnect with the new
                 # protocol version, making it appear (on the client side) as if
                 # the client had initially connected with the (hopefully)
