@@ -419,23 +419,23 @@ class LoginReactor(PacketReactor):
                 r"|Outdated server! I'm still on) (?P<version>.*)", data)
             if not match:
                 # If there's no match, we will try to select random version
-                versions_to_try = self.connection.allowed_proto_versions
+                versions_to_try = list(self.connection.allowed_proto_versions)
                 new_version = random.choice(versions_to_try)
+                version = None
             else:
                 version = match.group('version')
+                new_version = None
             self.connection.allowed_proto_versions.remove(
                 self.connection.context.protocol_version)
 
-            if not version and not new_version:
-                return
-            # If there's no versions left to try
-            if not self.connection.allowed_proto_versions:
+            if not version and not self.connection.allowed_proto_versions:
+                # If there's no versions left to try or version is empty
                 return
             if version in SUPPORTED_MINECRAFT_VERSIONS:
                 new_version = SUPPORTED_MINECRAFT_VERSIONS[version]
-            elif data.startswith('Outdated client!'):
+            elif data.startswith('Outdated client!') and not new_version:
                 new_version = max(SUPPORTED_PROTOCOL_VERSIONS)
-            elif data.startswith('Outdated server!'):
+            elif data.startswith('Outdated server!') and not new_version:
                 new_version = min(SUPPORTED_PROTOCOL_VERSIONS)
             if new_version in self.connection.allowed_proto_versions:
                 # Ignore this disconnect packet and reconnect with the new
