@@ -27,6 +27,7 @@ class ConnectionContext(object):
     shared by the Connection class with other classes, such as Packet.
     Importantly, it can be used without knowing the interface of Connection.
     """
+
     def __init__(self, **kwds):
         self.protocol_version = kwds.get('protocol_version')
 
@@ -45,14 +46,15 @@ class Connection(object):
     server, it handles everything from connecting, sending packets to
     handling default network behaviour
     """
+
     def __init__(
-        self,
-        address,
-        port,
-        auth_token=None,
-        username=None,
-        initial_version=None,
-        allowed_versions=None,
+            self,
+            address,
+            port,
+            auth_token=None,
+            username=None,
+            initial_version=None,
+            allowed_versions=None,
     ):
         """Sets up an instance of this object to be able to connect to a
         minecraft server.
@@ -417,13 +419,14 @@ class LoginReactor(PacketReactor):
                 r"|Outdated server! I'm still on) (?P<version>.*)", data)
             if not match:
                 # If there's no match, we will try to select random version
-                version = random.choice(list(SUPPORTED_MINECRAFT_VERSIONS.keys()))
+                versions_to_try = self.connection.allowed_proto_versions
+                new_version = random.choice(versions_to_try)
             else:
                 version = match.group('version')
             self.connection.allowed_proto_versions.remove(
                 self.connection.context.protocol_version)
-            
-            if not version:
+
+            if not version and not new_version:
                 return
             # If there's no versions left to try
             if not self.connection.allowed_proto_versions:
