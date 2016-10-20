@@ -428,7 +428,7 @@ class LoginReactor(PacketReactor):
             self.connection.allowed_proto_versions.remove(
                 self.connection.context.protocol_version)
 
-            if not version and not self.connection.allowed_proto_versions:
+            if not self.connection.allowed_proto_versions:
                 # If there's no versions left to try or version is empty
                 return
             if version in SUPPORTED_MINECRAFT_VERSIONS:
