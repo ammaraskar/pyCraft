@@ -417,15 +417,16 @@ class LoginReactor(PacketReactor):
             if not match:
                 # If there's no match, we will try to select random version
                 version = random.choice(list(SUPPORTED_MINECRAFT_VERSIONS.keys()))
-
+            else:
+                version = match.group('version')
             self.connection.allowed_proto_versions.remove(
                 self.connection.context.protocol_version)
+            
+            if not version:
+                return
             # If there's no versions left to try
             if not self.connection.allowed_proto_versions:
                 return
-            if not isinstance(version, str):
-                # If version is not string, we must take it from match
-                version = match.group('version')
             if version in SUPPORTED_MINECRAFT_VERSIONS:
                 new_version = SUPPORTED_MINECRAFT_VERSIONS[version]
             elif data.startswith('Outdated client!'):
