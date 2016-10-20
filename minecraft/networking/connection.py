@@ -9,6 +9,7 @@ import time
 import select
 import sys
 import json
+import random
 import re
 
 from future.utils import raise_
@@ -26,6 +27,7 @@ class ConnectionContext(object):
     shared by the Connection class with other classes, such as Packet.
     Importantly, it can be used without knowing the interface of Connection.
     """
+
     def __init__(self, **kwds):
         self.protocol_version = kwds.get('protocol_version')
 
@@ -44,14 +46,15 @@ class Connection(object):
     server, it handles everything from connecting, sending packets to
     handling default network behaviour
     """
+
     def __init__(
-        self,
-        address,
-        port,
-        auth_token=None,
-        username=None,
-        initial_version=None,
-        allowed_versions=None,
+            self,
+            address,
+            port,
+            auth_token=None,
+            username=None,
+            initial_version=None,
+            allowed_versions=None,
     ):
         """Sets up an instance of this object to be able to connect to a
         minecraft server.
@@ -415,17 +418,24 @@ class LoginReactor(PacketReactor):
                 r"(Outdated client! Please use"
                 r"|Outdated server! I'm still on) (?P<version>.*)", data)
             if not match:
-                return
-
+                # If there's no match, we will try to select random version
+                versions_to_try = list(self.connection.allowed_proto_versions)
+                new_version = random.choice(versions_to_try)
+                version = None
+            else:
+                version = match.group('version')
+                new_version = None
             self.connection.allowed_proto_versions.remove(
                 self.connection.context.protocol_version)
 
-            version = match.group('version')
+            if not self.connection.allowed_proto_versions:
+                # If there's no versions left to try or version is empty
+                return
             if version in SUPPORTED_MINECRAFT_VERSIONS:
                 new_version = SUPPORTED_MINECRAFT_VERSIONS[version]
-            elif data.startswith('Outdated client!'):
+            elif data.startswith('Outdated client!') and not new_version:
                 new_version = max(SUPPORTED_PROTOCOL_VERSIONS)
-            elif data.startswith('Outdated server!'):
+            elif data.startswith('Outdated server!') and not new_version:
                 new_version = min(SUPPORTED_PROTOCOL_VERSIONS)
             if new_version in self.connection.allowed_proto_versions:
                 # Ignore this disconnect packet and reconnect with the new
