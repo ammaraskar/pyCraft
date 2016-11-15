@@ -42,6 +42,7 @@ def get_mc_credentials():
     except IOError:
         return (None, None)
 
+
 username, password = get_mc_credentials()
 
 

@@ -9,6 +9,7 @@ def read(filename):
     with open(filename, "r") as f:
         return f.read()
 
+
 MAIN_AUTHORS = ["Ammar Askar <ammar@ammaraskar.com>",
                 "Jeppe Klitgaard <jeppe@dapj.dk>"]
 

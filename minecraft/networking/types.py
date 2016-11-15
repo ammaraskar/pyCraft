@@ -110,6 +110,7 @@ class VarInt(Type):
             if value < max_value:
                 return size
 
+
 # Maps (maximum integer value -> size of VarInt in bytes)
 VARINT_SIZE_TABLE = {
     2 ** 7: 1,
