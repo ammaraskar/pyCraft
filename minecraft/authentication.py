@@ -182,6 +182,10 @@ class AuthenticationToken(object):
         req = _make_request(AUTH_SERVER, "validate",
                             {"accessToken": self.access_token})
 
+        # Validate returns 204 to indicate success
+        # http://wiki.vg/Authentication#Response_3
+        if req.status_code == 204:
+            return True
         if _raise_from_request(req) is None:
             return True
 
