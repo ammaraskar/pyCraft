@@ -24,7 +24,8 @@ class _ConnectTest(unittest.TestCase):
         addr, port = server.listen_socket.getsockname()
 
         client = connection.Connection(
-            addr, port, username='User', initial_version=client_version)
+            addr, port, username='User', initial_version=client_version,
+            handle_exception=False)
         client.register_packet_listener(
             lambda packet: logging.debug('[ ->C] %s' % packet), packets.Packet)
 

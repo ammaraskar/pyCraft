@@ -53,6 +53,7 @@ class Connection(object):
         username=None,
         initial_version=None,
         allowed_versions=None,
+        handle_exception=None,
     ):
         """Sets up an instance of this object to be able to connect to a
         minecraft server.
@@ -73,6 +74,17 @@ class Connection(object):
                                  version string or protocol version number,
                                  restricting the versions that the client may
                                  use in connecting to the server.
+        :param handle_exception: A function to be called when an exception
+                                 occurs in the client's networking thread,
+                                 taking 2 arguments: the exception object `e'
+                                 as in `except Exception as e', and a 3-tuple
+                                 given by sys.exc_info(); or None for the
+                                 default behaviour of raising the exception
+                                 from its original context; or False for no
+                                 action. In any case, the networking thread
+                                 will terminate, the exception will be
+                                 available via the `exception' and `exc_info'
+                                 attributes of the `Connection' instance.
         """
 
         self._write_lock = Lock()
@@ -108,6 +120,9 @@ class Connection(object):
         self.options.port = port
         self.auth_token = auth_token
         self.username = username
+
+        self.handle_exception = handle_exception
+        self.exception, self.exc_info = None, None
 
         # The reactor handles all the default responses to packets,
         # it should be changed per networking state
@@ -271,6 +286,17 @@ class Connection(object):
 
         self.write_packet(handshake)
 
+    def _handle_exception(self, exc, exc_info):
+        try:
+            exc.exc_info = exc_info  # For backward compatibility.
+        except (TypeError, AttributeError):
+            pass
+        self.exception, self.exc_info = exc, exc_info
+        if self.handle_exception is None:
+            raise_(*exc_info)
+        elif self.handle_exception is not False:
+            self.handle_exception(exc, exc_info)
+
 
 class NetworkingThread(threading.Thread):
     def __init__(self, connection):
@@ -283,9 +309,8 @@ class NetworkingThread(threading.Thread):
     def run(self):
         try:
             self._run()
-        except Exception as e:
-            e.exc_info = sys.exc_info()
-            self.connection.exception = e
+        except BaseException as e:
+            self.connection._handle_exception(e, sys.exc_info())
         finally:
             self.connection.networking_thread = None
 
