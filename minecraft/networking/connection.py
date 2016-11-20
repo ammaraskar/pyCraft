@@ -6,6 +6,7 @@ from zlib import decompress
 import threading
 import socket
 import time
+import timeit
 import select
 import sys
 import json
@@ -47,7 +48,7 @@ class Connection(object):
     def __init__(
         self,
         address,
-        port,
+        port=25565,
         auth_token=None,
         username=None,
         initial_version=None,
@@ -114,9 +115,12 @@ class Connection(object):
 
     def _start_network_thread(self):
         """May safely be called multiple times."""
-        if self.networking_thread is None:
-            self.networking_thread = NetworkingThread(self)
-            self.networking_thread.start()
+        if self.networking_thread is not None:
+            if not self.networking_thread.interrupt:
+                return
+            self.networking_thread.join()
+        self.networking_thread = NetworkingThread(self)
+        self.networking_thread.start()
 
     def write_packet(self, packet, force=False):
         """Writes a packet to the server.
@@ -170,11 +174,33 @@ class Connection(object):
                 packet.write(self.socket)
             return True
 
-    def status(self):
+    def status(self, handle_status=None, handle_ping=False):
+        """Issue a status request to the server and then disconnect.
+
+        :param handle_status: a function to be called with the status
+                              dictionary None for the default behaviour of
+                              printing the dictionary to standard output, or
+                              False to ignore the result.
+        :param handle_ping: a function to be called with the measured latency
+                            in milliseconds, None for the default handler,
+                            which prints the latency to standard outout, or
+                            False, to prevent measurement of the latency.
+        """
         self._connect()
         self._handshake(1)
         self._start_network_thread()
-        self.reactor = StatusReactor(self)
+
+        self.reactor = StatusReactor(self, do_ping=handle_ping is not False)
+
+        if handle_status is False:
+            self.reactor.handle_status = lambda *args, **kwds: None
+        elif handle_status is not None:
+            self.reactor.handle_status = handle_status
+
+        if handle_ping is False:
+            self.reactor.handle_ping = lambda *args, **kwds: None
+        elif handle_ping is not None:
+            self.reactor.handle_ping = handle_ping
 
         request_packet = packets.RequestPacket()
         self.write_packet(request_packet)
@@ -190,8 +216,6 @@ class Connection(object):
             # automatic version negotiation.
 
             self.spawned = False
-            self._outgoing_packet_queue = deque()
-
             self._connect()
             self._handshake()
             login_start_packet = packets.LoginStartPacket()
@@ -211,9 +235,32 @@ class Connection(object):
         # since it's "guaranteed" to read the number of bytes specified,
         # the socket itself will mostly be used to write data upstream to
         # the server.
+        self._outgoing_packet_queue = deque()
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.connect((self.options.address, self.options.port))
         self.file_object = self.socket.makefile("rb", 0)
+
+    def disconnect(self):
+        """ Terminate the existing server connection, if there is one. """
+        if self.networking_thread is None:
+            self._disconnect()
+        else:
+            # The networking thread will call _disconnect() later.
+            self.networking_thread.interrupt = True
+
+    def _disconnect(self):
+        if self.socket is not None:
+            if hasattr(self.socket, 'actual_socket'):
+                # pylint: disable=no-member
+                actual_socket = self.socket.actual_socket
+            else:
+                actual_socket = self.socket
+
+            try:
+                actual_socket.shutdown(socket.SHUT_RDWR)
+            finally:
+                actual_socket.close()
+                self.socket = None
 
     def _handshake(self, next_state=2):
         handshake = packets.HandShakePacket()
@@ -236,14 +283,16 @@ class NetworkingThread(threading.Thread):
     def run(self):
         try:
             self._run()
-        except:
-            ty, ex, tb = sys.exc_info()
-            ex.exc_info = ty, ex, tb
-            self.connection.exception = ex
+        except Exception as e:
+            e.exc_info = sys.exc_info()
+            self.connection.exception = e
+        finally:
+            self.connection.networking_thread = None
 
     def _run(self):
         while True:
             if self.interrupt:
+                self.connection._disconnect()
                 break
 
             # Attempt to write out as many as 300 packets as possible every
@@ -283,6 +332,10 @@ class NetworkingThread(threading.Thread):
                     pass
 
                 if num_packets >= 50:
+                    break
+
+                if self.interrupt:
+                    self.connection._disconnect()
                     break
 
                 packet = self.connection.reactor.read_packet(
@@ -473,22 +526,36 @@ class PlayingReactor(PacketReactor):
             '''
             self.connection.spawned = True
 
-        '''
         if packet.packet_name == "disconnect":
-            print(packet.json_data)  # TODO: handle propagating this back
-        '''
+            self.connection.disconnect()
 
 
 class StatusReactor(PacketReactor):
     get_clientbound_packets = staticmethod(packets.state_status_clientbound)
 
+    def __init__(self, connection, do_ping=False):
+        super(StatusReactor, self).__init__(connection)
+        self.do_ping = do_ping
+
     def react(self, packet):
         if packet.packet_name == "response":
-            print(json.loads(packet.json_response))
+            if self.do_ping:
+                ping_packet = packets.PingPacket()
+                # NOTE: it may be better to depend on the `monotonic' package
+                # or something similar for more accurate time measurement.
+                ping_packet.time = int(1000 * timeit.default_timer())
+                self.connection.write_packet(ping_packet)
+            else:
+                self.connection.disconnect()
+            self.handle_status(json.loads(packet.json_response))
 
-            ping_packet = packets.PingPacket()
-            ping_packet.time = int(time.time())
-            self.connection.write_packet(ping_packet)
+        elif packet.packet_name == "ping" and self.do_ping:
+            now = int(1000 * timeit.default_timer())
+            self.connection.disconnect()
+            self.handle_ping(now - packet.time)
 
-            self.connection.networking_thread.interrupt = True
-            # TODO: More shutdown? idk
+    def handle_status(self, status_dict):
+        print(status_dict)
+
+    def handle_ping(self, latency_ms):
+        print('Ping: %d ms' % latency_ms)

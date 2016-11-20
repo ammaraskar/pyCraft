@@ -19,24 +19,27 @@ THREAD_TIMEOUT_S = 5
 
 
 class _ConnectTest(unittest.TestCase):
-    def _test_connect(self, client_version, server_version):
+    def _test_connect(self, client_version=None, server_version=None):
         server = FakeServer(minecraft_version=server_version)
         addr, port = server.listen_socket.getsockname()
+
         client = connection.Connection(
             addr, port, username='User', initial_version=client_version)
+        client.register_packet_listener(
+            lambda packet: logging.debug('[ ->C] %s' % packet), packets.Packet)
 
         cond = threading.Condition()
         try:
             with cond:
                 server_thread = threading.Thread(
-                    name='test_connection server',
+                    name='_ConnectTest server',
                     target=self._test_connect_server,
                     args=(server, cond))
                 server_thread.daemon = True
                 server_thread.start()
 
                 client_thread = threading.Thread(
-                    name='test_connection client',
+                    name='_ConnectTest client',
                     target=self._test_connect_client,
                     args=(client, cond))
                 client_thread.daemon = True
@@ -58,10 +61,6 @@ class _ConnectTest(unittest.TestCase):
                         break
 
     def _test_connect_client(self, client, cond):
-        def handle_packet(packet):
-            logging.debug('[ ->C] %s' % packet)
-        client.register_packet_listener(handle_packet, packets.Packet)
-
         client.connect()
         client.networking_thread.join()
         if getattr(client, 'exception', None) is not None:
@@ -100,13 +99,41 @@ class ConnectNewToNewTest(_ConnectTest):
         self._test_connect(VERSIONS[-1][1], VERSIONS[-1][0])
 
 
+class PingTest(_ConnectTest):
+    def runTest(self):
+        self._test_connect()
+
+    def _test_connect_client(self, client, cond):
+        def handle_ping(latency_ms):
+            assert 0 <= latency_ms < 60000
+            with cond:
+                cond.exc_info = None
+                cond.notify_all()
+        client.status(handle_status=False, handle_ping=handle_ping)
+
+        client.networking_thread.join()
+        if getattr(client, 'exception', None) is not None:
+            with cond:
+                cond.exc_info = client.exception.exc_info
+                cond.notify_all()
+
+    def _test_connect_server(self, server, cond):
+        try:
+            server.run()
+        except:
+            with cond:
+                cond.exc_info = sys.exc_info()
+                cond.notify_all()
+
+
 class FakeServer(threading.Thread):
     __slots__ = 'context', 'minecraft_version', 'listen_socket', \
-                'packets_login', 'packets_playing', 'packets',
+                'packets_login', 'packets_playing', 'packets_status', \
+                'packets',
 
     def __init__(self, minecraft_version=None):
         if minecraft_version is None:
-            minecraft_version = SUPPORTED_MINECRAFT_VERSIONS.keys()[-1]
+            minecraft_version = VERSIONS[-1][0]
         self.minecraft_version = minecraft_version
         protocol_version = SUPPORTED_MINECRAFT_VERSIONS[minecraft_version]
         self.context = connection.ConnectionContext(
@@ -115,12 +142,18 @@ class FakeServer(threading.Thread):
         self.packets_handshake = {
             p.get_id(self.context): p for p in
             packets.state_handshake_serverbound(self.context)}
+
         self.packets_login = {
             p.get_id(self.context): p for p in
             packets.state_login_serverbound(self.context)}
+
         self.packets_playing = {
             p.get_id(self.context): p for p in
             packets.state_playing_serverbound(self.context)}
+
+        self.packets_status = {
+            p.get_id(self.context): p for p in
+            packets.state_status_serverbound(self.context)}
 
         self.listen_socket = socket.socket()
         self.listen_socket.bind(('0.0.0.0', 0))
@@ -150,9 +183,20 @@ class FakeServer(threading.Thread):
         self.packets = self.packets_handshake
         packet = self.read_packet_filtered(client_file)
         assert isinstance(packet, packets.HandShakePacket)
+        if packet.next_state == 1:
+            return self.run_handshake_status(
+                packet, client_socket, client_file)
+        elif packet.next_state == 2:
+            return self.run_handshake_play(
+                packet, client_socket, client_file)
+        else:
+            raise AssertionError('Unknown state: %s' % packet.next_state)
 
+    def run_handshake_status(self, packet, client_socket, client_file):
+        self.run_status(client_socket, client_file)
+
+    def run_handshake_play(self, packet, client_socket, client_file):
         if packet.protocol_version == self.context.protocol_version:
-            assert packet.next_state == 2
             self.run_login(client_socket, client_file)
         else:
             if packet.protocol_version < self.context.protocol_version:
@@ -196,6 +240,36 @@ class FakeServer(threading.Thread):
         packet = packets.DisconnectPacketPlayState(
             self.context, json_data=json.dumps({'text': 'Test complete.'}))
         self.write_packet(packet, client_socket)
+        return False
+
+    def run_status(self, client_socket, client_file):
+        self.packets = self.packets_status
+
+        packet = self.read_packet(client_file)
+        assert isinstance(packet, packets.RequestPacket)
+
+        packet = packets.ResponsePacket(self.context)
+        packet.json_response = json.dumps({
+            'version': {
+                'name':     self.minecraft_version,
+                'protocol': self.context.protocol_version},
+            'players': {
+                'max':      1,
+                'online':   0,
+                'sample':   []},
+            'description': {
+                'text':     'FakeServer'}})
+        self.write_packet(packet, client_socket)
+
+        try:
+            packet = self.read_packet(client_file)
+        except EOFError:
+            return False
+        assert isinstance(packet, packets.PingPacket)
+
+        res_packet = packets.PingPacketResponse(self.context)
+        res_packet.time = packet.time
+        self.write_packet(res_packet, client_socket)
         return False
 
     def read_packet_filtered(self, client_file):

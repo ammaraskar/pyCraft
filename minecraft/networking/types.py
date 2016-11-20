@@ -86,7 +86,7 @@ class VarInt(Type):
         for i in range(5):
             byte = file_object.read(1)
             if len(byte) < 1:
-                raise RuntimeError("Unexpected end of message.")
+                raise EOFError("Unexpected end of message.")
             byte = ord(byte)
             number |= (byte & 0x7F) << 7 * i
             if not byte & 0x80:
