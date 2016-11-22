@@ -7,3 +7,7 @@ class YggdrasilError(Exception):
     """
     Base `Exception` for the Yggdrasil authentication service.
     """
+
+
+class VersionMismatch(Exception):
+    pass

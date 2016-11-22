@@ -23,13 +23,33 @@ class _ConnectTest(unittest.TestCase):
         server = FakeServer(minecraft_version=server_version)
         addr, port = server.listen_socket.getsockname()
 
+        cond = threading.Condition()
+
+        def handle_client_exception(exc, exc_info):
+            with cond:
+                cond.exc_info = exc_info
+                cond.notify_all()
+
+        def client_write(packet, *args, **kwds):
+            def packet_write(*args, **kwds):
+                logging.debug('[C-> ] %s' % packet)
+                return real_packet_write(*args, **kwds)
+            real_packet_write = packet.write
+            packet.write = packet_write
+            return real_client_write(packet, *args, **kwds)
+
+        def client_react(packet, *args, **kwds):
+            logging.debug('[ ->C] %s' % packet)
+            return real_client_react(packet, *args, **kwds)
+
         client = connection.Connection(
             addr, port, username='User', initial_version=client_version,
-            handle_exception=False)
-        client.register_packet_listener(
-            lambda packet: logging.debug('[ ->C] %s' % packet), packets.Packet)
+            handle_exception=handle_client_exception)
+        real_client_react = client._react
+        real_client_write = client.write_packet
+        client.write_packet = client_write
+        client._react = client_react
 
-        cond = threading.Condition()
         try:
             with cond:
                 server_thread = threading.Thread(
@@ -39,22 +59,20 @@ class _ConnectTest(unittest.TestCase):
                 server_thread.daemon = True
                 server_thread.start()
 
-                client_thread = threading.Thread(
-                    name='_ConnectTest client',
-                    target=self._test_connect_client,
-                    args=(client, cond))
-                client_thread.daemon = True
-                client_thread.start()
+                self._test_connect_client(client, cond)
 
-                cond.wait()
-                if cond.exc_info is not None:
+                cond.exc_info = Ellipsis
+                cond.wait(THREAD_TIMEOUT_S)
+                if cond.exc_info is Ellipsis:
+                    self.fail('Timed out.')
+                elif cond.exc_info is not None:
                     raise_(*cond.exc_info)
         finally:
             # Wait for all threads to exit.
-            for thread in server_thread, client_thread:
-                if thread.is_alive():
+            for thread in server_thread, client.networking_thread:
+                if thread is not None and thread.is_alive():
                     thread.join(THREAD_TIMEOUT_S)
-                if thread.is_alive():
+                if thread is not None and thread.is_alive():
                     if cond.exc_info is None:
                         self.fail('Thread "%s" timed out.' % thread.name)
                     else:
@@ -63,11 +81,6 @@ class _ConnectTest(unittest.TestCase):
 
     def _test_connect_client(self, client, cond):
         client.connect()
-        client.networking_thread.join()
-        if getattr(client, 'exception', None) is not None:
-            with cond:
-                cond.exc_info = client.exception.exc_info
-                cond.notify_all()
 
     def _test_connect_server(self, server, cond):
         try:
@@ -112,14 +125,9 @@ class PingTest(_ConnectTest):
                 cond.notify_all()
         client.status(handle_status=False, handle_ping=handle_ping)
 
-        client.networking_thread.join()
-        if getattr(client, 'exception', None) is not None:
-            with cond:
-                cond.exc_info = client.exception.exc_info
-                cond.notify_all()
-
     def _test_connect_server(self, server, cond):
         try:
+            server.continue_after_status = False
             server.run()
         except:
             with cond:
@@ -132,10 +140,11 @@ class FakeServer(threading.Thread):
                 'packets_login', 'packets_playing', 'packets_status', \
                 'packets',
 
-    def __init__(self, minecraft_version=None):
+    def __init__(self, minecraft_version=None, continue_after_status=True):
         if minecraft_version is None:
             minecraft_version = VERSIONS[-1][0]
         self.minecraft_version = minecraft_version
+        self.continue_after_status = continue_after_status
         protocol_version = SUPPORTED_MINECRAFT_VERSIONS[minecraft_version]
         self.context = connection.ConnectionContext(
             protocol_version=protocol_version)
@@ -172,11 +181,16 @@ class FakeServer(threading.Thread):
         running = True
         while running:
             client_socket, addr = self.listen_socket.accept()
+            logging.debug('[ ++ ] Client %s connected to server.' % (addr,))
             client_file = client_socket.makefile('rb', 0)
             try:
                 running = self.run_handshake(client_socket, client_file)
-            finally:
+            except:
+                raise
+            else:
                 client_socket.shutdown(socket.SHUT_RDWR)
+                logging.debug('[ -- ] Client %s disconnected.' % (addr,))
+            finally:
                 client_socket.close()
                 client_file.close()
 
@@ -195,6 +209,7 @@ class FakeServer(threading.Thread):
 
     def run_handshake_status(self, packet, client_socket, client_file):
         self.run_status(client_socket, client_file)
+        return self.continue_after_status
 
     def run_handshake_play(self, packet, client_socket, client_file):
         if packet.protocol_version == self.context.protocol_version:
@@ -226,7 +241,7 @@ class FakeServer(threading.Thread):
 
         packet = packets.JoinGamePacket(
             self.context, entity_id=0, game_mode=0, dimension=0, difficulty=2,
-            max_players=255, level_type='default', reduced_debug_info=False)
+            max_players=1, level_type='default', reduced_debug_info=False)
         self.write_packet(packet, client_socket)
 
         keep_alive_id = 1076048782
@@ -290,7 +305,7 @@ class FakeServer(threading.Thread):
             packet.read(buffer)
         else:
             packet = packets.Packet(self.context, id=packet_id)
-        logging.debug('[C->S] %s' % packet)
+        logging.debug('[ ->S] %s' % packet)
         return packet
 
     def read_packet_buffer(self, client_file):
