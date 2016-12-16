@@ -39,6 +39,7 @@ SUPPORTED_MINECRAFT_VERSIONS = {
     '16w44a':    313,
     '1.11-pre1': 314,
     '1.11':      315,
+    '16w50a':    316,
 }
 
 SUPPORTED_PROTOCOL_VERSIONS = sorted(SUPPORTED_MINECRAFT_VERSIONS.values())
