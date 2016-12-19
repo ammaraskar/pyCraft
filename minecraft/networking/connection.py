@@ -66,7 +66,7 @@ class Connection(object):
 
         :param address: address of the server to connect to
         :param port(int): port of the server to connect to
-        :param auth_token: :class:`authentication.AuthenticationToken` object.
+        :param auth_token: :class:`minecraft.authentication.AuthenticationToken` object.
                            If None, no authentication is attempted and the
                            server is assumed to be running in offline mode.
         :param username: Username string; only applicable in offline mode.
@@ -81,15 +81,15 @@ class Connection(object):
                                  use in connecting to the server.
         :param handle_exception: A function to be called when an exception
                                  occurs in the client's networking thread,
-                                 taking 2 arguments: the exception object `e'
-                                 as in `except Exception as e', and a 3-tuple
+                                 taking 2 arguments: the exception object 'e'
+                                 as in 'except Exception as e', and a 3-tuple
                                  given by sys.exc_info(); or None for the
                                  default behaviour of raising the exception
                                  from its original context; or False for no
                                  action. In any case, the networking thread
                                  will terminate, the exception will be
-                                 available via the `exception' and `exc_info'
-                                 attributes of the `Connection' instance.
+                                 available via the 'exception' and 'exc_info'
+                                 attributes of the 'Connection' instance.
         """
 
         self._write_lock = Lock()

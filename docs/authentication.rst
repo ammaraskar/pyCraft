@@ -1,29 +1,28 @@
 Authentication
 ==============
 
-.. currentmodule:: authentication
+.. currentmodule:: minecraft.authentication
 .. _Yggdrasil: http://wiki.vg/Authentication
 .. _LoginResponse: http://wiki.vg/Authentication#Authenticate
 
 The authentication module contains functions and classes to facilitate 
-interfacing with Mojang's Yggdrasil_ service.
+interfacing with Mojang's Yggdrasil_ authentication service.
 
 
 Logging In
 ~~~~~~~~~~~~~~~~~~~~
 
 The most common use for this module in the context of a client will be to
-log in to a Minecraft account. The convenience method 
+log in to a Minecraft account. The first step to doing this is creating
+an instance of the AuthenticationToken class after which you may use the
+authenticate method with the user's username and password in order to make the AuthenticationToken valid.
 
-.. autofunction:: login_to_minecraft
+.. autoclass:: AuthenticationToken
+    :members: authenticate
 
-should be used which will return a LoginResponse object. See LoginResponse_ for more details on the returned attributes
-
-.. autoclass:: LoginResponse
-    :members:
-
-or raise a YggdrasilError on failure, for example if an incorrect username/password
-is provided or the web request failed
+Upon success, the function returns True, on failure a YggdrasilError
+is raised. This happens, for example if an incorrect username/password
+is provided or the web request failed.
 
 .. autoexception:: YggdrasilError
     :members:
@@ -32,15 +31,13 @@ is provided or the web request failed
 Arbitary Requests
 ~~~~~~~~~~~~~~~~~~~~
 
-You may make any arbitary request to the Yggdrasil service with
+You may make any arbitary request to the Yggdrasil service with the _make_request
+method passing in the AUTH_SERVER as the server parameter.
 
-.. automodule:: authentication
-	:members: BASE_URL
+.. automodule:: minecraft.authentication
+	:members: AUTH_SERVER
 
-.. autofunction:: make_request
-
-.. autoclass:: Response
-	:members:
+.. autofunction:: _make_request
 
 
 ---------------
@@ -48,11 +45,8 @@ You may make any arbitary request to the Yggdrasil service with
 ---------------
 An example of making an arbitary request can be seen here::
 
-    url = authentication.BASE_URL + "session/minecraft/join"
-    server_id = encryption.generate_verification_hash(packet.server_id, secret, packet.public_key)
-    payload = {'accessToken': self.connection.login_response.access_token,
-               'selectedProfile': self.connection.login_response.profile_id,
-               'serverId': server_id}
+    payload = {'username': username,
+               'password': password}
 
-    authentication.make_request(url, payload)
+    authentication._make_request(authentication.AUTH_SERVER, "signout", payload)
 

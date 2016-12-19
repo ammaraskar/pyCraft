@@ -10,7 +10,8 @@ Welcome to pyCraft's documentation!
 between a Minecraft server as a client. 
 
 The authentication package contains utilities to manage communicating 
-with Mojang's in order to log in with a minecraft account, edit profiles etc
+with Mojang's authentication servers in order to log in with a minecraft
+account, edit profiles etc
 
 The Connection class under the networking package handles
 connecting to a server, sending packets, listening for packets etc

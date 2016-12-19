@@ -1,10 +1,8 @@
-"""
-Handles authentication with the Mojang authentication server.
-"""
 import requests
 import json
 from .exceptions import YggdrasilError
 
+#: The base url for Ygdrassil requests
 AUTH_SERVER = "https://authserver.mojang.com"
 SESSION_SERVER = "https://sessionserver.mojang.com/session/minecraft"
 # Need this content type, or authserver will complain
