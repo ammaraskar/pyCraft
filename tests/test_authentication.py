@@ -194,31 +194,6 @@ class AuthenticateAuthenticationToken(unittest.TestCase):
         self.assertTrue(resp)
 
 
-class RefreshAuthenticationToken(unittest.TestCase):
-    # TODO: Make me!
-    pass
-
-
-class ValidateAuthenticationToken(unittest.TestCase):
-    # TODO: Make me!
-    pass
-
-
-class SignOutAuthenticationToken(unittest.TestCase):
-    # TODO: Make me!
-    pass
-
-
-class InvalidateAuthenticationToken(unittest.TestCase):
-    # TODO: Make me!
-    pass
-
-
-class JoinAuthenticationToken(unittest.TestCase):
-    # TODO: Make me!
-    pass
-
-
 class MakeRequest(unittest.TestCase):
     def test_make_request_http_method(self):
         req = _make_request(AUTHSERVER, "authenticate", {"Billy": "Bob"})
@@ -254,6 +229,13 @@ class RaiseFromRequest(unittest.TestCase):
             _raise_from_request(err_req)
             self.assertEqual(e, "[401]) ThisIsAnException: Went Wrong.")
 
+    def test_raise_invalid_json(self):
+        err_req = requests.Request()
+        err_req.status_code = 401
+        err_req.json = mock.MagicMock(
+            side_effect=ValueError("no json could be decoded")
+        )
+
     def test_raise_from_erroneous_request_without_error(self):
         err_req = requests.Request()
         err_req.status_code = 401
@@ -270,3 +252,88 @@ class RaiseFromRequest(unittest.TestCase):
         req.json = mock.MagicMock(return_value={"vegetables": "are healthy."})
 
         self.assertIs(_raise_from_request(req), None)
+
+
+class NormalConnectionProcedure(unittest.TestCase):
+    def test_login_connect_and_logout(self):
+        a = AuthenticationToken()
+
+        successful_req = requests.Request()
+        successful_req.status_code = 200
+        successful_req.json = mock.MagicMock(
+            return_value={"accessToken": "token",
+                          "clientToken": "token",
+                          "selectedProfile": {
+                              "id": "1",
+                              "name": "asdf"
+                          }}
+        )
+
+        error_req = requests.Request()
+        error_req.status_code = 400
+        error_req.json = mock.MagicMock(
+            return_value={
+                "error": "invalid request",
+                "errorMessage": "invalid request"
+            }
+        )
+
+        def mocked_make_request(server, endpoint, data):
+            if endpoint == "authenticate":
+                return successful_req
+
+            if endpoint == "refresh" and data["accessToken"] == "token":
+                return successful_req
+
+            if (endpoint == "validate" and data["accessToken"] == "token") \
+                    or endpoint == "join":
+                r = requests.Request()
+                r.status_code = 204
+                r.raise_for_status = mock.MagicMock(return_value=None)
+                return r
+
+            if endpoint == "signout":
+                return successful_req
+
+            return error_req
+
+        # Test a successful sequence of events
+        with mock.patch("minecraft.authentication._make_request",
+                        side_effect=mocked_make_request) as _make_request_mock:
+
+            self.assertFalse(a.authenticated)
+            self.assertTrue(a.authenticate("username", "password"))
+
+            self.assertTrue(a.authenticated)
+
+            self.assertTrue(a.refresh())
+            self.assertTrue(a.validate())
+
+            self.assertTrue(a.authenticated)
+
+            self.assertTrue(a.join(123))
+            self.assertTrue(a.sign_out("username", "password"))
+
+            self.assertEqual(_make_request_mock.call_count, 5)
+
+        a = AuthenticationToken(username="username",
+                                access_token="token",
+                                client_token="token")
+
+        # Failures
+        with mock.patch("minecraft.authentication._make_request",
+                        return_value=error_req) as _make_request_mock:
+            self.assertFalse(a.authenticated)
+
+            a.client_token = "token"
+            a.access_token = None
+            self.assertRaises(ValueError, a.refresh)
+
+            a.client_token = None
+            a.access_token = "token"
+            self.assertRaises(ValueError, a.refresh)
+
+            a.access_token = None
+            self.assertRaises(ValueError, a.validate)
+
+            self.assertRaises(YggdrasilError, a.join, 123)
