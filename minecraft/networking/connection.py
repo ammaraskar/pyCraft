@@ -66,9 +66,9 @@ class Connection(object):
 
         :param address: address of the server to connect to
         :param port(int): port of the server to connect to
-        :param auth_token: :class:`minecraft.authentication.AuthenticationToken` object.
-                           If None, no authentication is attempted and the
-                           server is assumed to be running in offline mode.
+        :param auth_token: :class:`minecraft.authentication.AuthenticationToken`
+                           object. If None, no authentication is attempted and
+                           the server is assumed to be running in offline mode.
         :param username: Username string; only applicable in offline mode.
         :param initial_version: A Minecraft version string or protocol version
                                 number to use if the server's protocol version
@@ -90,7 +90,7 @@ class Connection(object):
                                  will terminate, the exception will be
                                  available via the 'exception' and 'exc_info'
                                  attributes of the 'Connection' instance.
-        """
+        """  # NOQA
 
         self._write_lock = Lock()
         self.networking_thread = None
