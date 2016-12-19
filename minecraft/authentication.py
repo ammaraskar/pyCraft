@@ -184,8 +184,6 @@ class AuthenticationToken(object):
         # http://wiki.vg/Authentication#Response_3
         if req.status_code == 204:
             return True
-        if _raise_from_request(req) is None:
-            return True
 
     @staticmethod
     def sign_out(username, password):
@@ -225,10 +223,9 @@ class AuthenticationToken(object):
                             {"accessToken": self.access_token,
                              "clientToken": self.client_token})
 
-        if not req.raise_for_status() and not req.text:
-            return True
-        else:
-            raise YggdrasilError("Failed to invalidate tokens.")
+        if req.status_code != 204:
+            _raise_from_request(req)
+        return True
 
     def join(self, server_id):
         """
@@ -254,10 +251,9 @@ class AuthenticationToken(object):
                              "selectedProfile": self.profile.to_dict(),
                              "serverId": server_id})
 
-        if not req.raise_for_status():
-            return True
-        else:
+        if req.status_code != 204:
             _raise_from_request(req)
+        return True
 
 
 def _make_request(server, endpoint, data):
@@ -295,8 +291,8 @@ def _raise_from_request(req):
         message = message.format(status_code=str(req.status_code),
                                  error=json_resp["error"],
                                  error_message=json_resp["errorMessage"])
-    except ValueError:
-        message = "Unknown requests error. Status code: {}"
-        message.format(str(req.status_code))
+    except ValueError as e:
+        message = "Unknown requests error. Status code: {}. Error: {}"
+        message.format(str(req.status_code), e)
 
     raise YggdrasilError(message)

@@ -236,6 +236,10 @@ class RaiseFromRequest(unittest.TestCase):
             side_effect=ValueError("no json could be decoded")
         )
 
+        with self.assertRaises(YggdrasilError) as e:
+            _raise_from_request(err_req)
+            self.assertTrue("Unknown requests error" in e)
+
     def test_raise_from_erroneous_request_without_error(self):
         err_req = requests.Request()
         err_req.status_code = 401
@@ -281,18 +285,17 @@ class NormalConnectionProcedure(unittest.TestCase):
         def mocked_make_request(server, endpoint, data):
             if endpoint == "authenticate":
                 return successful_req
-
             if endpoint == "refresh" and data["accessToken"] == "token":
                 return successful_req
-
             if (endpoint == "validate" and data["accessToken"] == "token") \
                     or endpoint == "join":
                 r = requests.Request()
                 r.status_code = 204
                 r.raise_for_status = mock.MagicMock(return_value=None)
                 return r
-
             if endpoint == "signout":
+                return successful_req
+            if endpoint == "invalidate":
                 return successful_req
 
             return error_req
@@ -314,7 +317,9 @@ class NormalConnectionProcedure(unittest.TestCase):
             self.assertTrue(a.join(123))
             self.assertTrue(a.sign_out("username", "password"))
 
-            self.assertEqual(_make_request_mock.call_count, 5)
+            self.assertTrue(a.invalidate())
+
+            self.assertEqual(_make_request_mock.call_count, 6)
 
         a = AuthenticationToken(username="username",
                                 access_token="token",
@@ -337,3 +342,4 @@ class NormalConnectionProcedure(unittest.TestCase):
             self.assertRaises(ValueError, a.validate)
 
             self.assertRaises(YggdrasilError, a.join, 123)
+            self.assertRaises(YggdrasilError, a.invalidate)
