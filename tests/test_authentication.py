@@ -1,7 +1,7 @@
 from minecraft.authentication import Profile
 from minecraft.authentication import AuthenticationToken
 from minecraft.authentication import _make_request
-from minecraft.authentication import _raise_from_request
+from minecraft.authentication import _raise_from_response
 from minecraft.exceptions import YggdrasilError
 
 import requests
@@ -179,11 +179,11 @@ class AuthenticateAuthenticationToken(unittest.TestCase):
         a = AuthenticationToken()
 
         # We assume these aren't actual, valid credentials.
-        with self.assertRaises(YggdrasilError) as e:
+        with self.assertRaises(YggdrasilError) as cm:
             a.authenticate("Billy", "The Goat")
 
-            err = "Invalid Credentials. Invalid username or password."
-            self.assertEqual(e.error, err)
+        err = "Invalid credentials. Invalid username or password."
+        self.assertEqual(cm.exception.yggdrasil_message, err)
 
     @unittest.skipIf(should_skip_cred_test(),
                      "Need credentials to perform test.")
@@ -196,8 +196,8 @@ class AuthenticateAuthenticationToken(unittest.TestCase):
 
 class MakeRequest(unittest.TestCase):
     def test_make_request_http_method(self):
-        req = _make_request(AUTHSERVER, "authenticate", {"Billy": "Bob"})
-        self.assertEqual(req.request.method, "POST")
+        res = _make_request(AUTHSERVER, "authenticate", {"Billy": "Bob"})
+        self.assertEqual(res.request.method, "POST")
 
     def test_make_request_json_dump(self):
         data = {"Marie": "McGee",
@@ -208,63 +208,72 @@ class MakeRequest(unittest.TestCase):
                 "Listly": ["listling1", 2, "listling 3"]
                 }
 
-        req = _make_request(AUTHSERVER, "authenticate", data)
-        self.assertEqual(req.request.body, json.dumps(data))
+        res = _make_request(AUTHSERVER, "authenticate", data)
+        self.assertEqual(res.request.body, json.dumps(data))
 
     def test_make_request_url(self):
         URL = "https://authserver.mojang.com/authenticate"
-        req = _make_request(AUTHSERVER, "authenticate", {"Darling": "Diary"})
-        self.assertEqual(req.request.url, URL)
+        res = _make_request(AUTHSERVER, "authenticate", {"Darling": "Diary"})
+        self.assertEqual(res.request.url, URL)
 
 
 class RaiseFromRequest(unittest.TestCase):
     def test_raise_from_erroneous_request(self):
-        err_req = requests.Request()
-        err_req.status_code = 401
-        err_req.json = mock.MagicMock(
+        err_res = mock.NonCallableMock(requests.Response)
+        err_res.status_code = 401
+        err_res.json = mock.MagicMock(
             return_value={"error": "ThisIsAnException",
                           "errorMessage": "Went wrong."})
+        err_res.text = json.dumps(err_res.json())
 
-        with self.assertRaises(YggdrasilError) as e:
-            _raise_from_request(err_req)
-            self.assertEqual(e, "[401]) ThisIsAnException: Went Wrong.")
+        with self.assertRaises(YggdrasilError) as cm:
+            _raise_from_response(err_res)
+
+        message = "[401] ThisIsAnException: 'Went wrong.'"
+        self.assertEqual(str(cm.exception), message)
 
     def test_raise_invalid_json(self):
-        err_req = requests.Request()
-        err_req.status_code = 401
-        err_req.json = mock.MagicMock(
+        err_res = mock.NonCallableMock(requests.Response)
+        err_res.status_code = 401
+        err_res.json = mock.MagicMock(
             side_effect=ValueError("no json could be decoded")
         )
+        err_res.text = "{sample invalid json}"
 
-        with self.assertRaises(YggdrasilError) as e:
-            _raise_from_request(err_req)
-            self.assertTrue("Unknown requests error" in e)
+        with self.assertRaises(YggdrasilError) as cm:
+            _raise_from_response(err_res)
 
-    def test_raise_from_erroneous_request_without_error(self):
-        err_req = requests.Request()
-        err_req.status_code = 401
-        err_req.json = mock.MagicMock(return_value={"goldfish": "are pretty."})
+        message_start = "[401] Malformed error message"
+        self.assertTrue(str(cm.exception).startswith(message_start))
 
-        with self.assertRaises(YggdrasilError) as e:
-            _raise_from_request(err_req)
+    def test_raise_from_erroneous_response_without_error(self):
+        err_res = mock.NonCallableMock(requests.Response)
+        err_res.status_code = 401
+        err_res.json = mock.MagicMock(return_value={"goldfish": "are pretty."})
+        err_res.text = json.dumps(err_res.json())
 
-            self.assertEqual(e, "Malformed error message.")
+        with self.assertRaises(YggdrasilError) as cm:
+            _raise_from_response(err_res)
 
-    def test_raise_from_healthy_request(self):
-        req = requests.Request()
-        req.status_code = 200
-        req.json = mock.MagicMock(return_value={"vegetables": "are healthy."})
+        message_start = "[401] Malformed error message"
+        self.assertTrue(str(cm.exception).startswith(message_start))
 
-        self.assertIs(_raise_from_request(req), None)
+    def test_raise_from_healthy_response(self):
+        res = mock.NonCallableMock(requests.Response)
+        res.status_code = 200
+        res.json = mock.MagicMock(return_value={"vegetables": "are healthy."})
+        res.text = json.dumps(res.json())
+
+        self.assertIs(_raise_from_response(res), None)
 
 
 class NormalConnectionProcedure(unittest.TestCase):
     def test_login_connect_and_logout(self):
         a = AuthenticationToken()
 
-        successful_req = requests.Request()
-        successful_req.status_code = 200
-        successful_req.json = mock.MagicMock(
+        successful_res = mock.NonCallableMock(requests.Response)
+        successful_res.status_code = 200
+        successful_res.json = mock.MagicMock(
             return_value={"accessToken": "token",
                           "clientToken": "token",
                           "selectedProfile": {
@@ -272,33 +281,35 @@ class NormalConnectionProcedure(unittest.TestCase):
                               "name": "asdf"
                           }}
         )
+        successful_res.text = json.dumps(successful_res.json())
 
-        error_req = requests.Request()
-        error_req.status_code = 400
-        error_req.json = mock.MagicMock(
+        error_res = mock.NonCallableMock(requests.Response)
+        error_res.status_code = 400
+        error_res.json = mock.MagicMock(
             return_value={
                 "error": "invalid request",
                 "errorMessage": "invalid request"
             }
         )
+        error_res.text = json.dumps(error_res.json())
 
         def mocked_make_request(server, endpoint, data):
             if endpoint == "authenticate":
-                return successful_req
+                return successful_res
             if endpoint == "refresh" and data["accessToken"] == "token":
-                return successful_req
+                return successful_res
             if (endpoint == "validate" and data["accessToken"] == "token") \
                     or endpoint == "join":
-                r = requests.Request()
+                r = requests.Response()
                 r.status_code = 204
                 r.raise_for_status = mock.MagicMock(return_value=None)
                 return r
             if endpoint == "signout":
-                return successful_req
+                return successful_res
             if endpoint == "invalidate":
-                return successful_req
+                return successful_res
 
-            return error_req
+            return error_res
 
         # Test a successful sequence of events
         with mock.patch("minecraft.authentication._make_request",
@@ -327,7 +338,7 @@ class NormalConnectionProcedure(unittest.TestCase):
 
         # Failures
         with mock.patch("minecraft.authentication._make_request",
-                        return_value=error_req) as _make_request_mock:
+                        return_value=error_res) as _make_request_mock:
             self.assertFalse(a.authenticated)
 
             a.client_token = "token"

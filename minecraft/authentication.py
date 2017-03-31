@@ -110,11 +110,11 @@ class AuthenticationToken(object):
             "password": password
         }
 
-        req = _make_request(AUTH_SERVER, "authenticate", payload)
+        res = _make_request(AUTH_SERVER, "authenticate", payload)
 
-        _raise_from_request(req)
+        _raise_from_response(res)
 
-        json_resp = req.json()
+        json_resp = res.json()
 
         self.username = username
         self.access_token = json_resp["accessToken"]
@@ -145,13 +145,13 @@ class AuthenticationToken(object):
         if self.client_token is None:
             raise ValueError("'client_token' is not set!")
 
-        req = _make_request(AUTH_SERVER,
+        res = _make_request(AUTH_SERVER,
                             "refresh", {"accessToken": self.access_token,
                                         "clientToken": self.client_token})
 
-        _raise_from_request(req)
+        _raise_from_response(res)
 
-        json_resp = req.json()
+        json_resp = res.json()
 
         self.access_token = json_resp["accessToken"]
         self.client_token = json_resp["clientToken"]
@@ -177,12 +177,12 @@ class AuthenticationToken(object):
         if self.access_token is None:
             raise ValueError("'access_token' not set!")
 
-        req = _make_request(AUTH_SERVER, "validate",
+        res = _make_request(AUTH_SERVER, "validate",
                             {"accessToken": self.access_token})
 
         # Validate returns 204 to indicate success
         # http://wiki.vg/Authentication#Response_3
-        if req.status_code == 204:
+        if res.status_code == 204:
             return True
 
     @staticmethod
@@ -202,10 +202,10 @@ class AuthenticationToken(object):
         Raises:
             minecraft.exceptions.YggdrasilError
         """
-        req = _make_request(AUTH_SERVER, "signout",
+        res = _make_request(AUTH_SERVER, "signout",
                             {"username": username, "password": password})
 
-        if _raise_from_request(req) is None:
+        if _raise_from_response(res) is None:
             return True
 
     def invalidate(self):
@@ -219,12 +219,12 @@ class AuthenticationToken(object):
         Raises:
             :class:`minecraft.exceptions.YggdrasilError`
         """
-        req = _make_request(AUTH_SERVER, "invalidate",
+        res = _make_request(AUTH_SERVER, "invalidate",
                             {"accessToken": self.access_token,
                              "clientToken": self.client_token})
 
-        if req.status_code != 204:
-            _raise_from_request(req)
+        if res.status_code != 204:
+            _raise_from_response(res)
         return True
 
     def join(self, server_id):
@@ -246,13 +246,13 @@ class AuthenticationToken(object):
             err = "AuthenticationToken hasn't been authenticated yet!"
             raise YggdrasilError(err)
 
-        req = _make_request(SESSION_SERVER, "join",
+        res = _make_request(SESSION_SERVER, "join",
                             {"accessToken": self.access_token,
                              "selectedProfile": self.profile.to_dict(),
                              "serverId": server_id})
 
-        if req.status_code != 204:
-            _raise_from_request(req)
+        if res.status_code != 204:
+            _raise_from_response(res)
         return True
 
 
@@ -268,31 +268,39 @@ def _make_request(server, endpoint, data):
     Returns:
         A `requests.Request` object.
     """
-    req = requests.post(server + "/" + endpoint, data=json.dumps(data),
+    res = requests.post(server + "/" + endpoint, data=json.dumps(data),
                         headers=HEADERS)
-    return req
+    return res
 
 
-def _raise_from_request(req):
+def _raise_from_response(res):
     """
     Raises an appropriate `YggdrasilError` based on the `status_code` and
     `json` of a `requests.Request` object.
     """
-    if req.status_code == requests.codes['ok']:
+    if res.status_code == requests.codes['ok']:
         return None
 
+    exception = YggdrasilError()
+    exception.status_code = res.status_code
+
     try:
-        json_resp = req.json()
-
-        if "error" not in json_resp and "errorMessage" not in json_resp:
-            raise YggdrasilError("Malformed error message.")
-
+        json_resp = res.json()
+        if not ("error" in json_resp and "errorMessage" in json_resp):
+            raise ValueError
+    except ValueError:
+        message = "[{status_code}] Malformed error message: '{response_text}'"
+        message = message.format(status_code=str(res.status_code),
+                                 response_text=res.text)
+        exception.args = (message,)
+    else:
         message = "[{status_code}] {error}: '{error_message}'"
-        message = message.format(status_code=str(req.status_code),
+        message = message.format(status_code=str(res.status_code),
                                  error=json_resp["error"],
                                  error_message=json_resp["errorMessage"])
-    except ValueError as e:
-        message = "Unknown requests error. Status code: {}. Error: {}"
-        message.format(str(req.status_code), e)
+        exception.args = (message,)
+        exception.yggdrasil_error = json_resp["error"]
+        exception.yggdrasil_message = json_resp["errorMessage"]
+        exception.yggdrasil_cause = json_resp.get("cause")
 
-    raise YggdrasilError(message)
+    raise exception

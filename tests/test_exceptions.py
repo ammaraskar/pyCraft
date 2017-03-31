@@ -9,7 +9,7 @@ class RaiseYggdrasilError(unittest.TestCase):
             raise YggdrasilError
 
     def test_raise_yggdrasil_error_message(self):
-        with self.assertRaises(YggdrasilError) as e:
+        with self.assertRaises(YggdrasilError) as cm:
             raise YggdrasilError("Error!")
 
-        self.assertEqual(str(e.exception), "Error!")
+        self.assertEqual(str(cm.exception), "Error!")
