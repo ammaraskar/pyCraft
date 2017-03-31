@@ -293,21 +293,24 @@ class KeepAlivePacket(Packet):
 class KeepAlivePacketClientbound(KeepAlivePacket):
     @staticmethod
     def get_id(context):
-        return 0x1F if context.protocol_version >= 107 else \
+        return 0x20 if context.protocol_version >= 318 else \
+               0x1F if context.protocol_version >= 107 else \
                0x00
 
 
 class KeepAlivePacketServerbound(KeepAlivePacket):
     @staticmethod
     def get_id(context):
-        return 0x0B if context.protocol_version >= 107 else \
+        return 0x0C if context.protocol_version >= 318 else \
+               0x0B if context.protocol_version >= 107 else \
                0x00
 
 
 class JoinGamePacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x23 if context.protocol_version >= 107 else \
+        return 0x24 if context.protocol_version >= 318 else \
+               0x23 if context.protocol_version >= 107 else \
                0x01
 
     packet_name = "join game"
@@ -324,7 +327,8 @@ class JoinGamePacket(Packet):
 class ChatMessagePacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x0F if context.protocol_version >= 107 else \
+        return 0x10 if context.protocol_version >= 317 else \
+               0x0F if context.protocol_version >= 107 else \
                0x02
 
     packet_name = "chat message"
@@ -336,7 +340,8 @@ class ChatMessagePacket(Packet):
 class PlayerPositionAndLookPacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x2E if context.protocol_version >= 107 else \
+        return 0x2F if context.protocol_version >= 318 else \
+               0x2E if context.protocol_version >= 107 else \
                0x08
 
     packet_name = "player position and look"
@@ -398,7 +403,8 @@ class PlayerPositionAndLookPacket(Packet):
 class DisconnectPacketPlayState(Packet):
     @staticmethod
     def get_id(context):
-        return 0x1A if context.protocol_version >= 107 else \
+        return 0x1B if context.protocol_version >= 318 else \
+               0x1A if context.protocol_version >= 107 else \
                0x40
 
     packet_name = "disconnect"
@@ -418,7 +424,8 @@ class SetCompressionPacketPlayState(Packet):
 class PlayerListItemPacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x2D if context.protocol_version >= 107 else \
+        return 0x2E if context.protocol_version >= 318 else \
+               0x2D if context.protocol_version >= 107 else \
                0x38
 
     packet_name = "player list item"
@@ -569,7 +576,8 @@ class PlayerListItemPacket(Packet):
 class MapPacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x24 if context.protocol_version >= 107 else \
+        return 0x25 if context.protocol_version >= 318 else \
+               0x24 if context.protocol_version >= 107 else \
                0x34
 
     packet_name = 'map'
@@ -701,7 +709,8 @@ def state_playing_clientbound(context):
 class ChatPacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x02 if context.protocol_version >= 107 else \
+        return 0x03 if context.protocol_version >= 318 else \
+               0x02 if context.protocol_version >= 107 else \
                0x01
 
     @staticmethod
@@ -722,7 +731,8 @@ class ChatPacket(Packet):
 class PositionAndLookPacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x0D if context.protocol_version >= 107 else \
+        return 0x0E if context.protocol_version >= 318 else \
+               0x0D if context.protocol_version >= 107 else \
                0x06
 
     packet_name = "position and look"
@@ -746,7 +756,8 @@ class TeleportConfirmPacket(Packet):
 class AnimationPacketServerbound(Packet):
     @staticmethod
     def get_id(context):
-        return 0x1A if context.protocol_version >= 107 else \
+        return 0x1C if context.protocol_version >= 318 else \
+               0x1A if context.protocol_version >= 107 else \
                0x0A
 
     packet_name = "animation"
