@@ -27,6 +27,7 @@ We aim to be compatible with the following python versions:
 * Python 3.3
 * Python 3.4
 * Python 3.5
+* Python 3.6
 * PyPy
 
 Requirements
