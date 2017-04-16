@@ -19,9 +19,32 @@ Detailed information for developers can be found here:
 ``start.py`` is a basic example of a headless client using the library
 Use ``start.py --help`` for the options.
 
-Python version
---------------
-We aim to be compatible with the following python versions:
+Supported Minecraft versions
+----------------------------
+pyCraft is compatible with the following Minecraft releases:
+
+* 1.8, 1.8.1, 1.8.2, 1.8.3, 1.8.4, 1.8.5, 1.8.6, 1.8.7, 1.8.8
+* 1.9, 1.9.1, 1.9.2, 1.9.3, 1.9.4
+* 1.10, 1.10.1, 1.10.2
+* 1.11, 1.11.1, 1.11.2
+
+In addition, some development snapshots and pre-release versions are supported:
+`<minecraft/__init__.py>`_ contains a full list of supported Minecraft versions
+and corresponding protocol version numbers.
+
+Supported functionality
+-----------------------
+Although pyCraft is compatible any supported server, only a subset of all
+packets are currently decoded or encoded by the library: those necessary
+to remain connected to the server, those used for chat, and some others.
+
+Developers wishing to use other functionality with pyCraft can contribute
+by implementing the desired packets in `<minecraft/networking/packets.py>`_
+and sending a pull request.
+
+Supported Python versions
+-------------------------
+pyCraft is compatible following Python implementations:
 
 * Python 2.7
 * Python 3.3
