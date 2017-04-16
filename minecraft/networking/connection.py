@@ -234,7 +234,7 @@ class Connection(object):
         """
         # Hold the lock throughout, in case connect() is called from the
         # networking thread while another connection is in progress.
-        with self._write_lock: # pylint: disable=not-context-manager
+        with self._write_lock:  # pylint: disable=not-context-manager
 
             # It is important that this is set correctly even when connecting
             # in status mode, as some servers, e.g. SpigotMC with the
@@ -278,7 +278,7 @@ class Connection(object):
     def disconnect(self):
         """ Terminate the existing server connection, if there is one. """
         if self.networking_thread is not None:
-            with self._write_lock: # pylint: disable=not-context-manager
+            with self._write_lock:  # pylint: disable=not-context-manager
                 self.networking_thread.interrupt = True
 
         if self.socket is not None:
