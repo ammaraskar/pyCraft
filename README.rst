@@ -44,7 +44,7 @@ and sending a pull request.
 
 Supported Python versions
 -------------------------
-pyCraft is compatible following Python implementations:
+pyCraft is compatible with (at least) the following Python implementations:
 
 * Python 2.7
 * Python 3.3
