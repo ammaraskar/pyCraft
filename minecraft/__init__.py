@@ -54,6 +54,7 @@ SUPPORTED_MINECRAFT_VERSIONS = {
     '17w18a':    326,
     '17w18b':    327,
     '1.12-pre1': 328,
+    '1.12-pre2': 329,
 }
 
 SUPPORTED_PROTOCOL_VERSIONS = sorted(SUPPORTED_MINECRAFT_VERSIONS.values())
