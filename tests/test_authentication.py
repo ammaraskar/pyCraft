@@ -7,6 +7,7 @@ from minecraft.exceptions import YggdrasilError
 import requests
 import json
 import unittest
+import os
 from .compat import mock
 
 FAKE_DATA = {
@@ -54,6 +55,14 @@ def should_skip_cred_test():
     if username is None or password is None:
         return True
     return False
+
+
+def should_run_internet_tests():
+    """
+    Returns `True` if tests involving access to Internet resources
+    should *not* be skipped. Otherwise returns `False`.
+    """
+    return os.environ.get('PYCRAFT_RUN_INTERNET_TESTS')
 
 
 class InitProfile(unittest.TestCase):
@@ -194,6 +203,8 @@ class AuthenticateAuthenticationToken(unittest.TestCase):
         self.assertTrue(resp)
 
 
+@unittest.skipUnless(should_run_internet_tests(),
+                     "Tests involving Internet access are disabled.")
 class MakeRequest(unittest.TestCase):
     def test_make_request_http_method(self):
         res = _make_request(AUTHSERVER, "authenticate", {"Billy": "Bob"})

@@ -1,11 +1,11 @@
 language: python
-python: 2.7
+python: 3.5
 env:
   - TOX_ENV=py27
   - TOX_ENV=py33
   - TOX_ENV=py34
+  - TOX_ENV=py35
   - TOX_ENV=pypy
-  - TOX_ENV=cover
   - TOX_ENV=flake8
   - TOX_ENV=pylint-errors
   - TOX_ENV=pylint-full
@@ -15,7 +15,7 @@ install:
   - pip install python-coveralls
 script:
   - tox -e $TOX_ENV
-after_success:
-  - if [ "$TOX_ENV" = "py27" ]; then tox -e coveralls; fi
+after_script:
+  - if [ "$TOX_ENV" = "py35" ]; then tox -e coveralls; fi
 notifications:
   email: false
