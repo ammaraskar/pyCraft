@@ -60,6 +60,7 @@ SUPPORTED_MINECRAFT_VERSIONS = {
     '1.12-pre5': 332,
     '1.12-pre6': 333,
     '1.12-pre7': 334,
+    '1.12':      335,
 }
 
 SUPPORTED_PROTOCOL_VERSIONS = sorted(SUPPORTED_MINECRAFT_VERSIONS.values())
