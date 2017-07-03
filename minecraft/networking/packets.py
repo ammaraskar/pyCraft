@@ -343,8 +343,8 @@ class ChatMessagePacket(Packet):
 class PlayerPositionAndLookPacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x2F if context.protocol_version >= 318 else \
-               0x2E if context.protocol_version >= 107 else \
+        return 0x2E if context.protocol_version >= 318 else \
+               0x2F if context.protocol_version >= 107 else \
                0x08
 
     packet_name = "player position and look"
@@ -399,8 +399,8 @@ class PlayerPositionAndLookPacket(Packet):
         else:
             target.pitch = self.pitch
 
-        self.yaw %= 360
-        self.pitch %= 360
+        target.yaw %= 360
+        target.pitch %= 360
 
 
 class DisconnectPacketPlayState(Packet):
