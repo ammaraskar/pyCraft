@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import unittest
+import uuid
 from minecraft.networking.types import (
     Type, Boolean, UnsignedByte, Byte, Short, UnsignedShort,
     Integer, VarInt, Long, Float, Double, ShortPrefixedByteArray,
-    VarIntPrefixedByteArray, String as StringType
+    VarIntPrefixedByteArray, UUID, String as StringType
 )
 from minecraft.networking.packets import PacketBuffer
 
@@ -22,6 +23,7 @@ TEST_DATA = {
     Double: [36.004002],
     ShortPrefixedByteArray: [bytes(245)],
     VarIntPrefixedByteArray: [bytes(1234)],
+    UUID: ["12345678-1234-5678-1234-567812345678"],
     StringType: ["hello world"]
 }
 
@@ -59,6 +61,15 @@ class SerializationTest(unittest.TestCase):
     def test_varint(self):
         self.assertEqual(VarInt.size(2), 1)
         self.assertEqual(VarInt.size(1250), 2)
+
+        with self.assertRaises(ValueError):
+            VarInt.size(2 ** 90)
+
+        with self.assertRaises(ValueError):
+            packet_buffer = PacketBuffer()
+            VarInt.send(2 ** 49, packet_buffer)
+            packet_buffer.reset_cursor()
+            VarInt.read(packet_buffer)
 
         packet_buffer = PacketBuffer()
         VarInt.send(50000, packet_buffer)

@@ -11,6 +11,30 @@ from minecraft.networking.packets import (
     PacketBuffer, ChatPacket, KeepAlivePacket, PacketListener)
 
 
+class PacketBufferTest(unittest.TestCase):
+    def test_basic_read_write(self):
+        message = b"hello"
+
+        packet_buffer = PacketBuffer()
+        packet_buffer.send(message)
+
+        packet_buffer.reset_cursor()
+        self.assertEqual(packet_buffer.read(), message)
+        packet_buffer.reset_cursor()
+        self.assertEqual(packet_buffer.recv(), message)
+
+        packet_buffer.reset()
+        self.assertNotEqual(packet_buffer.read(), message)
+
+    def test_get_writable(self):
+        message = b"hello"
+
+        packet_buffer = PacketBuffer()
+        packet_buffer.send(message)
+
+        self.assertEqual(packet_buffer.get_writable(), message)
+
+
 class PacketSerializatonTest(unittest.TestCase):
 
     def test_packet(self):

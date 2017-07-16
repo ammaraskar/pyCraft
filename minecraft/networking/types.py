@@ -83,14 +83,23 @@ class VarInt(Type):
     @staticmethod
     def read(file_object):
         number = 0
-        for i in range(5):
+        # Limit of 5 bytes, otherwise its possible to cause
+        # a DOS attack by sending VarInts that just keep
+        # going
+        bytes_encountered = 0
+        while True:
             byte = file_object.read(1)
             if len(byte) < 1:
                 raise EOFError("Unexpected end of message.")
+
             byte = ord(byte)
-            number |= (byte & 0x7F) << 7 * i
+            number |= (byte & 0x7F) << 7 * bytes_encountered
             if not byte & 0x80:
                 break
+
+            bytes_encountered += 1
+            if bytes_encountered > 5:
+                raise ValueError("Tried to read too long of a VarInt")
         return number
 
     @staticmethod
@@ -109,6 +118,7 @@ class VarInt(Type):
         for max_value, size in VARINT_SIZE_TABLE.items():
             if value < max_value:
                 return size
+        raise ValueError("Integer too large")
 
 
 # Maps (maximum integer value -> size of VarInt in bytes)
@@ -199,3 +209,7 @@ class UUID(Type):
     @staticmethod
     def read(file_object):
         return str(uuid.UUID(bytes=file_object.read(16)))
+
+    @staticmethod
+    def send(value, socket):
+        socket.send(uuid.UUID(value).bytes)
