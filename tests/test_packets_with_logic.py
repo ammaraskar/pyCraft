@@ -3,6 +3,8 @@ from minecraft.networking.types import (UUID, VarInt, String, Boolean)
 from minecraft.networking.packets import PacketBuffer
 from minecraft.networking.packets import PlayerPositionAndLookPacket
 from minecraft.networking.packets import PlayerListItemPacket
+from minecraft.networking.packets import MapPacket
+from minecraft.networking.connection import ConnectionContext
 
 
 class PlayerPositionAndLookTest(unittest.TestCase):
@@ -36,6 +38,78 @@ class PlayerPositionAndLookTest(unittest.TestCase):
         self.assertEqual(current_position.z, 6.0)
         self.assertEqual(current_position.yaw, 8.0)
         self.assertEqual(current_position.pitch, 10.0)
+
+
+class MapPacketTest(unittest.TestCase):
+
+    @staticmethod
+    def make_map_packet(
+            context, width=2, height=2, offset=(2, 2), pixels=b"this"):
+        packet = MapPacket(context)
+
+        packet.map_id = 1
+        packet.scale = 42
+        packet.is_tracking_position = True
+        packet.icons = []
+        packet.icons.append(
+            MapPacket.MapIcon(type=2, direction=2, location=(1, 1))
+        )
+        packet.icons.append(
+            MapPacket.MapIcon(type=3, direction=3, location=(3, 3))
+        )
+        packet.width = width
+        packet.height = height
+        packet.offset = offset
+        packet.pixels = pixels
+        return packet
+
+    def packet_roundtrip(self, context):
+        packet = self.make_map_packet(context)
+
+        packet_buffer = PacketBuffer()
+        packet.write(packet_buffer)
+
+        packet_buffer.reset_cursor()
+
+        # Read the length and packet id
+        VarInt.read(packet_buffer)
+        packet_id = VarInt.read(packet_buffer)
+        self.assertEqual(packet_id, packet.id)
+
+        p = MapPacket(context)
+        p.read(packet_buffer)
+
+        self.assertEqual(p.map_id, packet.map_id)
+        self.assertEqual(p.scale, packet.scale)
+        self.assertEqual(p.is_tracking_position, packet.is_tracking_position)
+        self.assertEqual(p.width, packet.width)
+        self.assertEqual(p.height, packet.height)
+        self.assertEqual(p.offset, packet.offset)
+        self.assertEqual(p.pixels, packet.pixels)
+        self.assertEqual(str(p.icons[0]), str(packet.icons[0]))
+        self.assertEqual(str(p.icons[1]), str(packet.icons[1]))
+        self.assertEqual(str(p), str(packet))
+
+    def test_packet_roundtrip(self):
+        self.packet_roundtrip(ConnectionContext(protocol_version=106))
+        self.packet_roundtrip(ConnectionContext(protocol_version=107))
+
+    def test_map_set(self):
+        map_set = MapPacket.MapSet()
+
+        context = ConnectionContext(protocol_version=107)
+        packet = self.make_map_packet(context)
+
+        packet.apply_to_map_set(map_set)
+        self.assertEqual(len(map_set.maps_by_id), 1)
+
+        packet = self.make_map_packet(
+            context, width=1, height=0, offset=(2, 2), pixels=b"x"
+        )
+        packet.apply_to_map_set(map_set)
+        map = map_set.maps_by_id[1]
+        self.assertIn(b"xh", map.pixels)
+        self.assertIn(b"is", map.pixels)
 
 
 fake_uuid = "12345678-1234-5678-1234-567812345678"

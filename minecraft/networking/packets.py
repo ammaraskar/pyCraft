@@ -688,7 +688,30 @@ class MapPacket(Packet):
         self.apply_to_map(map)
 
     def write(self, socket, compression_threshold=None):
-        raise NotImplementedError
+        packet_buffer = PacketBuffer()
+        VarInt.send(self.id, packet_buffer)
+
+        VarInt.send(self.map_id, packet_buffer)
+        Byte.send(self.scale, packet_buffer)
+        if self.context.protocol_version >= 107:
+            Boolean.send(self.is_tracking_position, packet_buffer)
+
+        VarInt.send(len(self.icons), packet_buffer)
+        for icon in self.icons:
+            type_and_direction = (icon.direction << 4) & 0xF0
+            type_and_direction |= (icon.type & 0xF)
+            UnsignedByte.send(type_and_direction, packet_buffer)
+            Byte.send(icon.location[0], packet_buffer)
+            Byte.send(icon.location[1], packet_buffer)
+
+        UnsignedByte.send(self.width, packet_buffer)
+        if self.width:
+            UnsignedByte.send(self.height, packet_buffer)
+            UnsignedByte.send(self.offset[0], packet_buffer)  # x
+            UnsignedByte.send(self.offset[1], packet_buffer)  # z
+            VarIntPrefixedByteArray.send(self.pixels, packet_buffer)
+
+        self._write_buffer(socket, packet_buffer, compression_threshold)
 
     def __repr__(self):
         return 'MapPacket(%s)' % ', '.join(
