@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import unittest
-import uuid
 from minecraft.networking.types import (
     Type, Boolean, UnsignedByte, Byte, Short, UnsignedShort,
     Integer, VarInt, Long, Float, Double, ShortPrefixedByteArray,

@@ -410,7 +410,8 @@ class PacketReactor(object):
     state_name = None
     TIME_OUT = 0
 
-    get_clientbound_packets = staticmethod(lambda context: set())
+    # Handshaking is considered the "default" state
+    get_clientbound_packets = staticmethod(packets.state_handshake_clientbound)
 
     def __init__(self, connection):
         self.connection = connection
