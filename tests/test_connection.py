@@ -21,7 +21,8 @@ THREAD_TIMEOUT_S = 5
 class _ConnectTest(unittest.TestCase):
     def _test_connect(self, client_version=None, server_version=None):
         server = FakeServer(minecraft_version=server_version)
-        addr, port = server.listen_socket.getsockname()
+        addr = "localhost"
+        port = server.listen_socket.getsockname()[1]
 
         cond = threading.Condition()
 
