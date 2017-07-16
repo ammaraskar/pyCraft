@@ -126,11 +126,11 @@ class PlayerListItemTest(unittest.TestCase):
         player_list = PlayerListItemPacket.PlayerList()
         by_uuid = player_list.players_by_uuid
 
-        packet_buffer = self.make_add_player_packet()
+        packet_buffer = self.make_add_player_packet(display_name=False)
         self.read_and_apply(packet_buffer, player_list)
         self.assertEqual(by_uuid[fake_uuid].gamemode, 42)
         self.assertEqual(by_uuid[fake_uuid].ping, 69)
-        self.assertEqual(by_uuid[fake_uuid].display_name, "display")
+        self.assertIsNone(by_uuid[fake_uuid].display_name)
 
         # Change the game mode
         packet_buffer = self.make_action_base(1)
@@ -144,18 +144,18 @@ class PlayerListItemTest(unittest.TestCase):
         self.read_and_apply(packet_buffer, player_list)
         self.assertEqual(by_uuid[fake_uuid].ping, 70)
 
-        # Remove the display name
-        packet_buffer = self.make_action_base(3)
-        Boolean.send(False, packet_buffer)
-        self.read_and_apply(packet_buffer, player_list)
-        self.assertIsNone(by_uuid[fake_uuid].display_name)
-
         # Change the display name
         packet_buffer = self.make_action_base(3)
         Boolean.send(True, packet_buffer)
         String.send("display2", packet_buffer)
         self.read_and_apply(packet_buffer, player_list)
         self.assertEqual(by_uuid[fake_uuid].display_name, "display2")
+
+        # Remove the display name
+        packet_buffer = self.make_action_base(3)
+        Boolean.send(False, packet_buffer)
+        self.read_and_apply(packet_buffer, player_list)
+        self.assertIsNone(by_uuid[fake_uuid].display_name)
 
         # Remove the player
         packet_buffer = self.make_action_base(4)

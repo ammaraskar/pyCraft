@@ -107,18 +107,9 @@ class Packet(object):
                 value = data_type.read(file_object)
                 setattr(self, var_name, value)
 
-    def write(self, socket, compression_threshold=None):
-        # buffer the data since we need to know the length of each packet's
-        # payload
-        packet_buffer = PacketBuffer()
-        # write packet's id right off the bat in the header
-        VarInt.send(self.id, packet_buffer)
-
-        for field in self.definition:
-            for var_name, data_type in field.items():
-                data = getattr(self, var_name)
-                data_type.send(data, packet_buffer)
-
+    # Writes a packet buffer to the socket with the appropriate headers
+    # and compressing the data if necessary
+    def _write_buffer(self, socket, packet_buffer, compression_threshold):
         # compression_threshold of None means compression is disabled
         if compression_threshold is not None:
             if len(packet_buffer.get_writable()) > compression_threshold != -1:
@@ -139,6 +130,20 @@ class Packet(object):
 
         VarInt.send(len(packet_buffer.get_writable()), socket)  # Packet Size
         socket.send(packet_buffer.get_writable())  # Packet Payload
+
+    def write(self, socket, compression_threshold=None):
+        # buffer the data since we need to know the length of each packet's
+        # payload
+        packet_buffer = PacketBuffer()
+        # write packet's id right off the bat in the header
+        VarInt.send(self.id, packet_buffer)
+        # write every individual field
+        for field in self.definition:
+            for var_name, data_type in field.items():
+                data = getattr(self, var_name)
+                data_type.send(data, packet_buffer)
+
+        self._write_buffer(socket, packet_buffer, compression_threshold)
 
     def __str__(self):
         str = type(self).__name__
