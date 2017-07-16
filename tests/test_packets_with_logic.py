@@ -4,10 +4,12 @@ from minecraft.networking.packets import PacketBuffer
 from minecraft.networking.packets import PlayerPositionAndLookPacket
 from minecraft.networking.packets import PlayerListItemPacket
 
+
 class PlayerPositionAndLookTest(unittest.TestCase):
 
     def test_position_and_look(self):
-        current_position = PlayerPositionAndLookPacket.PositionAndLook(x=999, y=999, z=999, yaw=999, pitch=999)
+        current_position = PlayerPositionAndLookPacket.PositionAndLook(
+            x=999, y=999, z=999, yaw=999, pitch=999)
 
         packet = PlayerPositionAndLookPacket()
         packet.x = 1.0
@@ -51,7 +53,7 @@ class PlayerListItemTest(unittest.TestCase):
 
     def test_invalid_action(self):
         packet_buffer = PacketBuffer()
-        VarInt.send(200, packet_buffer) # action_id
+        VarInt.send(200, packet_buffer)  # action_id
         packet_buffer.reset_cursor()
 
         with self.assertRaises(ValueError):
@@ -61,25 +63,25 @@ class PlayerListItemTest(unittest.TestCase):
     def make_add_player_packet(display_name=True):
         packet_buffer = PacketBuffer()
 
-        VarInt.send(0, packet_buffer) # action_id
-        VarInt.send(1, packet_buffer) # action count
-        UUID.send(fake_uuid, packet_buffer) # uuid
-        String.send("player", packet_buffer) # player name
+        VarInt.send(0, packet_buffer)  # action_id
+        VarInt.send(1, packet_buffer)  # action count
+        UUID.send(fake_uuid, packet_buffer)  # uuid
+        String.send("player", packet_buffer)  # player name
 
-        VarInt.send(2, packet_buffer) # number of properties
+        VarInt.send(2, packet_buffer)  # number of properties
         String.send("property1", packet_buffer)
         String.send("value1", packet_buffer)
-        Boolean.send(False, packet_buffer) # is signed
+        Boolean.send(False, packet_buffer)  # is signed
         String.send("property2", packet_buffer)
         String.send("value2", packet_buffer)
-        Boolean.send(True, packet_buffer) # is signed
+        Boolean.send(True, packet_buffer)  # is signed
         String.send("signature", packet_buffer)
 
-        VarInt.send(42, packet_buffer) # game mode
-        VarInt.send(69, packet_buffer) # ping
-        Boolean.send(display_name, packet_buffer) # has display name
+        VarInt.send(42, packet_buffer)  # game mode
+        VarInt.send(69, packet_buffer)  # ping
+        Boolean.send(display_name, packet_buffer)  # has display name
         if display_name:
-            String.send("display", packet_buffer) # display name
+            String.send("display", packet_buffer)  # display name
 
         packet_buffer.reset_cursor()
         return packet_buffer
@@ -109,7 +111,7 @@ class PlayerListItemTest(unittest.TestCase):
     def make_action_base(action_id):
         packet_buffer = PacketBuffer()
         VarInt.send(action_id, packet_buffer)
-        VarInt.send(1, packet_buffer) # action count
+        VarInt.send(1, packet_buffer)  # action count
         UUID.send(fake_uuid, packet_buffer)
 
         return packet_buffer
@@ -122,37 +124,38 @@ class PlayerListItemTest(unittest.TestCase):
 
     def test_add_and_others(self):
         player_list = PlayerListItemPacket.PlayerList()
+        by_uuid = player_list.players_by_uuid
 
         packet_buffer = self.make_add_player_packet()
         self.read_and_apply(packet_buffer, player_list)
-        self.assertEqual(player_list.players_by_uuid[fake_uuid].gamemode, 42)
-        self.assertEqual(player_list.players_by_uuid[fake_uuid].ping, 69)
-        self.assertEqual(player_list.players_by_uuid[fake_uuid].display_name, "display")
+        self.assertEqual(by_uuid[fake_uuid].gamemode, 42)
+        self.assertEqual(by_uuid[fake_uuid].ping, 69)
+        self.assertEqual(by_uuid[fake_uuid].display_name, "display")
 
         # Change the game mode
         packet_buffer = self.make_action_base(1)
-        VarInt.send(43, packet_buffer) # gamemode
+        VarInt.send(43, packet_buffer)  # gamemode
         self.read_and_apply(packet_buffer, player_list)
-        self.assertEqual(player_list.players_by_uuid[fake_uuid].gamemode, 43)
+        self.assertEqual(by_uuid[fake_uuid].gamemode, 43)
 
         # Change the ping
         packet_buffer = self.make_action_base(2)
-        VarInt.send(70, packet_buffer) # ping
+        VarInt.send(70, packet_buffer)  # ping
         self.read_and_apply(packet_buffer, player_list)
-        self.assertEqual(player_list.players_by_uuid[fake_uuid].ping, 70)
+        self.assertEqual(by_uuid[fake_uuid].ping, 70)
 
         # Remove the display name
         packet_buffer = self.make_action_base(3)
         Boolean.send(False, packet_buffer)
         self.read_and_apply(packet_buffer, player_list)
-        self.assertIsNone(player_list.players_by_uuid[fake_uuid].display_name)
+        self.assertIsNone(by_uuid[fake_uuid].display_name)
 
         # Change the display name
         packet_buffer = self.make_action_base(3)
         Boolean.send(True, packet_buffer)
         String.send("display2", packet_buffer)
         self.read_and_apply(packet_buffer, player_list)
-        self.assertEqual(player_list.players_by_uuid[fake_uuid].display_name, "display2")
+        self.assertEqual(by_uuid[fake_uuid].display_name, "display2")
 
         # Remove the player
         packet_buffer = self.make_action_base(4)
