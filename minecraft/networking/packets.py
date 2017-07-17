@@ -635,7 +635,8 @@ class MapPacket(Packet):
             self.maps_by_id = dict()
 
         def __repr__(self):
-            return 'MapSet(%s)' % ', '.join(self.maps_by_id.values())
+            maps = [str(map) for map in self.maps_by_id.values()]
+            return 'MapSet(%s)' % ', '.join(maps)
 
         def __str__(self):
             return self.__repr__()

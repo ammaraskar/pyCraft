@@ -110,6 +110,7 @@ class MapPacketTest(unittest.TestCase):
         map = map_set.maps_by_id[1]
         self.assertIn(b"xh", map.pixels)
         self.assertIn(b"is", map.pixels)
+        self.assertIsNotNone(str(map_set))
 
 
 fake_uuid = "12345678-1234-5678-1234-567812345678"
