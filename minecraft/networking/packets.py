@@ -777,6 +777,65 @@ class ClientUpdateHealth(Packet):
         {'food_saturation': Float}
     ])
 
+class ClientCombatEvent(Packet):
+    @staticmethod
+    def get_id(context):
+        return 0x2C if context.protocol_version >= 332 else \
+               0x2D if context.protocol_version >= 318 else \
+               0x2C if context.protocol_version >= 86 else \
+               0x2D if context.protocol_version >= 80 else \
+               0x2C if context.protocol_version >= 67 else \
+               0x42
+
+    packet_name = 'combat event'
+
+    class EventTypes(object):
+        def read(self, file_object):
+            self._read(file_object)
+
+        def _read(self, file_object):
+            raise NotImplementedError(
+                'This abstract method must be overridden in a subclass.')
+
+        @classmethod
+        def type_from_id(cls, event_id):
+            subcls = {
+                0: ClientCombatEvent.EnterCombatEvent,
+                1: ClientCombatEvent.EndCombatEvent,
+                2: ClientCombatEvent.EntityDeadEvent
+            }.get(event_id)
+            if subcls is None:
+                raise ValueError("Unknown combat event ID: %s."
+                                 % event_id)
+            return subcls
+
+    class EnterCombatEvent(EventTypes):
+        def _read(self, file_object):
+            pass
+
+    class EndCombatEvent(EventTypes):
+        __slots__ = 'duration', 'entity_id'
+
+        def _read(self, file_object):
+            self.duration = VarInt.read(file_object)
+            self.entity_id = Integer.read(file_object)
+
+    class EntityDeadEvent(EventTypes):
+        __slots__ = 'player_id', 'entity_id', 'message'
+
+        def _read(self, file_object):
+            self.player_id = VarInt.read(file_object)
+            self.entity_id = Integer.read(file_object)
+            self.message = String.read(file_object)
+
+    def read(self, file_object):
+        event_id = VarInt.read(file_object)
+        self.event_type = ClientCombatEvent.EventTypes.type_from_id(event_id)
+
+    def write(self, socket, compression_threshold=None):
+        raise NotImplementedError
+
+
 def state_playing_clientbound(context):
     packets = {
         KeepAlivePacketClientbound,
@@ -789,13 +848,13 @@ def state_playing_clientbound(context):
         ClientSpawnPlayer,
         ClientEntityVelocity,
         ClientUpdateHealth,
+        ClientCombatEvent,
     }
     if context.protocol_version <= 47:
         packets |= {
             SetCompressionPacketPlayState,
         }
     return packets
-
 
 class ChatPacket(Packet):
     @staticmethod
