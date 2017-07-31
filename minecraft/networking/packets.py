@@ -761,6 +761,22 @@ class ClientEntityVelocity(Packet):
         {'velocity_z': Short}
     ])
 
+class ClientUpdateHealth(Packet):
+    @staticmethod
+    def get_id(context):
+        return 0x40 if context.protocol_version >= 318 else \
+               0x3E if context.protocol_version >= 86 else \
+               0x3F if context.protocol_version >= 77 else \
+               0x3E if context.protocol_version >= 67 else \
+               0x06
+
+    packet_name = 'update health'
+    get_definition = staticmethod(lambda context: [
+        {'health': Float},
+        {'food': VarInt},
+        {'food_saturation': Float}
+    ])
+
 def state_playing_clientbound(context):
     packets = {
         KeepAlivePacketClientbound,
@@ -772,6 +788,7 @@ def state_playing_clientbound(context):
         DisconnectPacketPlayState,
         ClientSpawnPlayer,
         ClientEntityVelocity,
+        ClientUpdateHealth,
     }
     if context.protocol_version <= 47:
         packets |= {
