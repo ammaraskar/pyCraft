@@ -744,6 +744,23 @@ class ClientSpawnPlayer(Packet):
         {'current_item': Short} if context.protocol_version <= 49 else {}
     ])
 
+class ClientEntityVelocity(Packet):
+    @staticmethod
+    def get_id(context):
+        return 0x3D if context.protocol_version >= 332 else \
+               0x3B if context.protocol_version >= 86 else \
+               0x3C if context.protocol_version >= 77 else \
+               0x3B if context.protocol_version >= 67 else \
+               0x12
+
+    packet_name = 'entity velocity'
+    get_definition = staticmethod(lambda context: [
+        {'entity_id': VarInt},
+        {'velocity_x': Short},
+        {'velocity_y': Short},
+        {'velocity_z': Short}
+    ])
+
 def state_playing_clientbound(context):
     packets = {
         KeepAlivePacketClientbound,
@@ -754,6 +771,7 @@ def state_playing_clientbound(context):
         PlayerListItemPacket,
         DisconnectPacketPlayState,
         ClientSpawnPlayer,
+        ClientEntityVelocity,
     }
     if context.protocol_version <= 47:
         packets |= {
