@@ -861,6 +861,21 @@ class AnimationPacketServerbound(Packet):
     HAND_MAIN = 0
     HAND_OFF = 1
 
+class ServerClientStatus(Packet):
+    @staticmethod
+    def get_id(context):
+        return 0x04 if context.protocol_version >= 318 else \
+               0x03 if context.protocol_version >= 80 else \
+               0x02 if context.protocol_version >= 67 else \
+               0x17 if context.protocol_version >= 49 else \
+               0x16
+
+    packet_name = "client status"
+    get_definition = staticmethod(lambda context: [
+        {'action_id': VarInt}])
+
+    RESPAWN = 0
+    REQUEST_STATS = 1
 
 def state_playing_serverbound(context):
     packets = {
@@ -868,6 +883,7 @@ def state_playing_serverbound(context):
         ChatPacket,
         PositionAndLookPacket,
         AnimationPacketServerbound,
+        ServerClientStatus,
     }
     if context.protocol_version >= 107:
         packets |= {
