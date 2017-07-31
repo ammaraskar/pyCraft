@@ -835,6 +835,63 @@ class ClientCombatEvent(Packet):
     def write(self, socket, compression_threshold=None):
         raise NotImplementedError
 
+class ClientExplosion(Packet):
+    @staticmethod
+    def get_id(context):
+        return 0x1C if context.protocol_version >= 332 else \
+               0x1D if context.protocol_version >= 318 else \
+               0x1C if context.protocol_version >= 80 else \
+               0x1B if context.protocol_version >= 67 else \
+               0x27
+
+    packet_name = 'explosion'
+
+    class Record(object):
+        __slots__ = 'x', 'y', 'z'
+
+        def __init__(self, x, y, z):
+            self.x = x
+            self.y = y
+            self.z = z
+
+        def __repr__(self):
+            return ('Record(x=%s, y=%s, z=%s)'
+                    % (self.x, self.y, self.z))
+
+        def __str__(self):
+            return self.__repr__()
+
+
+    class Explosion(object):
+        __slots__ = ('x', 'y', 'z', 'radius', 'records',
+                     'player_motion_x', 'player_motion_y', 'player_motion_z')
+
+        def __repr__(self):
+            return ('Explosion(x=%s, y=%s, z=%s, radius=%s, records=%s)' % (
+                    self.x, self.y, self.z, self.radius, self.records))
+
+        def __str__(self):
+            return self.__repr__()
+
+    def read(self, file_object):
+        self.x = Float.read(file_object)
+        self.y = Float.read(file_object)
+        self.z = Float.read(file_object)
+        self.radius = Float.read(file_object)
+        records_count = VarInt.read(file_object)
+        self.records = []
+        for i in range(records_count):
+            rec_x = Byte.read(file_object)
+            rec_y = Byte.read(file_object)
+            rec_z = Byte.read(file_object)
+            record = ClientExplosion.Record(rec_x,rec_y,rec_z)
+            self.records.append(record)
+        self.player_motion_x = Float.read(file_object)
+        self.player_motion_y = Float.read(file_object)
+        self.player_motion_z = Float.read(file_object)
+
+    def write(self, socket, compression_threshold=None):
+        raise NotImplementedError
 
 def state_playing_clientbound(context):
     packets = {
@@ -849,6 +906,7 @@ def state_playing_clientbound(context):
         ClientEntityVelocity,
         ClientUpdateHealth,
         ClientCombatEvent,
+        ClientExplosion,
     }
     if context.protocol_version <= 47:
         packets |= {
