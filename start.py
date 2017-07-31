@@ -7,7 +7,7 @@ from optparse import OptionParser
 from minecraft import authentication
 from minecraft.exceptions import YggdrasilError
 from minecraft.networking.connection import Connection
-from minecraft.networking.packets import ChatMessagePacket, ChatPacket
+from minecraft.networking.packets import ChatMessagePacket, ChatPacket, ServerClientStatus
 from minecraft.compat import input
 
 
@@ -77,9 +77,15 @@ def main():
     while True:
         try:
             text = input()
-            packet = ChatPacket()
-            packet.message = text
-            connection.write_packet(packet)
+            if text == "/respawn":
+                print("respawning...")
+                packet = ServerClientStatus()
+                packet.action_id = ServerClientStatus.RESPAWN
+                connection.write_packet(packet)
+            else:
+                packet = ChatPacket()
+                packet.message = text
+                connection.write_packet(packet)
         except KeyboardInterrupt:
             print("Bye!")
             sys.exit()
