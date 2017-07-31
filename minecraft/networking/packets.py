@@ -3,7 +3,7 @@ from zlib import compress
 
 from .types import (
     VarInt, Integer, Float, Double, UnsignedShort, Long, Byte, UnsignedByte,
-    String, VarIntPrefixedByteArray, Boolean, UUID
+    String, VarIntPrefixedByteArray, Boolean, UUID, Short
 )
 
 
@@ -726,6 +726,23 @@ class MapPacket(Packet):
     def __str__(self):
         return self.__repr__()
 
+class ClientSpawnPlayer(Packet):
+    @staticmethod
+    def get_id(context):
+        return 0x05 if context.protocol_version >= 67 else \
+               0x0C
+
+    packet_name = 'spawn player'
+    get_definition = staticmethod(lambda context: [
+        {'entity_id': VarInt},
+        {'player_UUID': UUID},
+        {'x': Double} if context.protocol_version >= 100 else {'x': Integer},
+        {'y': Double} if context.protocol_version >= 100 else {'y': Integer},
+        {'z': Double} if context.protocol_version >= 100 else {'z': Integer},
+        {'yaw': Float},
+        {'pitch': Float},
+        {'current_item': Short} if context.protocol_version <= 49 else {}
+    ])
 
 def state_playing_clientbound(context):
     packets = {
@@ -736,6 +753,7 @@ def state_playing_clientbound(context):
         MapPacket,
         PlayerListItemPacket,
         DisconnectPacketPlayState,
+        ClientSpawnPlayer,
     }
     if context.protocol_version <= 47:
         packets |= {
