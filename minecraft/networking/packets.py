@@ -893,6 +893,120 @@ class ClientExplosion(Packet):
     def write(self, socket, compression_threshold=None):
         raise NotImplementedError
 
+
+class ClientSpawnObject(Packet):
+    @staticmethod
+    def get_id(context):
+        return 0x00 if context.protocol_version >= 67 else \
+               0x0E
+
+    packet_name = 'spawn object'
+
+    class Type(object):
+        def read(self, file_object):
+            self._read(file_object)
+
+        def _read(self, file_object):
+            raise NotImplementedError(
+                'This abstract method must be overridden in a subclass.')
+
+        @classmethod
+        def type_from_id(cls, type_id):
+            subcls = {
+                1 : ClientSpawnObject.Type_Boat,
+                2 : ClientSpawnObject.Type_Item_Stack,
+                3 : ClientSpawnObject.Type_Area_Effect_Cloud,
+                10: ClientSpawnObject.Type_Minecart,
+                50: ClientSpawnObject.Type_Activated_TNT,
+                51: ClientSpawnObject.Type_EnderCrystal,
+                60: ClientSpawnObject.Type_Arrow,
+                61: ClientSpawnObject.Type_Snowball,
+                62: ClientSpawnObject.Type_Egg,
+                63: ClientSpawnObject.Type_FireBall,
+                64: ClientSpawnObject.Type_FireCharge,
+                65: ClientSpawnObject.Type_Enderpearl,
+                66: ClientSpawnObject.Type_Wither_Skull,
+                67: ClientSpawnObject.Type_Shulker_Bullet,
+                68: ClientSpawnObject.Type_Llama_spit,
+                70: ClientSpawnObject.Type_Falling_Objects,
+                71: ClientSpawnObject.Type_Item_frames,
+                72: ClientSpawnObject.Type_Eye_of_Ender,
+                73: ClientSpawnObject.Type_Potion,
+                75: ClientSpawnObject.Type_Exp_Bottle,
+                76: ClientSpawnObject.Type_Firework_Rocket,
+                77: ClientSpawnObject.Type_Leash_Knot,
+                78: ClientSpawnObject.Type_ArmorStand,
+                79: ClientSpawnObject.Type_Evocation_Fangs,
+                90: ClientSpawnObject.Type_Fishing_Hook,
+                91: ClientSpawnObject.Type_Spectral_Arrow,
+                93: ClientSpawnObject.Type_Dragon_Fireball
+            }.get(type_id)
+            if subcls is None:
+                raise ValueError("Unknown type ID: %s."
+                                 % type_id)
+            return subcls
+
+    class Type_Boat(Type): pass
+    class Type_Item_Stack(Type): pass
+    class Type_Area_Effect_Cloud(Type): pass
+    class Type_Minecart(Type): pass
+    class Type_Activated_TNT(Type): pass
+    class Type_EnderCrystal(Type): pass
+    class Type_Arrow(Type): pass
+    class Type_Snowball(Type): pass
+    class Type_Egg(Type): pass
+    class Type_FireBall(Type): pass
+    class Type_FireCharge(Type): pass
+    class Type_Enderpearl(Type): pass
+    class Type_Wither_Skull(Type): pass
+    class Type_Shulker_Bullet(Type): pass
+    class Type_Llama_spit(Type): pass
+    class Type_Falling_Objects(Type): pass
+    class Type_Item_frames(Type): pass
+    class Type_Eye_of_Ender(Type): pass
+    class Type_Potion(Type): pass
+    class Type_Exp_Bottle(Type): pass
+    class Type_Firework_Rocket(Type): pass
+    class Type_Leash_Knot(Type): pass
+    class Type_ArmorStand(Type): pass
+    class Type_Evocation_Fangs(Type): pass
+    class Type_Fishing_Hook(Type): pass
+    class Type_Spectral_Arrow(Type): pass
+    class Type_Dragon_Fireball(Type): pass
+
+    def read(self, file_object):
+        self.entity_id = VarInt.read(file_object)
+        if self._context.protocol_version >= 49:
+            self.objectUUID = UUID.read(file_object)
+        type_id = Byte.read(file_object)
+        self.type = ClientSpawnObject.Type.type_from_id(type_id)
+
+        if self._context.protocol_version >= 100:
+            self.x = Double.read(file_object)
+            self.y = Double.read(file_object)
+            self.z = Double.read(file_object)
+        else:
+            self.x = Integer.read(file_object)
+            self.y = Integer.read(file_object)
+            self.z = Integer.read(file_object)
+
+        self.pitch = UnsignedByte.read(file_object)
+        self.yaw = UnsignedByte.read(file_object)
+        self.data = Integer.read(file_object)
+
+        if self._context.protocol_version < 49:
+            if self.data != 0:
+                self.velocity_x = Short.read(file_object)
+                self.velocity_y = Short.read(file_object)
+                self.velocity_z = Short.read(file_object)
+        else:
+            self.velocity_x = Short.read(file_object)
+            self.velocity_y = Short.read(file_object)
+            self.velocity_z = Short.read(file_object)
+
+    def write(self, socket, compression_threshold=None):
+        raise NotImplementedError
+
 def state_playing_clientbound(context):
     packets = {
         KeepAlivePacketClientbound,
@@ -907,6 +1021,7 @@ def state_playing_clientbound(context):
         ClientUpdateHealth,
         ClientCombatEvent,
         ClientExplosion,
+        ClientSpawnObject,
     }
     if context.protocol_version <= 47:
         packets |= {
