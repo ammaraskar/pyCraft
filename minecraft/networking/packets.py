@@ -995,7 +995,7 @@ class ClientSpawnObject(Packet):
         self.data = Integer.read(file_object)
 
         if self._context.protocol_version < 49:
-            if self.data != 0:
+            if self.data > 0:
                 self.velocity_x = Short.read(file_object)
                 self.velocity_y = Short.read(file_object)
                 self.velocity_z = Short.read(file_object)
