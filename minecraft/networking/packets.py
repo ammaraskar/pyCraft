@@ -3,7 +3,7 @@ from zlib import compress
 
 from .types import (
     VarInt, Integer, Float, Double, UnsignedShort, Long, Byte, UnsignedByte,
-    String, VarIntPrefixedByteArray, Boolean, UUID, Short
+    String, VarIntPrefixedByteArray, Boolean, UUID, Short, UnsignedLong, Position
 )
 
 
@@ -1007,6 +1007,26 @@ class ClientSpawnObject(Packet):
     def write(self, socket, compression_threshold=None):
         raise NotImplementedError
 
+class ClientBlockChange(Packet):
+    @staticmethod
+    def get_id(context):
+        return 0x0B if context.protocol_version >= 332 else \
+               0x0C if context.protocol_version >= 318 else \
+               0x0B if context.protocol_version >= 67 else \
+               0x24 if context.protocol_version >= 62 else \
+               0x23
+
+    packet_name = 'block change'
+
+    def read(self, file_object):
+        self.location = Position.read(file_object)
+        blockData = VarInt.read(file_object)
+        self.blockId = (blockData >> 4)
+        self.blockMeta = (blockData & 0xF)
+
+    def write(self, socket, compression_threshold=None):
+        raise NotImplementedError
+
 def state_playing_clientbound(context):
     packets = {
         KeepAlivePacketClientbound,
@@ -1022,6 +1042,7 @@ def state_playing_clientbound(context):
         ClientCombatEvent,
         ClientExplosion,
         ClientSpawnObject,
+        ClientBlockChange,
     }
     if context.protocol_version <= 47:
         packets |= {
