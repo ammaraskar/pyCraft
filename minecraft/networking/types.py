@@ -147,6 +147,14 @@ class Long(Type):
     def send(value, socket):
         socket.send(struct.pack('>q', value))
 
+class UnsignedLong(Type):
+    @staticmethod
+    def read(file_object):
+        return struct.unpack('>Q', file_object.read(8))[0]
+
+    @staticmethod
+    def send(value, socket):
+        socket.send(struct.pack('>Q', value))
 
 class Float(Type):
     @staticmethod
@@ -213,3 +221,31 @@ class UUID(Type):
     @staticmethod
     def send(value, socket):
         socket.send(uuid.UUID(value).bytes)
+
+class Position(Type):
+    @staticmethod
+    def read(file_object):
+        location = UnsignedLong.read(file_object) # 64-bit value
+        x = int(location >> 38)             # 26 MSBs
+        y = int((location >> 26) & 0xFFF)   # 12 bits between them
+        z = int(location & 0x3FFFFFF)       # 26 LSBs
+
+        if x >= pow(2,25):
+            x -= pow(2,26)
+
+        if y >= pow(2,11):
+            y -= pow(2,12)
+
+        if z >= pow(2,25):
+            z -= pow(2,26)
+
+        return {'x': x, 'y': y, 'z': z}
+
+    @staticmethod
+    def send(value, socket):
+        # Position is a single encoded long value; use encode method to encode position properly
+        UnsignedLong.send(value, socket)
+
+    @staticmethod
+    def encode(x,y,z):
+        return ((x & 0x3FFFFFF) << 38) | ((y & 0xFFF) << 26) | (z & 0x3FFFFFF)
