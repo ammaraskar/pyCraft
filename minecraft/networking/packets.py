@@ -1027,6 +1027,48 @@ class ClientBlockChange(Packet):
     def write(self, socket, compression_threshold=None):
         raise NotImplementedError
 
+class ClientMultiBlockChange(Packet):
+    @staticmethod
+    def get_id(context):
+        return 0x10 if context.protocol_version >= 332 else \
+               0x11 if context.protocol_version >= 318 else \
+               0x10 if context.protocol_version >= 67 else \
+               0x22
+
+    packet_name = 'multi block change'
+
+    class Record(object):
+        __slots__ = 'x', 'y', 'z', 'blockId', 'blockMeta'
+
+        def __init__(self, horizontal_position, y_coordinate, blockData):
+            self.x = (horizontal_position & 0xF0)
+            self.y = y_coordinate
+            self.z = (horizontal_position & 0x0F)
+            self.blockId = (blockData >> 4)
+            self.blockMeta = (blockData & 0xF)
+
+        def __repr__(self):
+            return ('Record(x=%s, y=%s, z=%s, blockId=%s)'
+                    % (self.x, self.y, self.z, self.blockId))
+
+        def __str__(self):
+            return self.__repr__()
+
+    def read(self, file_object):
+        self.chunk_x = Integer.read(file_object)
+        self.chunk_z = Integer.read(file_object)
+        records_count = VarInt.read(file_object)
+        self.records = []
+        for i in range(records_count):
+            rec_horizontal_position = UnsignedByte.read(file_object)
+            rec_y_coordinate = UnsignedByte.read(file_object)
+            rec_blockData = VarInt.read(file_object)
+            record = ClientMultiBlockChange.Record(rec_horizontal_position,rec_y_coordinate,rec_blockData)
+            self.records.append(record)
+
+    def write(self, socket, compression_threshold=None):
+        raise NotImplementedError
+
 def state_playing_clientbound(context):
     packets = {
         KeepAlivePacketClientbound,
@@ -1043,6 +1085,7 @@ def state_playing_clientbound(context):
         ClientExplosion,
         ClientSpawnObject,
         ClientBlockChange,
+        ClientMultiBlockChange,
     }
     if context.protocol_version <= 47:
         packets |= {
