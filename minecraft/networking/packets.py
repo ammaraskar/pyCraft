@@ -307,7 +307,8 @@ class KeepAlivePacketClientbound(KeepAlivePacket):
 class KeepAlivePacketServerbound(KeepAlivePacket):
     @staticmethod
     def get_id(context):
-        return 0x0C if context.protocol_version >= 318 else \
+        return 0x0B if context.protocol_version >= 336 else \
+               0x0C if context.protocol_version >= 318 else \
                0x0B if context.protocol_version >= 107 else \
                0x00
 
@@ -348,7 +349,8 @@ class ChatMessagePacket(Packet):
 class PlayerPositionAndLookPacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x2E if context.protocol_version >= 318 else \
+        return 0x2F if context.protocol_version >= 336 else \
+               0x2E if context.protocol_version >= 318 else \
                0x2F if context.protocol_version >= 107 else \
                0x08
 
@@ -433,7 +435,8 @@ class SetCompressionPacketPlayState(Packet):
 class PlayerListItemPacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x2D if context.protocol_version >= 332 else \
+        return 0x2E if context.protocol_version >= 336 else \
+               0x2D if context.protocol_version >= 332 else \
                0x2E if context.protocol_version >= 318 else \
                0x2D if context.protocol_version >= 107 else \
                0x38
@@ -744,7 +747,8 @@ def state_playing_clientbound(context):
 class ChatPacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x03 if context.protocol_version >= 318 else \
+        return 0x02 if context.protocol_version >= 336 else \
+               0x03 if context.protocol_version >= 318 else \
                0x02 if context.protocol_version >= 107 else \
                0x01
 
@@ -766,7 +770,8 @@ class ChatPacket(Packet):
 class PositionAndLookPacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x0F if context.protocol_version >= 332 else \
+        return 0x0E if context.protocol_version >= 336 else \
+               0x0F if context.protocol_version >= 332 else \
                0x0E if context.protocol_version >= 318 else \
                0x0D if context.protocol_version >= 107 else \
                0x06
