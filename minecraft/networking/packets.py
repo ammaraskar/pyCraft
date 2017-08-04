@@ -3,7 +3,7 @@ from zlib import compress
 
 from .types import (
     VarInt, Integer, Float, Double, UnsignedShort, Long, Byte, UnsignedByte,
-    String, VarIntPrefixedByteArray, Boolean, UUID, Short, UnsignedLong, Position
+    String, VarIntPrefixedByteArray, Boolean, UUID, Short, Position
 )
 
 
@@ -726,6 +726,7 @@ class MapPacket(Packet):
     def __str__(self):
         return self.__repr__()
 
+
 class ClientSpawnPlayer(Packet):
     @staticmethod
     def get_id(context):
@@ -744,6 +745,7 @@ class ClientSpawnPlayer(Packet):
         {'current_item': Short} if context.protocol_version <= 49 else {}
     ])
 
+
 class ClientEntityVelocity(Packet):
     @staticmethod
     def get_id(context):
@@ -761,6 +763,7 @@ class ClientEntityVelocity(Packet):
         {'velocity_z': Short}
     ])
 
+
 class ClientUpdateHealth(Packet):
     @staticmethod
     def get_id(context):
@@ -776,6 +779,7 @@ class ClientUpdateHealth(Packet):
         {'food': VarInt},
         {'food_saturation': Float}
     ])
+
 
 class ClientCombatEvent(Packet):
     @staticmethod
@@ -835,6 +839,7 @@ class ClientCombatEvent(Packet):
     def write(self, socket, compression_threshold=None):
         raise NotImplementedError
 
+
 class ClientExplosion(Packet):
     @staticmethod
     def get_id(context):
@@ -861,7 +866,6 @@ class ClientExplosion(Packet):
         def __str__(self):
             return self.__repr__()
 
-
     class Explosion(object):
         __slots__ = ('x', 'y', 'z', 'radius', 'records',
                      'player_motion_x', 'player_motion_y', 'player_motion_z')
@@ -884,7 +888,7 @@ class ClientExplosion(Packet):
             rec_x = Byte.read(file_object)
             rec_y = Byte.read(file_object)
             rec_z = Byte.read(file_object)
-            record = ClientExplosion.Record(rec_x,rec_y,rec_z)
+            record = ClientExplosion.Record(rec_x, rec_y, rec_z)
             self.records.append(record)
         self.player_motion_x = Float.read(file_object)
         self.player_motion_y = Float.read(file_object)
@@ -913,9 +917,9 @@ class ClientSpawnObject(Packet):
         @classmethod
         def type_from_id(cls, type_id):
             subcls = {
-                1 : ClientSpawnObject.Type_Boat,
-                2 : ClientSpawnObject.Type_Item_Stack,
-                3 : ClientSpawnObject.Type_Area_Effect_Cloud,
+                1: ClientSpawnObject.Type_Boat,
+                2: ClientSpawnObject.Type_Item_Stack,
+                3: ClientSpawnObject.Type_Area_Effect_Cloud,
                 10: ClientSpawnObject.Type_Minecart,
                 50: ClientSpawnObject.Type_Activated_TNT,
                 51: ClientSpawnObject.Type_EnderCrystal,
@@ -946,33 +950,86 @@ class ClientSpawnObject(Packet):
                                  % type_id)
             return subcls
 
-    class Type_Boat(Type): pass
-    class Type_Item_Stack(Type): pass
-    class Type_Area_Effect_Cloud(Type): pass
-    class Type_Minecart(Type): pass
-    class Type_Activated_TNT(Type): pass
-    class Type_EnderCrystal(Type): pass
-    class Type_Arrow(Type): pass
-    class Type_Snowball(Type): pass
-    class Type_Egg(Type): pass
-    class Type_FireBall(Type): pass
-    class Type_FireCharge(Type): pass
-    class Type_Enderpearl(Type): pass
-    class Type_Wither_Skull(Type): pass
-    class Type_Shulker_Bullet(Type): pass
-    class Type_Llama_spit(Type): pass
-    class Type_Falling_Objects(Type): pass
-    class Type_Item_frames(Type): pass
-    class Type_Eye_of_Ender(Type): pass
-    class Type_Potion(Type): pass
-    class Type_Exp_Bottle(Type): pass
-    class Type_Firework_Rocket(Type): pass
-    class Type_Leash_Knot(Type): pass
-    class Type_ArmorStand(Type): pass
-    class Type_Evocation_Fangs(Type): pass
-    class Type_Fishing_Hook(Type): pass
-    class Type_Spectral_Arrow(Type): pass
-    class Type_Dragon_Fireball(Type): pass
+    class Type_Boat(Type):
+        pass
+
+    class Type_Item_Stack(Type):
+        pass
+
+    class Type_Area_Effect_Cloud(Type):
+        pass
+
+    class Type_Minecart(Type):
+        pass
+
+    class Type_Activated_TNT(Type):
+        pass
+
+    class Type_EnderCrystal(Type):
+        pass
+
+    class Type_Arrow(Type):
+        pass
+
+    class Type_Snowball(Type):
+        pass
+
+    class Type_Egg(Type):
+        pass
+
+    class Type_FireBall(Type):
+        pass
+
+    class Type_FireCharge(Type):
+        pass
+
+    class Type_Enderpearl(Type):
+        pass
+
+    class Type_Wither_Skull(Type):
+        pass
+
+    class Type_Shulker_Bullet(Type):
+        pass
+
+    class Type_Llama_spit(Type):
+        pass
+
+    class Type_Falling_Objects(Type):
+        pass
+
+    class Type_Item_frames(Type):
+        pass
+
+    class Type_Eye_of_Ender(Type):
+        pass
+
+    class Type_Potion(Type):
+        pass
+
+    class Type_Exp_Bottle(Type):
+        pass
+
+    class Type_Firework_Rocket(Type):
+        pass
+
+    class Type_Leash_Knot(Type):
+        pass
+
+    class Type_ArmorStand(Type):
+        pass
+
+    class Type_Evocation_Fangs(Type):
+        pass
+
+    class Type_Fishing_Hook(Type):
+        pass
+
+    class Type_Spectral_Arrow(Type):
+        pass
+
+    class Type_Dragon_Fireball(Type):
+        pass
 
     def read(self, file_object):
         self.entity_id = VarInt.read(file_object)
@@ -1007,6 +1064,7 @@ class ClientSpawnObject(Packet):
     def write(self, socket, compression_threshold=None):
         raise NotImplementedError
 
+
 class ClientBlockChange(Packet):
     @staticmethod
     def get_id(context):
@@ -1026,6 +1084,7 @@ class ClientBlockChange(Packet):
 
     def write(self, socket, compression_threshold=None):
         raise NotImplementedError
+
 
 class ClientMultiBlockChange(Packet):
     @staticmethod
@@ -1063,11 +1122,14 @@ class ClientMultiBlockChange(Packet):
             rec_horizontal_position = UnsignedByte.read(file_object)
             rec_y_coordinate = UnsignedByte.read(file_object)
             rec_blockData = VarInt.read(file_object)
-            record = ClientMultiBlockChange.Record(rec_horizontal_position,rec_y_coordinate,rec_blockData)
+            record = ClientMultiBlockChange.Record(
+                         rec_horizontal_position,
+                         rec_y_coordinate, rec_blockData)
             self.records.append(record)
 
     def write(self, socket, compression_threshold=None):
         raise NotImplementedError
+
 
 def state_playing_clientbound(context):
     packets = {
@@ -1092,6 +1154,7 @@ def state_playing_clientbound(context):
             SetCompressionPacketPlayState,
         }
     return packets
+
 
 class ChatPacket(Packet):
     @staticmethod
@@ -1157,6 +1220,7 @@ class AnimationPacketServerbound(Packet):
     HAND_MAIN = 0
     HAND_OFF = 1
 
+
 class ServerClientStatus(Packet):
     @staticmethod
     def get_id(context):
@@ -1172,6 +1236,7 @@ class ServerClientStatus(Packet):
 
     RESPAWN = 0
     REQUEST_STATS = 1
+
 
 def state_playing_serverbound(context):
     packets = {
