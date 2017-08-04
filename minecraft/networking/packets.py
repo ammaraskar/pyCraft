@@ -866,17 +866,6 @@ class ClientExplosion(Packet):
         def __str__(self):
             return self.__repr__()
 
-    class Explosion(object):
-        __slots__ = ('x', 'y', 'z', 'radius', 'records',
-                     'player_motion_x', 'player_motion_y', 'player_motion_z')
-
-        def __repr__(self):
-            return ('Explosion(x=%s, y=%s, z=%s, radius=%s, records=%s)' % (
-                    self.x, self.y, self.z, self.radius, self.records))
-
-        def __str__(self):
-            return self.__repr__()
-
     def read(self, file_object):
         self.x = Float.read(file_object)
         self.y = Float.read(file_object)
