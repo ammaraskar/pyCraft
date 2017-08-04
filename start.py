@@ -7,7 +7,9 @@ from optparse import OptionParser
 from minecraft import authentication
 from minecraft.exceptions import YggdrasilError
 from minecraft.networking.connection import Connection
-from minecraft.networking.packets import ChatMessagePacket, ChatPacket, ServerClientStatus
+from minecraft.networking.packets import (
+    ChatMessagePacket, ChatPacket, ServerClientStatus
+)
 from minecraft.compat import input
 
 
