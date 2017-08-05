@@ -983,7 +983,14 @@ class ClientBlockChange(Packet):
         self.blockMeta = (blockData & 0xF)
 
     def write(self, socket, compression_threshold=None):
-        raise NotImplementedError
+        packet_buffer = PacketBuffer()
+        x = self.location['x']
+        y = self.location['y']
+        z = self.location['z']
+        Position.send(x, y, z, packet_buffer)
+        blockData = ((self.blockId << 4) | (self.blockMeta & 0xF))
+        VarInt.send(blockData)
+        self._write_buffer(socket, packet_buffer, compression_threshold)
 
 
 class ClientMultiBlockChange(Packet):
