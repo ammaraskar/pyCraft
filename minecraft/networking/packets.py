@@ -895,137 +895,48 @@ class ClientSpawnObject(Packet):
 
     packet_name = 'spawn object'
 
-    class Type(object):
-        def read(self, file_object):
-            self._read(file_object)
-
-        def _read(self, file_object):
-            raise NotImplementedError(
-                'This abstract method must be overridden in a subclass.')
+    class EntityType:
+        BOAT = 1
+        ITEM_STACK = 2
+        AREA_EFFECT_CLOUD = 3
+        MINECART = 10
+        ACTIVATED_TNT = 50
+        ENDERCRYSTAL = 51
+        ARROW = 60
+        SNOWBALL = 61
+        EGG = 62
+        FIREBALL = 63
+        FIRECHARGE = 64
+        ENDERPERL = 65
+        WITHER_SKULL = 66
+        SHULKER_BULLET = 67
+        LLAMA_SPIT = 68
+        FALLING_OBJECT = 70
+        ITEM_FRAMES = 71
+        EYE_OF_ENDER = 72
+        POTION = 73
+        EXP_BOTTLE = 75
+        FIREWORK_ROCKET = 76
+        LEASH_KNOT = 77
+        ARMORSTAND = 78
+        EVOCATION_FANGS = 79
+        FISHING_HOOK = 90
+        SPECTRAL_ARROW = 91
+        DRAGON_FIREBALL = 93
 
         @classmethod
-        def type_from_id(cls, type_id):
-            subcls = {
-                1: ClientSpawnObject.Type_Boat,
-                2: ClientSpawnObject.Type_Item_Stack,
-                3: ClientSpawnObject.Type_Area_Effect_Cloud,
-                10: ClientSpawnObject.Type_Minecart,
-                50: ClientSpawnObject.Type_Activated_TNT,
-                51: ClientSpawnObject.Type_EnderCrystal,
-                60: ClientSpawnObject.Type_Arrow,
-                61: ClientSpawnObject.Type_Snowball,
-                62: ClientSpawnObject.Type_Egg,
-                63: ClientSpawnObject.Type_FireBall,
-                64: ClientSpawnObject.Type_FireCharge,
-                65: ClientSpawnObject.Type_Enderpearl,
-                66: ClientSpawnObject.Type_Wither_Skull,
-                67: ClientSpawnObject.Type_Shulker_Bullet,
-                68: ClientSpawnObject.Type_Llama_spit,
-                70: ClientSpawnObject.Type_Falling_Objects,
-                71: ClientSpawnObject.Type_Item_frames,
-                72: ClientSpawnObject.Type_Eye_of_Ender,
-                73: ClientSpawnObject.Type_Potion,
-                75: ClientSpawnObject.Type_Exp_Bottle,
-                76: ClientSpawnObject.Type_Firework_Rocket,
-                77: ClientSpawnObject.Type_Leash_Knot,
-                78: ClientSpawnObject.Type_ArmorStand,
-                79: ClientSpawnObject.Type_Evocation_Fangs,
-                90: ClientSpawnObject.Type_Fishing_Hook,
-                91: ClientSpawnObject.Type_Spectral_Arrow,
-                93: ClientSpawnObject.Type_Dragon_Fireball
-            }.get(type_id)
-            if subcls is None:
-                raise ValueError("Unknown type ID: %s."
-                                 % type_id)
-            return subcls
+        def get_type_by_id(cls, type_id):
+            by_id = {id: entity for (entity, id) in
+                     cls.__dict__.items() if entity.isupper()}
 
-    class Type_Boat(Type):
-        pass
-
-    class Type_Item_Stack(Type):
-        pass
-
-    class Type_Area_Effect_Cloud(Type):
-        pass
-
-    class Type_Minecart(Type):
-        pass
-
-    class Type_Activated_TNT(Type):
-        pass
-
-    class Type_EnderCrystal(Type):
-        pass
-
-    class Type_Arrow(Type):
-        pass
-
-    class Type_Snowball(Type):
-        pass
-
-    class Type_Egg(Type):
-        pass
-
-    class Type_FireBall(Type):
-        pass
-
-    class Type_FireCharge(Type):
-        pass
-
-    class Type_Enderpearl(Type):
-        pass
-
-    class Type_Wither_Skull(Type):
-        pass
-
-    class Type_Shulker_Bullet(Type):
-        pass
-
-    class Type_Llama_spit(Type):
-        pass
-
-    class Type_Falling_Objects(Type):
-        pass
-
-    class Type_Item_frames(Type):
-        pass
-
-    class Type_Eye_of_Ender(Type):
-        pass
-
-    class Type_Potion(Type):
-        pass
-
-    class Type_Exp_Bottle(Type):
-        pass
-
-    class Type_Firework_Rocket(Type):
-        pass
-
-    class Type_Leash_Knot(Type):
-        pass
-
-    class Type_ArmorStand(Type):
-        pass
-
-    class Type_Evocation_Fangs(Type):
-        pass
-
-    class Type_Fishing_Hook(Type):
-        pass
-
-    class Type_Spectral_Arrow(Type):
-        pass
-
-    class Type_Dragon_Fireball(Type):
-        pass
+            return by_id[type_id]
 
     def read(self, file_object):
         self.entity_id = VarInt.read(file_object)
         if self._context.protocol_version >= 49:
             self.objectUUID = UUID.read(file_object)
         type_id = Byte.read(file_object)
-        self.type = ClientSpawnObject.Type.type_from_id(type_id)
+        self.type = ClientSpawnObject.EntityType.get_type_by_id(type_id)
 
         if self._context.protocol_version >= 100:
             self.x = Double.read(file_object)
