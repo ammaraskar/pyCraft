@@ -245,9 +245,6 @@ class Position(Type):
         return {'x': x, 'y': y, 'z': z}
 
     @staticmethod
-    def send(value, socket):
+    def send(x, y, z, socket):
+        value = ((x & 0x3FFFFFF) << 38) | ((y & 0xFFF) << 26) | (z & 0x3FFFFFF)
         UnsignedLong.send(value, socket)
-
-    @staticmethod
-    def encode(x, y, z):
-        return ((x & 0x3FFFFFF) << 38) | ((y & 0xFFF) << 26) | (z & 0x3FFFFFF)
