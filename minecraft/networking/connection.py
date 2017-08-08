@@ -436,23 +436,14 @@ class PacketReactor(object):
 
             if self.connection.options.compression_enabled:
                 decompressed_size = VarInt.read(packet_data)
-                rawPacketData = None
-                try:
-                    if decompressed_size > 0:
-                        rawPacketData = packet_data.read()
-                        decompressed_packet = decompress(rawPacketData)
-                        assert len(decompressed_packet) == decompressed_size, \
-                            'decompressed length %d, but expected %d' % \
-                            (len(decompressed_packet), decompressed_size)
-                        packet_data.reset()
-                        packet_data.send(decompressed_packet)
-                        packet_data.reset_cursor()
-                except:
-                    if rawPacketData:
-                        packet_data.reset()
-                        packet_data.send(rawPacketData)
-                        packet_data.reset_cursor()
-                    pass
+                if decompressed_size > 0:
+                    decompressed_packet = decompress(packet_data.read())
+                    assert len(decompressed_packet) == decompressed_size, \
+                        'decompressed length %d, but expected %d' % \
+                        (len(decompressed_packet), decompressed_size)
+                    packet_data.reset()
+                    packet_data.send(decompressed_packet)
+                    packet_data.reset_cursor()
 
             packet_id = VarInt.read(packet_data)
 
