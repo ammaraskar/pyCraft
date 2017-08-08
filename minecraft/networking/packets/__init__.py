@@ -8,53 +8,6 @@ from minecraft.networking.types import (
 )
 
 
-# For backward compatibility, re-export any old names from before the change:
-
-# Handshake State
-# ==============
-from .clientbound.handshake import get_packets as state_handshake_clientbound
-from .serverbound.handshake import HandShakePacket
-from .serverbound.handshake import get_packets as state_handshake_serverbound
-
-# Status State
-# ==============
-from .clientbound.status import ResponsePacket
-from .clientbound.status import PingPacketResponse
-from .clientbound.status import get_packets as state_status_clientbound
-from .serverbound.status import RequestPacket
-from .serverbound.status import PingPacket
-from .serverbound.status import get_packets as state_status_serverbound
-
-# Login State
-# ==============
-from .clientbound.login import DisconnectPacket
-from .clientbound.login import EncryptionRequestPacket
-from .clientbound.login import LoginSuccessPacket
-from .clientbound.login import SetCompressionPacket
-from .clientbound.login import get_packets as state_login_clientbound
-from .serverbound.login import LoginStartPacket
-from .serverbound.login import EncryptionResponsePacket
-from .serverbound.login import get_packets as state_login_serverbound
-
-# Playing State
-# ==============
-from .clientbound.play import KeepAlivePacket as KeepAlivePacketClientbound
-from .serverbound.play import KeepAlivePacket as KeepAlivePacketServerbound
-from .clientbound.play import JoinGamePacket
-from .clientbound.play import ChatMessagePacket
-from .clientbound.play import PlayerPositionAndLookPacket
-from .clientbound.play import DisconnectPacketPlayState
-from .clientbound.play import SetCompressionPacketPlayState
-from .clientbound.play import PlayerListItemPacket
-from .clientbound.play import MapPacket
-from .clientbound.play import get_packets as state_playing_clientbound
-from .serverbound.play import ChatPacket
-from .serverbound.play import PositionAndLookPacket
-from .serverbound.play import TeleportConfirmPacket
-from .serverbound.play import AnimationPacket as AnimationPacketServerbound
-from .serverbound.play import get_packets as state_playing_serverbound
-
-
 class PacketBuffer(object):
     def __init__(self):
         self.bytes = BytesIO()
@@ -207,3 +160,50 @@ class KeepAlivePacket(Packet):
     packet_name = "keep alive"
     definition = [
         {'keep_alive_id': VarInt}]
+
+
+# For backward compatibility, re-export any old names from before the change:
+
+# Handshake State
+# ==============
+from .clientbound.handshake import get_packets as state_handshake_clientbound
+from .serverbound.handshake import HandShakePacket
+from .serverbound.handshake import get_packets as state_handshake_serverbound
+
+# Status State
+# ==============
+from .clientbound.status import ResponsePacket
+from .clientbound.status import PingPacketResponse
+from .clientbound.status import get_packets as state_status_clientbound
+from .serverbound.status import RequestPacket
+from .serverbound.status import PingPacket
+from .serverbound.status import get_packets as state_status_serverbound
+
+# Login State
+# ==============
+from .clientbound.login import DisconnectPacket
+from .clientbound.login import EncryptionRequestPacket
+from .clientbound.login import LoginSuccessPacket
+from .clientbound.login import SetCompressionPacket
+from .clientbound.login import get_packets as state_login_clientbound
+from .serverbound.login import LoginStartPacket
+from .serverbound.login import EncryptionResponsePacket
+from .serverbound.login import get_packets as state_login_serverbound
+
+# Playing State
+# ==============
+from .clientbound.play import KeepAlivePacket as KeepAlivePacketClientbound
+from .serverbound.play import KeepAlivePacket as KeepAlivePacketServerbound
+from .clientbound.play import JoinGamePacket
+from .clientbound.play import ChatMessagePacket
+from .clientbound.play import PlayerPositionAndLookPacket
+from .clientbound.play import DisconnectPacketPlayState
+from .clientbound.play import SetCompressionPacketPlayState
+from .clientbound.play import PlayerListItemPacket
+from .clientbound.play import MapPacket
+from .clientbound.play import get_packets as state_playing_clientbound
+from .serverbound.play import ChatPacket
+from .serverbound.play import PositionAndLookPacket
+from .serverbound.play import TeleportConfirmPacket
+from .serverbound.play import AnimationPacket as AnimationPacketServerbound
+from .serverbound.play import get_packets as state_playing_serverbound

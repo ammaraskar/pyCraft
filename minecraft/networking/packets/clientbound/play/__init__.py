@@ -215,9 +215,7 @@ class BlockChangePacket(Packet):
 
     def write(self, socket, compression_threshold=None):
         packet_buffer = PacketBuffer()
-        x = self.location['x']
-        y = self.location['y']
-        z = self.location['z']
+        (x, y, z) = self.location
         Position.send(x, y, z, packet_buffer)
         blockData = ((self.blockId << 4) | (self.blockMeta & 0xF))
         VarInt.send(blockData)
