@@ -4,6 +4,7 @@ These definitions and methods are used by the packet definitions
 """
 import struct
 import uuid
+from collections import namedtuple
 
 
 class Type(object):
@@ -225,7 +226,9 @@ class UUID(Type):
         socket.send(uuid.UUID(value).bytes)
 
 
-class Position(Type):
+class Position(Type, namedtuple('Position', ('x', 'y', 'z'))):
+    __slots__ = ()
+
     @staticmethod
     def read(file_object):
         location = UnsignedLong.read(file_object)
@@ -242,7 +245,7 @@ class Position(Type):
         if z >= pow(2, 25):
             z -= pow(2, 26)
 
-        return {'x': x, 'y': y, 'z': z}
+        return Position(x=x, y=y, z=z)
 
     @staticmethod
     def send(x, y, z, socket):

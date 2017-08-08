@@ -172,20 +172,8 @@ class ExplosionPacket(Packet):
 
     packet_name = 'explosion'
 
-    class Record(object):
-        __slots__ = 'x', 'y', 'z'
-
-        def __init__(self, x, y, z):
-            self.x = x
-            self.y = y
-            self.z = z
-
-        def __repr__(self):
-            return ('Record(x=%s, y=%s, z=%s)'
-                    % (self.x, self.y, self.z))
-
-        def __str__(self):
-            return self.__repr__()
+    class Record(Position):
+        pass
 
     def read(self, file_object):
         self.x = Float.read(file_object)
