@@ -749,7 +749,8 @@ class ClientSpawnPlayer(Packet):
 class ClientEntityVelocity(Packet):
     @staticmethod
     def get_id(context):
-        return 0x3D if context.protocol_version >= 332 else \
+        return 0x3E if context.protocol_version >= 336 else \
+               0x3D if context.protocol_version >= 332 else \
                0x3B if context.protocol_version >= 86 else \
                0x3C if context.protocol_version >= 77 else \
                0x3B if context.protocol_version >= 67 else \
@@ -767,7 +768,8 @@ class ClientEntityVelocity(Packet):
 class ClientUpdateHealth(Packet):
     @staticmethod
     def get_id(context):
-        return 0x40 if context.protocol_version >= 318 else \
+        return 0x41 if context.protocol_version >= 336 else \
+               0x40 if context.protocol_version >= 318 else \
                0x3E if context.protocol_version >= 86 else \
                0x3F if context.protocol_version >= 77 else \
                0x3E if context.protocol_version >= 67 else \
@@ -784,7 +786,8 @@ class ClientUpdateHealth(Packet):
 class ClientCombatEvent(Packet):
     @staticmethod
     def get_id(context):
-        return 0x2C if context.protocol_version >= 332 else \
+        return 0x2D if context.protocol_version >= 336 else \
+               0x2C if context.protocol_version >= 332 else \
                0x2D if context.protocol_version >= 318 else \
                0x2C if context.protocol_version >= 86 else \
                0x2D if context.protocol_version >= 80 else \
@@ -1131,7 +1134,8 @@ class AnimationPacketServerbound(Packet):
 class ServerClientStatus(Packet):
     @staticmethod
     def get_id(context):
-        return 0x04 if context.protocol_version >= 318 else \
+        return 0x03 if context.protocol_version >= 336 else \
+               0x04 if context.protocol_version >= 318 else \
                0x03 if context.protocol_version >= 80 else \
                0x02 if context.protocol_version >= 67 else \
                0x17 if context.protocol_version >= 49 else \
