@@ -8,8 +8,9 @@ from minecraft import authentication
 from minecraft.exceptions import YggdrasilError
 from minecraft.networking.connection import Connection
 from minecraft.networking.packets import (
-    ChatMessagePacket, ChatPacket, ServerClientStatus
+    ChatMessagePacket, ChatPacket
 )
+from minecraft.networking.packets.serverbound.play import ClientStatusPacket
 from minecraft.compat import input
 
 
@@ -81,8 +82,8 @@ def main():
             text = input()
             if text == "/respawn":
                 print("respawning...")
-                packet = ServerClientStatus()
-                packet.action_id = ServerClientStatus.RESPAWN
+                packet = ClientStatusPacket()
+                packet.action_id = ClientStatusPacket.RESPAWN
                 connection.write_packet(packet)
             else:
                 packet = ChatPacket()
