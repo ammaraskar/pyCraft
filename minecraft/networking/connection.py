@@ -2,7 +2,7 @@ from __future__ import print_function
 
 from collections import deque
 from threading import Lock
-from zlib import decompress
+import zlib
 import threading
 import socket
 import time
@@ -437,7 +437,9 @@ class PacketReactor(object):
             if self.connection.options.compression_enabled:
                 decompressed_size = VarInt.read(packet_data)
                 if decompressed_size > 0:
-                    decompressed_packet = decompress(packet_data.read())
+                    decompressor = zlib.decompressobj()
+                    decompressed_packet = decompressor.decompress(
+                                                       packet_data.read())
                     assert len(decompressed_packet) == decompressed_size, \
                         'decompressed length %d, but expected %d' % \
                         (len(decompressed_packet), decompressed_size)
