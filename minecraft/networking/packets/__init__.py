@@ -1,3 +1,13 @@
+'''
+NOTE: The packet classes in __all_legacy_packets__ exported by this
+module are included only for backward compatibility, and should not
+be used in new code, as (1) they do not include all packets present
+in pyCraft, and (2) some are named oddly, for historical reasons.
+
+Use the packet classes under packets.clientbound.* and
+packets.serverbound.* instead.
+'''
+
 from .packet import Packet
 from .packet_buffer import PacketBuffer
 from .keep_alive_packet import KeepAlivePacket
