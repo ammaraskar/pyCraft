@@ -14,6 +14,7 @@ import json
 from future.utils import raise_
 
 from .types import VarInt
+from .packets import clientbound, serverbound
 from . import packets
 from . import encryption
 from .. import SUPPORTED_PROTOCOL_VERSIONS
@@ -224,7 +225,7 @@ class Connection(object):
         elif handle_ping is not None:
             self.reactor.handle_ping = handle_ping
 
-        request_packet = packets.RequestPacket()
+        request_packet = serverbound.status.RequestPacket()
         self.write_packet(request_packet)
 
     def connect(self):
@@ -248,7 +249,7 @@ class Connection(object):
                 # process of determining the server's version, and immediately
                 # connect.
                 self._handshake(next_state=STATE_PLAYING)
-                login_start_packet = packets.LoginStartPacket()
+                login_start_packet = serverbound.login.LoginStartPacket()
                 if self.auth_token:
                     login_start_packet.name = self.auth_token.profile.name
                 else:
@@ -259,7 +260,7 @@ class Connection(object):
                 # Determine the server's protocol version by first performing a
                 # status query.
                 self._handshake(next_state=STATE_STATUS)
-                self.write_packet(packets.RequestPacket())
+                self.write_packet(serverbound.status.RequestPacket())
                 self.reactor = PlayingStatusReactor(self)
             self._start_network_thread()
 
@@ -297,7 +298,7 @@ class Connection(object):
                 self.socket = None
 
     def _handshake(self, next_state=STATE_PLAYING):
-        handshake = packets.HandShakePacket()
+        handshake = serverbound.handshake.HandShakePacket()
         handshake.protocol_version = self.context.protocol_version
         handshake.server_address = self.options.address
         handshake.server_port = self.options.port
@@ -411,7 +412,7 @@ class PacketReactor(object):
     TIME_OUT = 0
 
     # Handshaking is considered the "default" state
-    get_clientbound_packets = staticmethod(packets.state_handshake_clientbound)
+    get_clientbound_packets = staticmethod(clientbound.handshake.get_packets)
 
     def __init__(self, connection):
         self.connection = connection
@@ -473,7 +474,7 @@ class PacketReactor(object):
 
 
 class LoginReactor(PacketReactor):
-    get_clientbound_packets = staticmethod(packets.state_login_clientbound)
+    get_clientbound_packets = staticmethod(clientbound.login.get_packets)
 
     def react(self, packet):
         if packet.packet_name == "encryption request":
@@ -489,7 +490,7 @@ class LoginReactor(PacketReactor):
                 if self.connection.auth_token is not None:
                     self.connection.auth_token.join(server_id)
 
-            encryption_response = packets.EncryptionResponsePacket()
+            encryption_response = serverbound.login.EncryptionResponsePacket()
             encryption_response.shared_secret = encrypted_secret
             encryption_response.verify_token = token
 
@@ -519,7 +520,7 @@ class LoginReactor(PacketReactor):
 
 
 class PlayingReactor(PacketReactor):
-    get_clientbound_packets = staticmethod(packets.state_playing_clientbound)
+    get_clientbound_packets = staticmethod(clientbound.play.get_packets)
 
     def react(self, packet):
         if packet.packet_name == "set compression":
@@ -527,17 +528,17 @@ class PlayingReactor(PacketReactor):
             self.connection.options.compression_enabled = True
 
         if packet.packet_name == "keep alive":
-            keep_alive_packet = packets.KeepAlivePacketServerbound()
+            keep_alive_packet = serverbound.play.KeepAlivePacket()
             keep_alive_packet.keep_alive_id = packet.keep_alive_id
             self.connection.write_packet(keep_alive_packet)
 
         if packet.packet_name == "player position and look":
             if self.connection.context.protocol_version >= 107:
-                teleport_confirm = packets.TeleportConfirmPacket()
+                teleport_confirm = serverbound.play.TeleportConfirmPacket()
                 teleport_confirm.teleport_id = packet.teleport_id
                 self.connection.write_packet(teleport_confirm)
             else:
-                position_response = packets.PositionAndLookPacket()
+                position_response = serverbound.play.PositionAndLookPacket()
                 position_response.x = packet.x
                 position_response.feet_y = packet.y
                 position_response.z = packet.z
@@ -552,7 +553,7 @@ class PlayingReactor(PacketReactor):
 
 
 class StatusReactor(PacketReactor):
-    get_clientbound_packets = staticmethod(packets.state_status_clientbound)
+    get_clientbound_packets = staticmethod(clientbound.status.get_packets)
 
     def __init__(self, connection, do_ping=False):
         super(StatusReactor, self).__init__(connection)
@@ -562,7 +563,7 @@ class StatusReactor(PacketReactor):
         if packet.packet_name == "response":
             status_dict = json.loads(packet.json_response)
             if self.do_ping:
-                ping_packet = packets.PingPacket()
+                ping_packet = serverbound.status.PingPacket()
                 # NOTE: it may be better to depend on the `monotonic' package
                 # or something similar for more accurate time measurement.
                 ping_packet.time = int(1000 * timeit.default_timer())

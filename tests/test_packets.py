@@ -8,7 +8,7 @@ from minecraft import SUPPORTED_PROTOCOL_VERSIONS
 from minecraft.networking.connection import ConnectionContext
 from minecraft.networking.types import VarInt
 from minecraft.networking.packets import (
-    PacketBuffer, ChatPacket, KeepAlivePacket, PacketListener)
+    PacketBuffer, PacketListener, KeepAlivePacket, serverbound)
 
 
 class PacketBufferTest(unittest.TestCase):
@@ -41,7 +41,7 @@ class PacketSerializatonTest(unittest.TestCase):
         for protocol_version in SUPPORTED_PROTOCOL_VERSIONS:
             context = ConnectionContext(protocol_version=protocol_version)
 
-            packet = ChatPacket(context)
+            packet = serverbound.play.ChatPacket(context)
             packet.message = u"κόσμε"
 
             packet_buffer = PacketBuffer()
@@ -53,7 +53,7 @@ class PacketSerializatonTest(unittest.TestCase):
             packet_id = VarInt.read(packet_buffer)
             self.assertEqual(packet_id, packet.id)
 
-            deserialized = ChatPacket(context)
+            deserialized = serverbound.play.ChatPacket(context)
             deserialized.read(packet_buffer)
 
             self.assertEqual(packet.message, deserialized.message)
@@ -63,7 +63,7 @@ class PacketSerializatonTest(unittest.TestCase):
             context = ConnectionContext(protocol_version=protocol_version)
 
             msg = ''.join(choice(string.ascii_lowercase) for i in range(500))
-            packet = ChatPacket(context)
+            packet = serverbound.play.ChatPacket(context)
             packet.message = msg
 
             self.write_read_packet(packet, 20)
@@ -90,7 +90,7 @@ class PacketSerializatonTest(unittest.TestCase):
             packet_id = VarInt.read(packet_buffer)
             self.assertEqual(packet_id, packet.id)
 
-            deserialized = ChatPacket(context)
+            deserialized = serverbound.play.ChatPacket(context)
             deserialized.read(packet_buffer)
 
             self.assertEqual(packet.message, deserialized.message)
@@ -107,9 +107,10 @@ class PacketListenerTest(unittest.TestCase):
         for protocol_version in SUPPORTED_PROTOCOL_VERSIONS:
             context = ConnectionContext(protocol_version=protocol_version)
 
-            listener = PacketListener(test_packet, ChatPacket)
+            listener = PacketListener(test_packet, serverbound.play.ChatPacket)
 
-            packet = ChatPacket(context).set_values(message=message)
+            packet = serverbound.play.ChatPacket(context).set_values(
+                message=message)
             uncalled_packet = KeepAlivePacket().set_values(keep_alive_id=0)
 
             listener.call_packet(packet)

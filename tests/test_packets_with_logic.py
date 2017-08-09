@@ -1,9 +1,9 @@
 import unittest
 from minecraft.networking.types import (UUID, VarInt, String, Boolean)
 from minecraft.networking.packets import PacketBuffer
-from minecraft.networking.packets import PlayerPositionAndLookPacket
-from minecraft.networking.packets import PlayerListItemPacket
-from minecraft.networking.packets import MapPacket
+from minecraft.networking.packets.clientbound.play import (
+    PlayerPositionAndLookPacket, PlayerListItemPacket, MapPacket
+)
 from minecraft.networking.connection import ConnectionContext
 
 

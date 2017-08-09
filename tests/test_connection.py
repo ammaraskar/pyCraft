@@ -4,6 +4,8 @@ from minecraft import SUPPORTED_MINECRAFT_VERSIONS
 from minecraft.networking import connection
 from minecraft.networking import types
 from minecraft.networking import packets
+from minecraft.networking.packets import clientbound
+from minecraft.networking.packets import serverbound
 
 from future.utils import raise_
 
@@ -170,19 +172,19 @@ class FakeServer(threading.Thread):
 
         self.packets_handshake = {
             p.get_id(self.context): p for p in
-            packets.state_handshake_serverbound(self.context)}
+            serverbound.handshake.get_packets(self.context)}
 
         self.packets_login = {
             p.get_id(self.context): p for p in
-            packets.state_login_serverbound(self.context)}
+            serverbound.login.get_packets(self.context)}
 
         self.packets_playing = {
             p.get_id(self.context): p for p in
-            packets.state_playing_serverbound(self.context)}
+            serverbound.play.get_packets(self.context)}
 
         self.packets_status = {
             p.get_id(self.context): p for p in
-            packets.state_status_serverbound(self.context)}
+            serverbound.status.get_packets(self.context)}
 
         self.listen_socket = socket.socket()
         self.listen_socket.bind(('0.0.0.0', 0))
@@ -216,7 +218,7 @@ class FakeServer(threading.Thread):
     def run_handshake(self, client_socket, client_file):
         self.packets = self.packets_handshake
         packet = self.read_packet_filtered(client_file)
-        assert isinstance(packet, packets.HandShakePacket)
+        assert isinstance(packet, serverbound.handshake.HandShakePacket)
         if packet.next_state == 1:
             return self.run_handshake_status(
                 packet, client_socket, client_file)
@@ -240,7 +242,7 @@ class FakeServer(threading.Thread):
             else:
                 msg = "Outdated server! I'm still on %s" \
                       % self.minecraft_version
-            packet = packets.DisconnectPacket(
+            packet = clientbound.login.DisconnectPacket(
                 self.context, json_data=json.dumps({'text': msg}))
             self.write_packet(packet, client_socket)
             return True
@@ -248,15 +250,15 @@ class FakeServer(threading.Thread):
     def run_login(self, client_socket, client_file):
         self.packets = self.packets_login
         packet = self.read_packet_filtered(client_file)
-        assert isinstance(packet, packets.LoginStartPacket)
+        assert isinstance(packet, serverbound.login.LoginStartPacket)
 
         if self.compression_threshold is not None:
-            self.write_packet(packets.SetCompressionPacket(
+            self.write_packet(clientbound.login.SetCompressionPacket(
                 self.context, threshold=self.compression_threshold),
                 client_socket)
             self.compression_enabled = True
 
-        packet = packets.LoginSuccessPacket(
+        packet = clientbound.login.LoginSuccessPacket(
             self.context, UUID='{fake uuid}', Username=packet.name)
         self.write_packet(packet, client_socket)
 
@@ -265,21 +267,21 @@ class FakeServer(threading.Thread):
     def run_playing(self, client_socket, client_file):
         self.packets = self.packets_playing
 
-        packet = packets.JoinGamePacket(
+        packet = clientbound.play.JoinGamePacket(
             self.context, entity_id=0, game_mode=0, dimension=0, difficulty=2,
             max_players=1, level_type='default', reduced_debug_info=False)
         self.write_packet(packet, client_socket)
 
         keep_alive_id = 1076048782
-        packet = packets.KeepAlivePacketClientbound(
+        packet = clientbound.play.KeepAlivePacket(
             self.context, keep_alive_id=keep_alive_id)
         self.write_packet(packet, client_socket)
 
         packet = self.read_packet_filtered(client_file)
-        assert isinstance(packet, packets.KeepAlivePacketServerbound)
+        assert isinstance(packet, serverbound.play.KeepAlivePacket)
         assert packet.keep_alive_id == keep_alive_id
 
-        packet = packets.DisconnectPacketPlayState(
+        packet = clientbound.play.DisconnectPacket(
             self.context, json_data=json.dumps({'text': 'Test complete.'}))
         self.write_packet(packet, client_socket)
         return False
@@ -288,9 +290,9 @@ class FakeServer(threading.Thread):
         self.packets = self.packets_status
 
         packet = self.read_packet(client_file)
-        assert isinstance(packet, packets.RequestPacket)
+        assert isinstance(packet, serverbound.status.RequestPacket)
 
-        packet = packets.ResponsePacket(self.context)
+        packet = clientbound.status.ResponsePacket(self.context)
         packet.json_response = json.dumps({
             'version': {
                 'name':     self.minecraft_version,
@@ -307,9 +309,9 @@ class FakeServer(threading.Thread):
             packet = self.read_packet(client_file)
         except EOFError:
             return False
-        assert isinstance(packet, packets.PingPacket)
+        assert isinstance(packet, serverbound.status.PingPacket)
 
-        res_packet = packets.PingPacketResponse(self.context)
+        res_packet = clientbound.status.PingResponsePacket(self.context)
         res_packet.time = packet.time
         self.write_packet(res_packet, client_socket)
         return False
@@ -317,9 +319,9 @@ class FakeServer(threading.Thread):
     def read_packet_filtered(self, client_file):
         while True:
             packet = self.read_packet(client_file)
-            if isinstance(packet, packets.PositionAndLookPacket):
+            if isinstance(packet, serverbound.play.PositionAndLookPacket):
                 continue
-            if isinstance(packet, packets.AnimationPacketServerbound):
+            if isinstance(packet, serverbound.play.AnimationPacket):
                 continue
             return packet
 

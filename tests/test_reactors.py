@@ -6,9 +6,7 @@ except ImportError:
 from minecraft.networking.connection import (
     LoginReactor, PlayingReactor, ConnectionContext
 )
-from minecraft.networking.packets import (
-    EncryptionRequestPacket, PlayerPositionAndLookPacket
-)
+from minecraft.networking.packets import clientbound
 
 
 class LoginReactorTest(unittest.TestCase):
@@ -18,7 +16,7 @@ class LoginReactorTest(unittest.TestCase):
         connection = mock.MagicMock()
         reactor = LoginReactor(connection)
 
-        packet = EncryptionRequestPacket()
+        packet = clientbound.login.EncryptionRequestPacket()
         packet.server_id = "123"
         packet.public_key = b"asdf"
         packet.verify_token = b"23"
@@ -41,7 +39,7 @@ class LoginReactorTest(unittest.TestCase):
         connection = mock.MagicMock()
         reactor = LoginReactor(connection)
 
-        packet = EncryptionRequestPacket()
+        packet = clientbound.login.EncryptionRequestPacket()
         packet.server_id = "-"
         packet.public_key = b"asdf"
         packet.verify_token = b"23"
@@ -62,7 +60,7 @@ class LoginReactorTest(unittest.TestCase):
 class PlayingReactorTest(unittest.TestCase):
 
     def get_position_packet(self):
-        packet = PlayerPositionAndLookPacket()
+        packet = clientbound.play.PlayerPositionAndLookPacket()
         packet.x = 1.0
         packet.y = 2.0
         packet.z = 3.0
