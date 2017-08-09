@@ -1,6 +1,10 @@
 language: python
-python: 3.5
-dist: precise
+python:
+  - 2.7
+  - 3.3
+  - 3.4
+  - 3.5
+  - pypy
 env:
   - TOX_ENV=py27
   - TOX_ENV=py33
