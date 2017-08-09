@@ -1,16 +1,27 @@
 language: python
 python: 3.5
-dist: precise
-env:
-  - TOX_ENV=py27
-  - TOX_ENV=py33
-  - TOX_ENV=py34
-  - TOX_ENV=py35
-  - TOX_ENV=pypy
-  - TOX_ENV=flake8
-  - TOX_ENV=pylint-errors
-  - TOX_ENV=pylint-full
-  - TOX_ENV=verify-manifest
+
+matrix:
+  include:
+    - python: 2.7
+      env: TOX_ENV=py27
+    - python: 3.3
+      env: TOX_ENV=py33
+    - python: 3.4
+      env: TOX_ENV=py34
+    - python: pypy
+      env: TOX_ENV=pypy
+    - python: 3.5
+      env: TOX_ENV=py35
+    - python: 3.5
+      env: TOX_ENV=flake8
+    - python: 3.5
+      env: TOX_ENV=pylint-errors
+    - python: 3.5
+      env: TOX_ENV=pylint-full
+    - python: 3.5
+      env: TOX_ENV=verify-manifest
+
 install:
   - pip install tox
   - pip install python-coveralls
