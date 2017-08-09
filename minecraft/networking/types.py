@@ -8,6 +8,8 @@ from collections import namedtuple
 
 
 class Type(object):
+    __slots__ = ()
+
     @staticmethod
     def read(file_object):
         raise NotImplementedError("Base data type not serializable")
