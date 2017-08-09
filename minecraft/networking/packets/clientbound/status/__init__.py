@@ -9,7 +9,7 @@ from minecraft.networking.types import (
 def get_packets(context):
     packets = {
         ResponsePacket,
-        PingPacketResponse,
+        PingResponsePacket,
     }
     return packets
 
@@ -21,7 +21,7 @@ class ResponsePacket(Packet):
         {'json_response': String}]
 
 
-class PingPacketResponse(Packet):
+class PingResponsePacket(Packet):
     id = 0x01
     packet_name = "ping"
     definition = [

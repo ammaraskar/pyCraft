@@ -13,7 +13,7 @@ from .serverbound.handshake import get_packets as state_handshake_serverbound
 # Status State
 # ==============
 from .clientbound.status import ResponsePacket
-from .clientbound.status import PingPacketResponse
+from .clientbound.status import PingResponsePacket as PingPacketResponse
 from .clientbound.status import get_packets as state_status_clientbound
 from .serverbound.status import RequestPacket
 from .serverbound.status import PingPacket
@@ -37,8 +37,10 @@ from .serverbound.play import KeepAlivePacket as KeepAlivePacketServerbound
 from .clientbound.play import JoinGamePacket
 from .clientbound.play import ChatMessagePacket
 from .clientbound.play import PlayerPositionAndLookPacket
-from .clientbound.play import DisconnectPacketPlayState
-from .clientbound.play import SetCompressionPacketPlayState
+from .clientbound.play import DisconnectPacket as DisconnectPacketPlayState
+from .clientbound.play import (
+    SetCompressionPacket as SetCompressionPacketPlayState
+)
 from .clientbound.play import PlayerListItemPacket
 from .clientbound.play import MapPacket
 from .clientbound.play import get_packets as state_playing_clientbound

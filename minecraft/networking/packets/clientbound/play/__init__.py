@@ -23,7 +23,7 @@ def get_packets(context):
         PlayerPositionAndLookPacket,
         MapPacket,
         PlayerListItemPacket,
-        DisconnectPacketPlayState,
+        DisconnectPacket,
         SpawnPlayerPacket,
         EntityVelocityPacket,
         UpdateHealthPacket,
@@ -35,7 +35,7 @@ def get_packets(context):
     }
     if context.protocol_version <= 47:
         packets |= {
-            SetCompressionPacketPlayState,
+            SetCompressionPacket,
         }
     return packets
 
@@ -82,7 +82,7 @@ class ChatMessagePacket(Packet):
         {'position': Byte}]
 
 
-class DisconnectPacketPlayState(Packet):
+class DisconnectPacket(Packet):
     @staticmethod
     def get_id(context):
         return 0x1A if context.protocol_version >= 332 else \
@@ -96,7 +96,7 @@ class DisconnectPacketPlayState(Packet):
         {'json_data': String}]
 
 
-class SetCompressionPacketPlayState(Packet):
+class SetCompressionPacket(Packet):
     # Note: removed between protocol versions 47 and 107.
     id = 0x46
     packet_name = "set compression"
