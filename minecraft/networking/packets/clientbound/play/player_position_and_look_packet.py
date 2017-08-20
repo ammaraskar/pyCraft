@@ -9,8 +9,9 @@ class PlayerPositionAndLookPacket(Packet):
     @staticmethod
     def get_id(context):
         return 0x2F if context.protocol_version >= 336 else \
-               0x2E if context.protocol_version >= 318 else \
-               0x2F if context.protocol_version >= 107 else \
+               0x2E if context.protocol_version >= 332 else \
+               0x2F if context.protocol_version >= 318 else \
+               0x2E if context.protocol_version >= 70 else \
                0x08
 
     packet_name = "player position and look"
