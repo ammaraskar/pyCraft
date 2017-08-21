@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 import getpass
 import sys
 from optparse import OptionParser
@@ -7,10 +9,7 @@ from optparse import OptionParser
 from minecraft import authentication
 from minecraft.exceptions import YggdrasilError
 from minecraft.networking.connection import Connection
-from minecraft.networking.packets import (
-    ChatMessagePacket, ChatPacket
-)
-from minecraft.networking.packets.serverbound.play import ClientStatusPacket
+from minecraft.networking.packets import Packet, clientbound, serverbound
 from minecraft.compat import input
 
 
@@ -28,6 +27,10 @@ def get_options():
 
     parser.add_option("-o", "--offline", dest="offline", action="store_true",
                       help="connect to a server in offline mode")
+
+    parser.add_option("-d", "--dump-packets", dest="dump_packets",
+                      action="store_true",
+                      help="print sent and received packets to standard error")
 
     (options, args) = parser.parse_args()
 
@@ -70,23 +73,40 @@ def main():
         connection = Connection(
             options.address, options.port, auth_token=auth_token)
 
+    if options.dump_packets:
+        def print_incoming(packet):
+            if type(packet) is Packet:
+                # This is a direct instance of the base Packet type, meaning
+                # that it is a packet of unknown type, so we do not print it.
+                return
+            print('--> %s' % packet, file=sys.stderr)
+
+        def print_outgoing(packet):
+            print('<-- %s' % packet, file=sys.stderr)
+
+        connection.register_packet_listener(
+            print_incoming, Packet, early=True)
+        connection.register_packet_listener(
+            print_outgoing, Packet, outgoing=True)
+
     connection.connect()
 
     def print_chat(chat_packet):
         print("Position: " + str(chat_packet.position))
         print("Data: " + chat_packet.json_data)
 
-    connection.register_packet_listener(print_chat, ChatMessagePacket)
+    connection.register_packet_listener(
+        print_chat, clientbound.play.ChatMessagePacket)
     while True:
         try:
             text = input()
             if text == "/respawn":
                 print("respawning...")
-                packet = ClientStatusPacket()
-                packet.action_id = ClientStatusPacket.RESPAWN
+                packet = serverbound.play.ClientStatusPacket()
+                packet.action_id = serverbound.play.ClientStatusPacket.RESPAWN
                 connection.write_packet(packet)
             else:
-                packet = ChatPacket()
+                packet = serverbound.play.ChatPacket()
                 packet.message = text
                 connection.write_packet(packet)
         except KeyboardInterrupt:
