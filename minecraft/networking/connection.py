@@ -1,7 +1,7 @@
 from __future__ import print_function
 
 from collections import deque
-from threading import Lock
+from threading import RLock
 import zlib
 import threading
 import socket
@@ -93,9 +93,15 @@ class Connection(object):
                                  attributes of the 'Connection' instance.
         """  # NOQA
 
-        self._write_lock = Lock()
+        # This lock is re-entrant because it may be acquired in a re-entrant
+        # manner from within an outgoing packet listener
+        self._write_lock = RLock()
+
         self.networking_thread = None
         self.packet_listeners = []
+        self.early_packet_listeners = []
+        self.outgoing_packet_listeners = []
+        self.early_outgoing_packet_listeners = []
 
         def proto_version(version):
             if isinstance(version, str):
@@ -159,24 +165,42 @@ class Connection(object):
         """
         packet.context = self.context
         if force:
-            self._write_lock.acquire()
-            if self.options.compression_enabled:
-                packet.write(self.socket, self.options.compression_threshold)
-            else:
-                packet.write(self.socket)
-            self._write_lock.release()
+            with self._write_lock:
+                self._write_packet(packet)
         else:
             self._outgoing_packet_queue.append(packet)
 
-    def register_packet_listener(self, method, *args):
+    def register_packet_listener(self, method, *packet_types, **kwds):
         """
         Registers a listener method which will be notified when a packet of
-        a selected type is received
+        a selected type is received.
+
+        If :class:`minecraft.networking.connection.IgnorePacket` is raised from
+        within this method, no subsequent handlers will be called. If
+        'early=True', this has the additional effect of preventing the default
+        in-built action; this could break the internal state of the
+        'Connection', so should be done with care. If, in addition,
+        'outgoing=True', this will prevent the packet from being written to the
+        network.
 
         :param method: The method which will be called back with the packet
-        :param args: The packets to listen for
+        :param packet_types: The packets to listen for
+        :param outgoing: If 'True', this listener will be called on outgoing
+                         packets just after they are sent to the server, rather
+                         than on incoming packets.
+        :param early: If 'True', this listener will be called before any
+                      built-in default action is carried out, and before any
+                      listeners with 'early=False' are called. If
+                      'outgoing=True', the listener will be called before the
+                      packet is written to the network, rather than afterwards.
         """
-        self.packet_listeners.append(packets.PacketListener(method, *args))
+        outgoing = kwds.pop('outgoing', False)
+        early = kwds.pop('early', False)
+        target = self.packet_listeners if not early and not outgoing \
+            else self.early_packet_listeners if early and not outgoing \
+            else self.outgoing_packet_listeners if not early \
+            else self.early_outgoing_packet_listeners
+        target.append(packets.PacketListener(method, *packet_types, **kwds))
 
     def _pop_packet(self):
         # Pops the topmost packet off the outgoing queue and writes it out
@@ -190,12 +214,25 @@ class Connection(object):
         if len(self._outgoing_packet_queue) == 0:
             return False
         else:
-            packet = self._outgoing_packet_queue.popleft()
+            self._write_packet(self._outgoing_packet_queue.popleft())
+            return True
+
+    def _write_packet(self, packet):
+        # Immediately writes the given packet to the network. The caller must
+        # have the write lock acquired before calling this method.
+        try:
+            for listener in self.early_outgoing_packet_listeners:
+                listener.call_packet(packet)
+
             if self.options.compression_enabled:
                 packet.write(self.socket, self.options.compression_threshold)
             else:
                 packet.write(self.socket)
-            return True
+
+            for listener in self.outgoing_packet_listeners:
+                listener.call_packet(packet)
+        except IgnorePacket:
+            pass
 
     def status(self, handle_status=None, handle_ping=False):
         """Issue a status request to the server and then disconnect.
@@ -382,6 +419,8 @@ class NetworkingThread(threading.Thread):
                     exc_info = None
 
                 try:
+                    for listener in self.connection.early_packet_listeners:
+                        listener.call_packet(packet)
                     self.connection._react(packet)
                     for listener in self.connection.packet_listeners:
                         listener.call_packet(packet)

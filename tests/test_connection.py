@@ -37,25 +37,14 @@ class _ConnectTest(unittest.TestCase):
                 cond.exc_info = exc_info
                 cond.notify_all()
 
-        def client_write(packet, *args, **kwds):
-            def packet_write(*args, **kwds):
-                logging.debug('[C-> ] %s' % packet)
-                return real_packet_write(*args, **kwds)
-            real_packet_write = packet.write
-            packet.write = packet_write
-            return real_client_write(packet, *args, **kwds)
-
-        def client_react(packet, *args, **kwds):
-            logging.debug('[ ->C] %s' % packet)
-            return real_client_react(packet, *args, **kwds)
-
         client = connection.Connection(
             addr, port, username='User', initial_version=client_version,
             handle_exception=handle_client_exception)
-        real_client_react = client._react
-        real_client_write = client.write_packet
-        client.write_packet = client_write
-        client._react = client_react
+
+        client.register_packet_listener(
+            lambda packet: logging.debug('[ ->C] %s' % packet), early=True)
+        client.register_packet_listener(
+            lambda packet: logging.debug('[C-> ] %s' % packet), outgoing=True)
 
         try:
             with cond:
