@@ -12,7 +12,15 @@ class ConnectTest(fake_server._FakeServerTest):
     class client_handler_type(fake_server.FakeClientHandler):
         def handle_play_start(self):
             super(ConnectTest.client_handler_type, self).handle_play_start()
-            raise fake_server.FakeServerDisconnect
+            self.write_packet(clientbound.play.KeepAlivePacket(
+                keep_alive_id=1223334444))
+
+        def handle_play_packet(self, packet):
+            super(ConnectTest.client_handler_type, self) \
+                .handle_play_packet(packet)
+            if isinstance(packet, serverbound.play.KeepAlivePacket):
+                assert packet.keep_alive_id == 1223334444
+                raise fake_server.FakeServerDisconnect
 
 
 class PingTest(ConnectTest):
@@ -168,8 +176,7 @@ class IgnorePacketTest(ConnectTest):
                 keep_alive_id=2))
             self.write_packet(clientbound.play.KeepAlivePacket(
                 keep_alive_id=3))
-            self.write_packet(clientbound.play.DisconnectPacket(
-                json_data='{"text":"Test complete."}'))
+            self.handle_play_server_disconnect('Test complete.')
 
         def handle_play_packet(self, packet):
             super(IgnorePacketTest.client_handler_type, self) \
