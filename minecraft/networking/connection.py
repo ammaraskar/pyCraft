@@ -352,6 +352,8 @@ class Connection(object):
         if self.reactor.handle_exception(exc, exc_info):
             return
 
+        self.disconnect()
+
         self.exception, self.exc_info = exc, exc_info
         if self.handle_exception is None:
             raise_(*exc_info)
