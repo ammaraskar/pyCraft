@@ -315,8 +315,13 @@ class Connection(object):
 
     def disconnect(self):
         """ Terminate the existing server connection, if there is one. """
-        if self.networking_thread is not None:
-            with self._write_lock:  # pylint: disable=not-context-manager
+        with self._write_lock:  # pylint: disable=not-context-manager
+            if self.socket is not None:
+                # Flush any packets remaining in the queue.
+                while self._pop_packet():
+                    pass
+
+            if self.networking_thread is not None:
                 self.networking_thread.interrupt = True
 
         if self.socket is not None:

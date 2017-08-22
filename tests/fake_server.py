@@ -23,7 +23,7 @@ import uuid
 VERSIONS = sorted(SUPPORTED_MINECRAFT_VERSIONS.items(), key=lambda i: i[1])
 VERSIONS = [v for (v, p) in VERSIONS]
 
-THREAD_TIMEOUT_S = 5
+THREAD_TIMEOUT_S = 2
 
 
 class FakeClientDisconnect(Exception):
@@ -79,7 +79,6 @@ class FakeClientHandler(object):
         self.write_packet(clientbound.play.JoinGamePacket(
             entity_id=0, game_mode=0, dimension=0, difficulty=2, max_players=1,
             level_type='default', reduced_debug_info=False))
-        raise FakeServerDisconnect
 
     def handle_play_packet(self, packet):
         # Called upon each packet received after handle_play_start() returns.
@@ -247,8 +246,8 @@ class FakeServer(object):
 
         The server listens on a local TCP socket and accepts client connections
         in serial, in a single-threaded manner. It responds to status queries,
-        performs handshake and login, and, by default, immediately cleanly
-        disconnects the client after they join the game.
+        performs handshake and login, and, by default, echoes any chat messages
+        back to the client until it disconnects.1~
 
         The behaviour of the server can be customised by writing subclasses of
         FakeClientHandler, overriding its public methods of the form
@@ -383,7 +382,8 @@ class _FakeServerTest(unittest.TestCase):
             client_handler_type = self.client_handler_type
 
         server = FakeServer(minecraft_version=server_version,
-                            compression_threshold=compression_threshold)
+                            compression_threshold=compression_threshold,
+                            client_handler_type=client_handler_type)
         addr = "localhost"
         port = server.listen_socket.getsockname()[1]
 
@@ -432,7 +432,9 @@ class _FakeServerTest(unittest.TestCase):
                         errors.append({
                             'msg': 'Thread "%s" timed out.' % thread.name})
         except:
-            errors.insert(0, sys.exc_info())
+            errors.insert(0, {
+                'msg': 'Exception in main thread',
+                'exc_info': sys.exc_info()})
         else:
             timeout = True
             for lock, [exc_info], thread_name in (
@@ -448,7 +450,7 @@ class _FakeServerTest(unittest.TestCase):
                             'exc_info': exc_info})
                     timeout = False
             if timeout:
-                errors.insert(0, {'msg': 'Timed out.'})
+                errors.insert(0, {'msg': 'Test timed out.'})
 
         if len(errors) > 1:
             for error in errors:
