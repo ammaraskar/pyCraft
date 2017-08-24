@@ -8,20 +8,22 @@ Use the packet classes under packets.clientbound.* and
 packets.serverbound.* instead.
 '''
 
-from .packet import Packet
+# Packet-Related Utilities
 from .packet_buffer import PacketBuffer
-from .keep_alive_packet import KeepAlivePacket
+from .packet_listener import PacketListener
 
-# For backward compatibility, re-export any old names from before the change:
+# Abstract Packet Classes
+from .packet import Packet
+from .keep_alive_packet import AbstractKeepAlivePacket
+from .plugin_message_packet import AbstractPluginMessagePacket
 
-# Handshake State
-# ==============
+
+# Legacy Packets (Handshake State)
 from .clientbound.handshake import get_packets as state_handshake_clientbound
 from .serverbound.handshake import HandShakePacket
 from .serverbound.handshake import get_packets as state_handshake_serverbound
 
-# Status State
-# ==============
+# Legacy Packets (Status State)
 from .clientbound.status import ResponsePacket
 from .clientbound.status import PingResponsePacket as PingPacketResponse
 from .clientbound.status import get_packets as state_status_clientbound
@@ -29,8 +31,7 @@ from .serverbound.status import RequestPacket
 from .serverbound.status import PingPacket
 from .serverbound.status import get_packets as state_status_serverbound
 
-# Login State
-# ==============
+# Legacy Packets (Login State)
 from .clientbound.login import DisconnectPacket
 from .clientbound.login import EncryptionRequestPacket
 from .clientbound.login import LoginSuccessPacket
@@ -40,8 +41,8 @@ from .serverbound.login import LoginStartPacket
 from .serverbound.login import EncryptionResponsePacket
 from .serverbound.login import get_packets as state_login_serverbound
 
-# Playing State
-# ==============
+# Legacy Packets (Playing State)
+from .keep_alive_packet import KeepAlivePacket
 from .clientbound.play import KeepAlivePacket as KeepAlivePacketClientbound
 from .serverbound.play import KeepAlivePacket as KeepAlivePacketServerbound
 from .clientbound.play import JoinGamePacket
@@ -60,34 +61,25 @@ from .serverbound.play import TeleportConfirmPacket
 from .serverbound.play import AnimationPacket as AnimationPacketServerbound
 from .serverbound.play import get_packets as state_playing_serverbound
 
-__all_legacy_packets__ = [
-           state_handshake_clientbound, HandShakePacket,
-           state_handshake_serverbound, ResponsePacket,
-           PingPacketResponse, state_status_clientbound,
-           RequestPacket, PingPacket, state_status_serverbound,
-           DisconnectPacket, EncryptionRequestPacket, LoginSuccessPacket,
-           SetCompressionPacket, state_login_clientbound,
-           LoginStartPacket, EncryptionResponsePacket,
-           state_login_serverbound, KeepAlivePacketClientbound,
-           KeepAlivePacketServerbound, JoinGamePacket, ChatMessagePacket,
-           PlayerPositionAndLookPacket, DisconnectPacketPlayState,
-           SetCompressionPacketPlayState, PlayerListItemPacket,
-           MapPacket, state_playing_clientbound, ChatPacket,
-           PositionAndLookPacket, TeleportConfirmPacket,
-           AnimationPacketServerbound, state_playing_serverbound,
-           Packet, PacketBuffer, KeepAlivePacket
-                         ]
+__all_legacy_packets__ = (
+    state_handshake_clientbound, HandShakePacket,
+    state_handshake_serverbound, ResponsePacket,
+    PingPacketResponse, state_status_clientbound,
+    RequestPacket, PingPacket, state_status_serverbound,
+    DisconnectPacket, EncryptionRequestPacket, LoginSuccessPacket,
+    SetCompressionPacket, state_login_clientbound,
+    LoginStartPacket, EncryptionResponsePacket,
+    state_login_serverbound, KeepAlivePacketClientbound,
+    KeepAlivePacketServerbound, JoinGamePacket, ChatMessagePacket,
+    PlayerPositionAndLookPacket, DisconnectPacketPlayState,
+    SetCompressionPacketPlayState, PlayerListItemPacket,
+    MapPacket, state_playing_clientbound, ChatPacket,
+    PositionAndLookPacket, TeleportConfirmPacket,
+    AnimationPacketServerbound, state_playing_serverbound,
+    KeepAlivePacket,
+)
 
-
-class PacketListener(object):
-    def __init__(self, callback, *args):
-        self.callback = callback
-        self.packets_to_listen = []
-        for arg in args:
-            if issubclass(arg, Packet):
-                self.packets_to_listen.append(arg)
-
-    def call_packet(self, packet):
-        for packet_type in self.packets_to_listen:
-            if isinstance(packet, packet_type):
-                self.callback(packet)
+__all_other__ = (
+    Packet, PacketBuffer, PacketListener,
+    AbstractKeepAlivePacket, AbstractPluginMessagePacket,
+)

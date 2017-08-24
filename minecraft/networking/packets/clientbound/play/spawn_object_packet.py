@@ -1,7 +1,7 @@
 from minecraft.networking.packets import Packet
 
 from minecraft.networking.types import (
-    VarInt, UUID, Byte, Double, Integer, UnsignedByte, Short
+    VarInt, UUID, Byte, Double, Integer, UnsignedByte, Short, Enum
 )
 
 
@@ -13,7 +13,7 @@ class SpawnObjectPacket(Packet):
 
     packet_name = 'spawn object'
 
-    class EntityType:
+    class EntityType(Enum):
         BOAT = 1
         ITEM_STACK = 2
         AREA_EFFECT_CLOUD = 3
@@ -42,19 +42,12 @@ class SpawnObjectPacket(Packet):
         SPECTRAL_ARROW = 91
         DRAGON_FIREBALL = 93
 
-        @classmethod
-        def get_type_by_id(cls, type_id):
-            by_id = {id: entity for (entity, id) in
-                     cls.__dict__.items() if entity.isupper()}
-
-            return by_id[type_id]
-
     def read(self, file_object):
         self.entity_id = VarInt.read(file_object)
         if self._context.protocol_version >= 49:
             self.objectUUID = UUID.read(file_object)
         type_id = Byte.read(file_object)
-        self.type = SpawnObjectPacket.EntityType.get_type_by_id(type_id)
+        self.type = SpawnObjectPacket.EntityType.name_from_value(type_id)
 
         if self._context.protocol_version >= 100:
             self.x = Double.read(file_object)

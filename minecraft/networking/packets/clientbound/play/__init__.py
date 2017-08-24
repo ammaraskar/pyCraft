@@ -1,10 +1,10 @@
 from minecraft.networking.packets import (
-    Packet, PacketBuffer, KeepAlivePacket as AbstractKeepAlivePacket
+    Packet, PacketBuffer, AbstractKeepAlivePacket, AbstractPluginMessagePacket
 )
 
 from minecraft.networking.types import (
     Integer, UnsignedByte, Byte, Boolean, UUID, Short, Position,
-    VarInt, Double, Float, String
+    VarInt, Double, Float, String, Enum,
 )
 
 from .combat_event_packet import CombatEventPacket
@@ -32,6 +32,7 @@ def get_packets(context):
         SpawnObjectPacket,
         BlockChangePacket,
         MultiBlockChangePacket,
+        PluginMessagePacket,
     }
     if context.protocol_version <= 47:
         packets |= {
@@ -80,6 +81,11 @@ class ChatMessagePacket(Packet):
     definition = [
         {'json_data': String},
         {'position': Byte}]
+
+    class Position(Enum):
+        CHAT = 0       # A player-initiated chat message.
+        SYSTEM = 1     # The result of running a command.
+        GAME_INFO = 2  # Displayed above the hotbar in vanilla clients.
 
 
 class DisconnectPacket(Packet):
@@ -265,3 +271,12 @@ class MultiBlockChangePacket(Packet):
 
     def write(self, socket, compression_threshold=None):
         raise NotImplementedError
+
+
+class PluginMessagePacket(AbstractPluginMessagePacket):
+    @staticmethod
+    def get_id(context):
+        return 0x18 if context.protocol_version >= 332 else \
+               0x19 if context.protocol_version >= 318 else \
+               0x18 if context.protocol_version >= 70 else \
+               0x3F

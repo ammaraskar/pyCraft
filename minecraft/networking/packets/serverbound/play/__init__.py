@@ -1,10 +1,12 @@
 from minecraft.networking.packets import (
-    Packet, KeepAlivePacket as AbstractKeepAlivePacket
+    Packet, AbstractKeepAlivePacket, AbstractPluginMessagePacket
 )
 
 from minecraft.networking.types import (
-    Double, Float, Boolean, VarInt, String
+    Double, Float, Boolean, VarInt, String, Enum
 )
+
+from .client_settings_packet import ClientSettingsPacket
 
 
 # Formerly known as state_playing_serverbound.
@@ -15,6 +17,8 @@ def get_packets(context):
         PositionAndLookPacket,
         AnimationPacket,
         ClientStatusPacket,
+        ClientSettingsPacket,
+        PluginMessagePacket,
     }
     if context.protocol_version >= 107:
         packets |= {
@@ -82,7 +86,7 @@ class TeleportConfirmPacket(Packet):
         {'teleport_id': VarInt}]
 
 
-class AnimationPacket(Packet):
+class AnimationPacket(Packet, Enum):
     @staticmethod
     def get_id(context):
         return 0x1D if context.protocol_version >= 332 else \
@@ -93,11 +97,14 @@ class AnimationPacket(Packet):
     packet_name = "animation"
     get_definition = staticmethod(lambda context: [
         {'hand': VarInt} if context.protocol_version >= 107 else {}])
+    field_enum = classmethod(
+        lambda cls, field: cls if field == 'hand' else None)
+
     HAND_MAIN = 0
     HAND_OFF = 1
 
 
-class ClientStatusPacket(Packet):
+class ClientStatusPacket(Packet, Enum):
     @staticmethod
     def get_id(context):
         return 0x03 if context.protocol_version >= 336 else \
@@ -110,8 +117,19 @@ class ClientStatusPacket(Packet):
     packet_name = "client status"
     get_definition = staticmethod(lambda context: [
         {'action_id': VarInt}])
+    field_enum = classmethod(
+        lambda cls, field: cls if field == 'action_id' else None)
 
     RESPAWN = 0
     REQUEST_STATS = 1
     # Note: Open Inventory (id 2) was removed in protocol version 319
     OPEN_INVENTORY = 2
+
+
+class PluginMessagePacket(AbstractPluginMessagePacket):
+    @staticmethod
+    def get_id(context):
+        return 0x09 if context.protocol_version >= 336 else \
+               0x0A if context.protocol_version >= 317 else \
+               0x09 if context.protocol_version >= 94 else \
+               0x17

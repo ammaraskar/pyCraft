@@ -6,9 +6,9 @@ from random import choice
 
 from minecraft import SUPPORTED_PROTOCOL_VERSIONS
 from minecraft.networking.connection import ConnectionContext
-from minecraft.networking.types import VarInt
+from minecraft.networking.types import VarInt, Enum, BitFieldEnum
 from minecraft.networking.packets import (
-    PacketBuffer, PacketListener, KeepAlivePacket, serverbound)
+    Packet, PacketBuffer, PacketListener, KeepAlivePacket, serverbound)
 
 
 class PacketBufferTest(unittest.TestCase):
@@ -115,3 +115,61 @@ class PacketListenerTest(unittest.TestCase):
 
             listener.call_packet(packet)
             listener.call_packet(uncalled_packet)
+
+
+class PacketEnumTest(unittest.TestCase):
+    def test_packet_str(self):
+        class ExamplePacket(Packet):
+            id = 0x00
+            packet_name = 'example'
+            definition = [
+                {'alpha': VarInt},
+                {'beta': VarInt},
+                {'gamma': VarInt}]
+
+            class Alpha(Enum):
+                ZERO = 0
+
+            class Beta(Enum):
+                ONE = 1
+
+        self.assertEqual(
+            str(ExamplePacket(ConnectionContext(), alpha=0, beta=0, gamma=0)),
+            '0x00 ExamplePacket(alpha=ZERO, beta=0, gamma=0)')
+
+
+class EnumTest(unittest.TestCase):
+    def test_enum(self):
+        class Example(Enum):
+            ONE = 1
+            TWO = 2
+            THREE = 3
+
+        self.assertEqual(
+            list(map(Example.name_from_value, range(5))),
+            [None, 'ONE', 'TWO', 'THREE', None])
+
+
+class BitFieldEnumTest(unittest.TestCase):
+    def test_name_from_value(self):
+        class Example1(BitFieldEnum):
+            ONE = 1
+            TWO = 2
+            FOUR = 4
+            ALL = 7
+            NONE = 0
+
+        self.assertEqual(
+            list(map(Example1.name_from_value, range(9))),
+            ['NONE', 'ONE', 'TWO', 'ONE|TWO', 'FOUR',
+             'ONE|FOUR', 'TWO|FOUR', 'ALL', None])
+
+        class Example2(BitFieldEnum):
+            ONE = 1
+            TWO = 2
+            FOUR = 4
+
+        self.assertEqual(
+            list(map(Example2.name_from_value, range(9))),
+            ['0', 'ONE', 'TWO', 'ONE|TWO', 'FOUR',
+             'ONE|FOUR', 'TWO|FOUR', 'ONE|TWO|FOUR', None])

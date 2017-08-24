@@ -7,6 +7,9 @@ from minecraft.networking.packets import serverbound
 
 class LegacyPacketNamesTest(unittest.TestCase):
     def test_legacy_packets_equal_current_packets(self):
+        self.assertEqual(packets.KeepAlivePacket,
+                         packets.AbstractKeepAlivePacket)
+
         self.assertEqual(packets.state_handshake_clientbound,
                          clientbound.handshake.get_packets)
         self.assertEqual(packets.HandShakePacket,

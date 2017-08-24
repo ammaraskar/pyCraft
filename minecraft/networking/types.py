@@ -205,6 +205,19 @@ class VarIntPrefixedByteArray(Type):
         socket.send(struct.pack(str(len(value)) + "s", value))
 
 
+class TrailingByteArray(Type):
+    """ A byte array consisting of all remaining data. If present in a packet
+        definition, this should only be the type of the last field. """
+
+    @staticmethod
+    def read(file_object):
+        return file_object.read()
+
+    @staticmethod
+    def send(value, socket):
+        socket.send(value)
+
+
 class String(Type):
     @staticmethod
     def read(file_object):
@@ -253,3 +266,30 @@ class Position(Type, namedtuple('Position', ('x', 'y', 'z'))):
     def send(x, y, z, socket):
         value = ((x & 0x3FFFFFF) << 38) | ((y & 0xFFF) << 26) | (z & 0x3FFFFFF)
         UnsignedLong.send(value, socket)
+
+
+class Enum(object):
+    @classmethod
+    def name_from_value(cls, value):
+        for name, name_value in cls.__dict__.items():
+            if name.isupper() and name_value == value:
+                return name
+
+
+class BitFieldEnum(Enum):
+    @classmethod
+    def name_from_value(cls, value):
+        if not isinstance(value, int):
+            return
+        ret_names = []
+        ret_value = 0
+        for cls_name, cls_value in sorted(
+            [(n, v) for (n, v) in cls.__dict__.items()
+             if isinstance(v, int) and n.isupper() and v | value == value],
+            reverse=True, key=lambda p: p[1]
+        ):
+            if ret_value | cls_value != ret_value or cls_value == value:
+                ret_names.append(cls_name)
+                ret_value |= cls_value
+        if ret_value == value:
+            return '|'.join(reversed(ret_names)) if ret_names else '0'

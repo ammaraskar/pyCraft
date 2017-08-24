@@ -1,7 +1,7 @@
 from .packet_buffer import PacketBuffer
 from zlib import compress
 from minecraft.networking.types import (
-    VarInt
+    VarInt, Enum
 )
 
 
@@ -107,6 +107,32 @@ class Packet(object):
         if self.id is not None:
             str = '0x%02X %s' % (self.id, str)
         if self.definition is not None:
-            fields = {a: getattr(self, a) for d in self.definition for a in d}
-            str = '%s %s' % (str, fields)
+            str = '%s(%s)' % (str, ', '.join(
+                '%s=%s' % (a, self.field_string(a))
+                for d in self.definition for a in d))
         return str
+
+    def field_string(self, field):
+        """ The string representation of the value of a the given named field
+            of this packet. Override to customise field value representation.
+        """
+        value = getattr(self, field, None)
+
+        enum_class = self.field_enum(field)
+        if enum_class is not None:
+            name = enum_class.name_from_value(value)
+            if name is not None:
+                return name
+
+        return repr(value)
+
+    @classmethod
+    def field_enum(cls, field):
+        """ The subclass of 'minecraft.networking.types.Enum' associated with
+            this field, or None if there is no such class.
+        """
+        enum_name = ''.join(s.capitalize() for s in field.split('_'))
+        if hasattr(cls, enum_name):
+            enum_class = getattr(cls, enum_name)
+            if isinstance(enum_class, type) and issubclass(enum_class, Enum):
+                return enum_class
