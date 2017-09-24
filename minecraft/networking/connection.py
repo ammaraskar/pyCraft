@@ -394,7 +394,26 @@ class NetworkingThread(threading.Thread):
             self.previous_thread = None
             self.connection.networking_thread = self
 
+        prof_filename = '.'.join((
+            'pyCraft-profile',
+            self.connection.options.address,
+            str(self.connection.options.port),
+            str(__import__('os').getpid()),
+            '%x' % id(self.connection),
+            'json'))
+        prof = __import__('collections').OrderedDict({
+            'iterations': 0,
+            'reads': 0,
+            'writes': 0,
+            'read_time': 0.0,
+            'write_time': 0.0,
+            'sleep_time': 0.0,
+        })
+        prof_last_report = timeit.default_timer()
+
         while not self.interrupt:
+            prof_start = timeit.default_timer()
+
             # Attempt to write out as many as 300 packets as possible every
             # 0.05 seconds (20 ticks per second)
             num_packets = 0
@@ -408,6 +427,10 @@ class NetworkingThread(threading.Thread):
             except:
                 exc_info = sys.exc_info()
             self.connection._write_lock.release()
+
+            prof['write_time'] += timeit.default_timer() - prof_start
+            prof['writes'] += num_packets
+            prof_start = timeit.default_timer()
 
             # Read and react to as many as 50 packets
             num_packets = 0
@@ -437,7 +460,26 @@ class NetworkingThread(threading.Thread):
             if exc_info is not None:
                 raise_(*exc_info)
 
+            prof['read_time'] += timeit.default_timer() - prof_start
+            prof['reads'] += num_packets
+            prof_start = timeit.default_timer()
+
             time.sleep(0.05)
+
+            prof_now = timeit.default_timer()
+            prof['sleep_time'] += prof_now - prof_start
+            prof['iterations'] += 1
+
+            # Write a profiling report every 5 minutes.
+            if prof_now - prof_last_report > 300:
+                prof['iter_reads'] = prof['reads']/prof['iterations']
+                prof['iter_writes'] = prof['writes']/prof['iterations']
+                prof['iter_read_time'] = prof['read_time']/prof['iterations']
+                prof['iter_write_time'] = prof['write_time']/prof['iterations']
+                prof['iter_sleep_time'] = prof['sleep_time']/prof['iterations']
+                with open(prof_filename, 'w') as file:
+                    json.dump(prof, file, indent=4)
+                prof_last_report = prof_now
 
 
 class IgnorePacket(Exception):
