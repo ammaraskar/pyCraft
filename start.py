@@ -59,7 +59,7 @@ def main():
     options = get_options()
 
     if options.offline:
-        print("Connecting in offline mode")
+        print("Connecting in offline mode...")
         connection = Connection(
             options.address, options.port, username=options.username)
     else:
@@ -69,7 +69,7 @@ def main():
         except YggdrasilError as e:
             print(e)
             sys.exit()
-        print("Logged in as " + auth_token.username)
+        print("Logged in as %s..." % auth_token.username)
         connection = Connection(
             options.address, options.port, auth_token=auth_token)
 
@@ -89,14 +89,21 @@ def main():
         connection.register_packet_listener(
             print_outgoing, Packet, outgoing=True)
 
-    connection.connect()
+    def handle_join_game(join_game_packet):
+        print('Connected.')
+
+    connection.register_packet_listener(
+        handle_join_game, clientbound.play.JoinGamePacket)
 
     def print_chat(chat_packet):
-        print("Position: " + str(chat_packet.position))
-        print("Data: " + chat_packet.json_data)
+        print("Message (%s): %s" % (
+            chat_packet.field_string('position'), chat_packet.json_data))
 
     connection.register_packet_listener(
         print_chat, clientbound.play.ChatMessagePacket)
+
+    connection.connect()
+
     while True:
         try:
             text = input()
