@@ -56,7 +56,7 @@ pyCraft is compatible with (at least) the following Python implementations:
 
 Requirements
 ------------
-- `cryptography <https://github.com/pyca/cryptography#cryptography>`_ 
+- `cryptography <https://github.com/pyca/cryptography#cryptography>`_ (<=1.9 for Python 3.3)
 - `requests <http://docs.python-requests.org/en/latest/>`_
 - `future <http://python-future.org/>`_
 
