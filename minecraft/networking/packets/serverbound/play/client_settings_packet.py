@@ -20,7 +20,7 @@ class ClientSettingsPacket(Packet):
         {'chat_mode': VarInt if context.protocol_version > 47 else Byte},
         {'chat_colors': Boolean},
         {'displayed_skin_parts': UnsignedByte},
-        {'main_hand': VarInt}])
+        {'main_hand': VarInt} if context.protocol_version > 49 else {}])
 
     field_enum = classmethod(
         lambda cls, field: {
