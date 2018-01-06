@@ -431,7 +431,7 @@ class _FakeServerTest(unittest.TestCase):
                     if thread is not None and thread.is_alive():
                         errors.append({
                             'msg': 'Thread "%s" timed out.' % thread.name})
-        except:
+        except Exception:
             errors.insert(0, {
                 'msg': 'Exception in main thread',
                 'exc_info': sys.exc_info()})
@@ -465,7 +465,7 @@ class _FakeServerTest(unittest.TestCase):
         exc_info = None
         try:
             server.run()
-        except:
+        except Exception:
             exc_info = sys.exc_info()
         with server_lock:
             server_exc_info[0] = exc_info
