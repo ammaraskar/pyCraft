@@ -191,8 +191,9 @@ class AuthenticateAuthenticationToken(unittest.TestCase):
         with self.assertRaises(YggdrasilError) as cm:
             a.authenticate("Billy", "The Goat")
 
-        err = "Invalid credentials. Invalid username or password."
-        self.assertEqual(cm.exception.yggdrasil_message, err)
+        err = "[403] ForbiddenOperationException: " \
+              "'Invalid credentials. Invalid username or password.'"
+        self.assertEqual(str(cm.exception), err)
 
     @unittest.skipIf(should_skip_cred_test(),
                      "Need credentials to perform test.")
