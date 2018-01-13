@@ -47,22 +47,14 @@ def get_mc_credentials():
 username, password = get_mc_credentials()
 
 
-def should_skip_cred_test():
-    """
-    Returns `True` if a test requiring credentials should be skipped.
-    Otherwise returns `False`
-    """
-    if username is None or password is None:
-        return True
-    return False
+skipIfNoCredentials = unittest.skipIf(
+    username is None or password is None,
+    "Need credentials to perform test.")
 
 
-def should_run_internet_tests():
-    """
-    Returns `True` if tests involving access to Internet resources
-    should *not* be skipped. Otherwise returns `False`.
-    """
-    return os.environ.get('PYCRAFT_RUN_INTERNET_TESTS')
+skipUnlessInternetTestsEnabled = unittest.skipUnless(
+    os.environ.get('PYCRAFT_RUN_INTERNET_TESTS'),
+    "Tests involving Internet access are disabled.")
 
 
 class InitProfile(unittest.TestCase):
@@ -184,6 +176,7 @@ class AuthenticateAuthenticationToken(unittest.TestCase):
         with self.assertRaises(TypeError):
             a.authenticate("username")
 
+    @skipUnlessInternetTestsEnabled
     def test_authenticate_wrong_credentials(self):
         a = AuthenticationToken()
 
@@ -196,8 +189,8 @@ class AuthenticateAuthenticationToken(unittest.TestCase):
         self.maxDiff = 5000
         self.assertEqual(str(cm.exception), err)
 
-    @unittest.skipIf(should_skip_cred_test(),
-                     "Need credentials to perform test.")
+    @skipIfNoCredentials
+    @skipUnlessInternetTestsEnabled
     def test_authenticate_good_credentials(self):
         a = AuthenticationToken()
 
@@ -205,8 +198,7 @@ class AuthenticateAuthenticationToken(unittest.TestCase):
         self.assertTrue(resp)
 
 
-@unittest.skipUnless(should_run_internet_tests(),
-                     "Tests involving Internet access are disabled.")
+@skipUnlessInternetTestsEnabled
 class MakeRequest(unittest.TestCase):
     def test_make_request_http_method(self):
         res = _make_request(AUTHSERVER, "authenticate", {"Billy": "Bob"})
