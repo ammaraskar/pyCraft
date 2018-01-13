@@ -193,6 +193,7 @@ class AuthenticateAuthenticationToken(unittest.TestCase):
 
         err = "[403] ForbiddenOperationException: " \
               "'Invalid credentials. Invalid username or password.'"
+        self.maxDiff = 5000
         self.assertEqual(str(cm.exception), err)
 
     @unittest.skipIf(should_skip_cred_test(),
