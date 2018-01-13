@@ -30,7 +30,9 @@ def get_packets(context):
 class KeepAlivePacket(AbstractKeepAlivePacket):
     @staticmethod
     def get_id(context):
-        return 0x0B if context.protocol_version >= 336 else \
+        return 0x0B if context.protocol_version >= 345 else \
+               0x0A if context.protocol_version >= 343 else \
+               0x0B if context.protocol_version >= 336 else \
                0x0C if context.protocol_version >= 318 else \
                0x0B if context.protocol_version >= 107 else \
                0x00
@@ -39,7 +41,8 @@ class KeepAlivePacket(AbstractKeepAlivePacket):
 class ChatPacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x02 if context.protocol_version >= 336 else \
+        return 0x01 if context.protocol_version >= 343 else \
+               0x02 if context.protocol_version >= 336 else \
                0x03 if context.protocol_version >= 318 else \
                0x02 if context.protocol_version >= 107 else \
                0x01
@@ -62,7 +65,9 @@ class ChatPacket(Packet):
 class PositionAndLookPacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x0E if context.protocol_version >= 336 else \
+        return 0x0E if context.protocol_version >= 345 else \
+               0x0D if context.protocol_version >= 343 else \
+               0x0E if context.protocol_version >= 336 else \
                0x0F if context.protocol_version >= 332 else \
                0x0E if context.protocol_version >= 318 else \
                0x0D if context.protocol_version >= 107 else \
@@ -89,7 +94,9 @@ class TeleportConfirmPacket(Packet):
 class AnimationPacket(Packet, Enum):
     @staticmethod
     def get_id(context):
-        return 0x1D if context.protocol_version >= 332 else \
+        return 0x1D if context.protocol_version >= 345 else \
+               0x1C if context.protocol_version >= 343 else \
+               0x1D if context.protocol_version >= 332 else \
                0x1C if context.protocol_version >= 318 else \
                0x1A if context.protocol_version >= 107 else \
                0x0A
@@ -107,7 +114,8 @@ class AnimationPacket(Packet, Enum):
 class ClientStatusPacket(Packet, Enum):
     @staticmethod
     def get_id(context):
-        return 0x03 if context.protocol_version >= 336 else \
+        return 0x02 if context.protocol_version >= 343 else \
+               0x03 if context.protocol_version >= 336 else \
                0x04 if context.protocol_version >= 318 else \
                0x03 if context.protocol_version >= 80 else \
                0x02 if context.protocol_version >= 67 else \
@@ -129,7 +137,9 @@ class ClientStatusPacket(Packet, Enum):
 class PluginMessagePacket(AbstractPluginMessagePacket):
     @staticmethod
     def get_id(context):
-        return 0x09 if context.protocol_version >= 336 else \
+        return 0x09 if context.protocol_version >= 345 else \
+               0x08 if context.protocol_version >= 343 else \
+               0x09 if context.protocol_version >= 336 else \
                0x0A if context.protocol_version >= 317 else \
                0x09 if context.protocol_version >= 94 else \
                0x17

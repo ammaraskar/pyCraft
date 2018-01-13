@@ -1,5 +1,5 @@
 from minecraft.networking.packets import (
-    Packet, PacketBuffer, AbstractKeepAlivePacket, AbstractPluginMessagePacket
+    Packet, AbstractKeepAlivePacket, AbstractPluginMessagePacket
 )
 
 from minecraft.networking.types import (
@@ -12,6 +12,7 @@ from .map_packet import MapPacket
 from .player_list_item_packet import PlayerListItemPacket
 from .player_position_and_look_packet import PlayerPositionAndLookPacket
 from .spawn_object_packet import SpawnObjectPacket
+from .block_change_packet import BlockChangePacket, MultiBlockChangePacket
 
 
 # Formerly known as state_playing_clientbound.
@@ -44,7 +45,8 @@ def get_packets(context):
 class KeepAlivePacket(AbstractKeepAlivePacket):
     @staticmethod
     def get_id(context):
-        return 0x1F if context.protocol_version >= 332 else \
+        return 0x20 if context.protocol_version >= 345 else \
+               0x1F if context.protocol_version >= 332 else \
                0x20 if context.protocol_version >= 318 else \
                0x1F if context.protocol_version >= 107 else \
                0x00
@@ -53,7 +55,8 @@ class KeepAlivePacket(AbstractKeepAlivePacket):
 class JoinGamePacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x23 if context.protocol_version >= 332 else \
+        return 0x24 if context.protocol_version >= 345 else \
+               0x23 if context.protocol_version >= 332 else \
                0x24 if context.protocol_version >= 318 else \
                0x23 if context.protocol_version >= 107 else \
                0x01
@@ -72,7 +75,8 @@ class JoinGamePacket(Packet):
 class ChatMessagePacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x0F if context.protocol_version >= 332 else \
+        return 0x0E if context.protocol_version >= 343 else \
+               0x0F if context.protocol_version >= 332 else \
                0x10 if context.protocol_version >= 317 else \
                0x0F if context.protocol_version >= 107 else \
                0x02
@@ -91,7 +95,8 @@ class ChatMessagePacket(Packet):
 class DisconnectPacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x1A if context.protocol_version >= 332 else \
+        return 0x1B if context.protocol_version >= 345 else \
+               0x1A if context.protocol_version >= 332 else \
                0x1B if context.protocol_version >= 318 else \
                0x1A if context.protocol_version >= 107 else \
                0x40
@@ -133,7 +138,9 @@ class SpawnPlayerPacket(Packet):
 class EntityVelocityPacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x3E if context.protocol_version >= 336 else \
+        return 0x40 if context.protocol_version >= 352 else \
+               0x3F if context.protocol_version >= 345 else \
+               0x3E if context.protocol_version >= 336 else \
                0x3D if context.protocol_version >= 332 else \
                0x3B if context.protocol_version >= 86 else \
                0x3C if context.protocol_version >= 77 else \
@@ -152,7 +159,9 @@ class EntityVelocityPacket(Packet):
 class UpdateHealthPacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x41 if context.protocol_version >= 336 else \
+        return 0x43 if context.protocol_version >= 352 else \
+               0x42 if context.protocol_version >= 345 else \
+               0x41 if context.protocol_version >= 336 else \
                0x40 if context.protocol_version >= 318 else \
                0x3E if context.protocol_version >= 86 else \
                0x3F if context.protocol_version >= 77 else \
@@ -170,7 +179,8 @@ class UpdateHealthPacket(Packet):
 class ExplosionPacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x1C if context.protocol_version >= 332 else \
+        return 0x1D if context.protocol_version >= 345 else \
+               0x1C if context.protocol_version >= 332 else \
                0x1D if context.protocol_version >= 318 else \
                0x1C if context.protocol_version >= 80 else \
                0x1B if context.protocol_version >= 67 else \
@@ -202,81 +212,11 @@ class ExplosionPacket(Packet):
         raise NotImplementedError
 
 
-class BlockChangePacket(Packet):
-    @staticmethod
-    def get_id(context):
-        return 0x0B if context.protocol_version >= 332 else \
-               0x0C if context.protocol_version >= 318 else \
-               0x0B if context.protocol_version >= 67 else \
-               0x24 if context.protocol_version >= 62 else \
-               0x23
-
-    packet_name = 'block change'
-
-    def read(self, file_object):
-        self.location = Position.read(file_object)
-        blockData = VarInt.read(file_object)
-        self.blockId = (blockData >> 4)
-        self.blockMeta = (blockData & 0xF)
-
-    def write(self, socket, compression_threshold=None):
-        packet_buffer = PacketBuffer()
-        (x, y, z) = self.location
-        Position.send(x, y, z, packet_buffer)
-        blockData = ((self.blockId << 4) | (self.blockMeta & 0xF))
-        VarInt.send(blockData)
-        self._write_buffer(socket, packet_buffer, compression_threshold)
-
-
-class MultiBlockChangePacket(Packet):
-    @staticmethod
-    def get_id(context):
-        return 0x10 if context.protocol_version >= 332 else \
-               0x11 if context.protocol_version >= 318 else \
-               0x10 if context.protocol_version >= 67 else \
-               0x22
-
-    packet_name = 'multi block change'
-
-    class Record(object):
-        __slots__ = 'x', 'y', 'z', 'blockId', 'blockMeta'
-
-        def __init__(self, horizontal_position, y_coordinate, blockData):
-            self.x = (horizontal_position & 0xF0) >> 4
-            self.y = y_coordinate
-            self.z = (horizontal_position & 0x0F)
-            self.blockId = (blockData >> 4)
-            self.blockMeta = (blockData & 0xF)
-
-        def __repr__(self):
-            return ('Record(x=%s, y=%s, z=%s, blockId=%s)'
-                    % (self.x, self.y, self.z, self.blockId))
-
-        def __str__(self):
-            return self.__repr__()
-
-    def read(self, file_object):
-        self.chunk_x = Integer.read(file_object)
-        self.chunk_z = Integer.read(file_object)
-        records_count = VarInt.read(file_object)
-        self.records = []
-        for i in range(records_count):
-            rec_horizontal_position = UnsignedByte.read(file_object)
-            rec_y_coordinate = UnsignedByte.read(file_object)
-            rec_blockData = VarInt.read(file_object)
-            record = MultiBlockChangePacket.Record(
-                         rec_horizontal_position,
-                         rec_y_coordinate, rec_blockData)
-            self.records.append(record)
-
-    def write(self, socket, compression_threshold=None):
-        raise NotImplementedError
-
-
 class PluginMessagePacket(AbstractPluginMessagePacket):
     @staticmethod
     def get_id(context):
-        return 0x18 if context.protocol_version >= 332 else \
+        return 0x19 if context.protocol_version >= 345 else \
+               0x18 if context.protocol_version >= 332 else \
                0x19 if context.protocol_version >= 318 else \
                0x18 if context.protocol_version >= 70 else \
                0x3F

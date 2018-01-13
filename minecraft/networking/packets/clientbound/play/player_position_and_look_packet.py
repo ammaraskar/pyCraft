@@ -8,7 +8,9 @@ from minecraft.networking.types import (
 class PlayerPositionAndLookPacket(Packet, BitFieldEnum):
     @staticmethod
     def get_id(context):
-        return 0x2F if context.protocol_version >= 336 else \
+        return 0x31 if context.protocol_version >= 352 else \
+               0x30 if context.protocol_version >= 345 else \
+               0x2F if context.protocol_version >= 336 else \
                0x2E if context.protocol_version >= 332 else \
                0x2F if context.protocol_version >= 318 else \
                0x2E if context.protocol_version >= 70 else \
