@@ -101,7 +101,7 @@ class MultiBlockChangePacket(Packet):
         self.records = []
         for i in range(records_count):
             record = record_type(h_position=UnsignedByte.read(file_object),
-                                 y_coordinate=VarInt.read(file_object),
+                                 y_coordinate=UnsignedByte.read(file_object),
                                  blockData=VarInt.read(file_object))
             self.records.append(record)
 
