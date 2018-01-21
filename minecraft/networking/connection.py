@@ -433,7 +433,7 @@ class NetworkingThread(threading.Thread):
                 # Ignore the earlier exception if a disconnect packet is
                 # received, as it may have been caused by trying to write to
                 # thw closed socket, which does not represent a program error.
-                if exc_info is not None and packet.name == 'disconnect':
+                if exc_info is not None and packet.packet_name == "disconnect":
                     exc_info = None
 
             if exc_info is not None:
