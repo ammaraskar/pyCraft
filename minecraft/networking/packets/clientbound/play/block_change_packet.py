@@ -107,3 +107,27 @@ class MultiBlockChangePacket(Packet):
 
     def write(self, socket, compression_threshold=None):
         raise NotImplementedError
+
+
+class PlayerBlockPlacementPacket(Packet):
+    """Realizaton of http://wiki.vg/Protocol#Player_Block_Placement packet
+    Usage:
+        packet = PlayerBlockPlacementPacket()
+        packet.location = Position(x=1200, y=65, z=-420)
+        packet.face = 2  # 0: Bottom, 1: Top, 2: North, 3: South, 4: West, 5: East
+        packet.hand = 0  # 0: Main, 2: Off
+    Next values are called in-block coordinates. They are calculated using raytracing. From 0 to 1:
+        packet.x = 0.725
+        packet.y = 0.125
+        packet.z = 0.555"""
+    id = 0x1F
+    packet_name = 'player block placement'
+    definition = [
+        {'location': Position},
+        {'face': VarInt},
+        {'hand': VarInt},
+        {'x': Float},
+        {'y': Float},
+        {'z': Float},
+    ]
+
