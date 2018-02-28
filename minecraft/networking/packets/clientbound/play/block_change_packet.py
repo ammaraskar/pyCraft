@@ -2,7 +2,7 @@ from minecraft.networking.packets import (
     Packet, PacketBuffer
 )
 from minecraft.networking.types import (
-    VarInt, Integer, UnsignedByte, Position
+    VarInt, Integer, UnsignedByte, Position, Float
 )
 
 
