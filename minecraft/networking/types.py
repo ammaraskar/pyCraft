@@ -263,8 +263,7 @@ class Position(Type, namedtuple('Position', ('x', 'y', 'z'))):
         return Position(x=x, y=y, z=z)
 
     @staticmethod
-    def send(cursor_position, socket):
-	"""Cursor_position can be either a tuple or Position object"""
+    def send(x, y, z, socket):
         value = ((x & 0x3FFFFFF) << 38) | ((y & 0xFFF) << 26) | (z & 0x3FFFFFF)
         UnsignedLong.send(value, socket)
 
