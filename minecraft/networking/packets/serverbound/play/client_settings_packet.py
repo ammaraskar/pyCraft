@@ -1,6 +1,7 @@
 from minecraft.networking.packets import Packet
 from minecraft.networking.types import (
-    String, Byte, VarInt, Boolean, UnsignedByte, Enum, BitFieldEnum
+    String, Byte, VarInt, Boolean, UnsignedByte, Enum, BitFieldEnum,
+    AbsoluteHand
 )
 
 
@@ -27,7 +28,7 @@ class ClientSettingsPacket(Packet):
         lambda cls, field: {
             'chat_mode': cls.ChatMode,
             'displayed_skin_parts': cls.SkinParts,
-            'main_hand': cls.Hand,
+            'main_hand': AbsoluteHand,
         }.get(field))
 
     class ChatMode(Enum):
@@ -47,6 +48,5 @@ class ClientSettingsPacket(Packet):
         ALL = 0x7F
         NONE = 0x00
 
-    class Hand(Enum):
-        LEFT = 0
-        RIGHT = 1
+    # This class alias is retained for backward compatibility.
+    Hand = AbsoluteHand

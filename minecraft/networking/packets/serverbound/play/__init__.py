@@ -3,7 +3,7 @@ from minecraft.networking.packets import (
 )
 
 from minecraft.networking.types import (
-    Double, Float, Boolean, VarInt, String, Enum
+    Double, Float, Boolean, VarInt, String, Enum, RelativeHand
 )
 
 from .client_settings_packet import ClientSettingsPacket
@@ -91,7 +91,7 @@ class TeleportConfirmPacket(Packet):
         {'teleport_id': VarInt}]
 
 
-class AnimationPacket(Packet, Enum):
+class AnimationPacket(Packet):
     @staticmethod
     def get_id(context):
         return 0x1D if context.protocol_version >= 345 else \
@@ -105,10 +105,11 @@ class AnimationPacket(Packet, Enum):
     get_definition = staticmethod(lambda context: [
         {'hand': VarInt} if context.protocol_version >= 107 else {}])
     field_enum = classmethod(
-        lambda cls, field: cls if field == 'hand' else None)
+        lambda cls, field: RelativeHand if field == 'hand' else None)
 
-    HAND_MAIN = 0
-    HAND_OFF = 1
+    # These fields are retained for backward compatibility.
+    HAND_MAIN = RelativeHand.MAIN
+    HAND_OFF = RelativeHand.OFF
 
 
 class ClientStatusPacket(Packet, Enum):

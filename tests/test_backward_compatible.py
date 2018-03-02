@@ -1,6 +1,7 @@
 import unittest
 
 from minecraft.networking import packets
+from minecraft.networking import types
 from minecraft.networking.packets import clientbound
 from minecraft.networking.packets import serverbound
 
@@ -77,3 +78,16 @@ class LegacyPacketNamesTest(unittest.TestCase):
                          serverbound.play.AnimationPacket)
         self.assertEqual(packets.state_playing_serverbound,
                          serverbound.play.get_packets)
+
+
+class ClassMemberAliasesTest(unittest.TestCase):
+    def test_alias_values(self):
+        self.assertEqual(serverbound.play.AnimationPacket.HAND_MAIN,
+                         types.RelativeHand.MAIN)
+        self.assertEqual(serverbound.play.AnimationPacket.HAND_OFF,
+                         types.RelativeHand.OFF)
+
+        self.assertEqual(serverbound.play.ClientSettingsPacket.Hand.LEFT,
+                         types.AbsoluteHand.LEFT)
+        self.assertEqual(serverbound.play.ClientSettingsPacket.Hand.RIGHT,
+                         types.AbsoluteHand.RIGHT)

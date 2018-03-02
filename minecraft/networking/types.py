@@ -293,3 +293,15 @@ class BitFieldEnum(Enum):
                 ret_value |= cls_value
         if ret_value == value:
             return '|'.join(reversed(ret_names)) if ret_names else '0'
+
+
+# Designation of one of a player's hands, in absolute terms.
+class AbsoluteHand(Enum):
+    LEFT = 0
+    RIGHT = 1
+
+
+# Designation of one a player's hands, relative to a choice of main/off hand.
+class RelativeHand(Enum):
+    MAIN = 0
+    OFF = 1
