@@ -55,6 +55,13 @@ def get_options():
     return options
 
 
+x = 0
+feet_y = 0
+z = 0
+yaw = 0
+pitch = 0
+
+
 def main():
     options = get_options()
 
@@ -88,7 +95,18 @@ def main():
             print_incoming, Packet, early=True)
         connection.register_packet_listener(
             print_outgoing, Packet, outgoing=True)
-
+    
+    def pos(packet):
+        global x, feet_y, z, yaw, pitch
+        x = packet.x
+        feet_y = packet.y
+        z = packet.z
+        yaw = packet.yaw
+        pitch = packet.pitch
+        
+    connection.register_packet_listener(
+        pos, clientbound.play.PlayerPositionAndLookPacket)
+    
     def handle_join_game(join_game_packet):
         print('Connected.')
 
@@ -111,6 +129,13 @@ def main():
                 print("respawning...")
                 packet = serverbound.play.ClientStatusPacket()
                 packet.action_id = serverbound.play.ClientStatusPacket.RESPAWN
+                connection.write_packet(packet)
+            elif text == "/forward":
+                x = x + math.sin(yaw)
+                z = z + math.sin(yaw + 90)
+                print("moving forward...")
+                packet = serverbound.play.PositionAndLookPacket()
+                packet.set_values(x=x, feet_y=feet_y, z=z, yaw=yaw, pitch=pitch, on_ground=True)
                 connection.write_packet(packet)
             else:
                 packet = serverbound.play.ChatPacket()
