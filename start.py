@@ -137,8 +137,8 @@ def main():
                 z = z + sin(yaw + 90)
                 print("moving forward...")
                 packet = serverbound.play.PositionAndLookPacket()
-                packet.set_values(x=x, feet_y=feet_y, z=z, yaw=yaw, pitch=pitch,
-                                  on_ground=True)
+                packet.set_values(x=x, feet_y=feet_y, z=z, yaw=yaw,
+                                  pitch=pitch, on_ground=True)
                 connection.write_packet(packet)
             else:
                 packet = serverbound.play.ChatPacket()
