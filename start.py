@@ -4,6 +4,7 @@ from __future__ import print_function
 
 import getpass
 import sys
+import re
 from optparse import OptionParser
 
 from minecraft import authentication
@@ -23,10 +24,12 @@ def get_options():
                       help="password to log in with")
 
     parser.add_option("-s", "--server", dest="server", default=None,
-                      help="server to connect to")
+                      help="server host or host:port "
+                           "(enclose IPv6 addresses in square brackets)")
 
     parser.add_option("-o", "--offline", dest="offline", action="store_true",
-                      help="connect to a server in offline mode")
+                      help="connect to a server in offline mode "
+                           "(no password required)")
 
     parser.add_option("-d", "--dump-packets", dest="dump_packets",
                       action="store_true",
@@ -38,19 +41,20 @@ def get_options():
         options.username = input("Enter your username: ")
 
     if not options.password and not options.offline:
-        options.password = getpass.getpass("Enter your password: ")
+        options.password = getpass.getpass("Enter your password (leave "
+                                           "blank for offline mode): ")
+        options.offline = options.offline or (options.password == "")
 
     if not options.server:
-        options.server = input("Please enter server address"
-                               " (including port): ")
+        options.server = input("Enter server host or host:port "
+                               "(enclose IPv6 addresses in square brackets): ")
     # Try to split out port and address
-    if ':' in options.server:
-        server = options.server.split(":")
-        options.address = server[0]
-        options.port = int(server[1])
-    else:
-        options.address = options.server
-        options.port = 25565
+    match = re.match(r"((?P<host>[^\[\]:]+)|\[(?P<addr>[^\[\]]+)\])"
+                     r"(:(?P<port>\d+))?$", options.server)
+    if match is None:
+        raise ValueError("Invalid server address: '%s'." % options.server)
+    options.address = match.group("host") or match.group("addr")
+    options.port = int(match.group("port") or 25565)
 
     return options
 
