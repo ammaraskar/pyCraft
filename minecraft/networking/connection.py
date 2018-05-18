@@ -308,8 +308,20 @@ class Connection(object):
         # the socket itself will mostly be used to write data upstream to
         # the server.
         self._outgoing_packet_queue = deque()
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.connect((self.options.address, self.options.port))
+
+        info = socket.getaddrinfo(self.options.address, self.options.port,
+                                  0, socket.SOCK_STREAM)
+
+        # Prefer to use IPv4 (for backward compatibility with previous
+        # versions that always resolved hostnames to IPv4 addresses),
+        # then IPv6, then other address families.
+        def key(ai):
+            return 0 if ai[0] == socket.AF_INET else \
+                   1 if ai[0] == socket.AF_INET6 else 2
+        ai_faml, ai_type, ai_prot, _ai_cnam, ai_addr = min(info, key=key)
+
+        self.socket = socket.socket(ai_faml, ai_type, ai_prot)
+        self.socket.connect(ai_addr)
         self.file_object = self.socket.makefile("rb", 0)
 
     def disconnect(self):
