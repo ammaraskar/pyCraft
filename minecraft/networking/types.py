@@ -307,3 +307,32 @@ class AbsoluteHand(Enum):
 class RelativeHand(Enum):
     MAIN = 0
     OFF = 1
+
+
+# Designation of one of a block's 6 faces.
+class BlockFace(Enum):
+    BOTTOM = 0  # -Y
+    TOP = 1     # +Y
+    NORTH = 2   # -Z
+    SOUTH = 3   # +Z
+    WEST = 4    # -X
+    EAST = 5    # +X
+
+    # A dict mapping Position tuples to the corresponding BlockFace values.
+    # When accessing this dict, plain tuples also match. For example:
+    #   >>> BlockFace.from_vector[0, 0, -1] == BlockFace.NORTH
+    #   True
+    from_vector = {
+        Position(0, -1, 0): BOTTOM,
+        Position(0, +1, 0): TOP,
+        Position(0, 0, -1): NORTH,
+        Position(0, 0, +1): SOUTH,
+        Position(-1, 0, 0): WEST,
+        Position(+1, 0, 0): EAST,
+    }
+
+    # A dict mapping BlockFace values to unit Position tuples.
+    # This is the inverse mapping of face_by_position. For example:
+    #   >>> BlockFace.to_vector[BlockFace.NORTH]
+    #   Position(x=0, y=0, z=-1)
+    to_vector = {fce: pos for (pos, fce) in from_vector.items()}

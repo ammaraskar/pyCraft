@@ -3,7 +3,8 @@ from minecraft.networking.packets import (
 )
 
 from minecraft.networking.types import (
-    Double, Float, Boolean, VarInt, String, Enum, RelativeHand
+    Double, Float, Boolean, VarInt, String, Byte, Position, Enum,
+    RelativeHand, BlockFace
 )
 
 from .client_settings_packet import ClientSettingsPacket
@@ -19,6 +20,7 @@ def get_packets(context):
         ClientStatusPacket,
         ClientSettingsPacket,
         PluginMessagePacket,
+        PlayerBlockPlacementPacket,
     }
     if context.protocol_version >= 107:
         packets |= {
@@ -104,12 +106,9 @@ class AnimationPacket(Packet):
     packet_name = "animation"
     get_definition = staticmethod(lambda context: [
         {'hand': VarInt} if context.protocol_version >= 107 else {}])
-    field_enum = classmethod(
-        lambda cls, field: RelativeHand if field == 'hand' else None)
 
-    # These fields are retained for backward compatibility.
-    HAND_MAIN = RelativeHand.MAIN
-    HAND_OFF = RelativeHand.OFF
+    Hand = RelativeHand
+    HAND_MAIN, HAND_OFF = Hand.MAIN, Hand.OFF  # For backward compatibility.
 
 
 class ClientStatusPacket(Packet, Enum):
@@ -144,3 +143,46 @@ class PluginMessagePacket(AbstractPluginMessagePacket):
                0x0A if context.protocol_version >= 317 else \
                0x09 if context.protocol_version >= 94 else \
                0x17
+
+
+class PlayerBlockPlacementPacket(Packet):
+    """Realizaton of http://wiki.vg/Protocol#Player_Block_Placement packet
+    Usage:
+        packet = PlayerBlockPlacementPacket()
+        packet.location = Position(x=1200, y=65, z=-420)
+        packet.face = packet.Face.TOP   # See networking.types.BlockFace.
+        packet.hand = packet.Hand.MAIN  # See networking.types.RelativeHand.
+    Next values are called in-block coordinates.
+    They are calculated using raytracing. From 0 to 1 (from Minecraft 1.11)
+    or integers from 0 to 15 or, in a special case, -1 (1.10.2 and earlier).
+        packet.x = 0.725
+        packet.y = 0.125
+        packet.z = 0.555"""
+
+    @staticmethod
+    def get_id(context):
+        return 0x1F if context.protocol_version >= 345 else \
+               0x1E if context.protocol_version >= 343 else \
+               0x1F if context.protocol_version >= 332 else \
+               0x1E if context.protocol_version >= 318 else \
+               0x1C if context.protocol_version >= 94 else \
+               0x08
+
+    packet_name = 'player block placement'
+
+    @staticmethod
+    def get_definition(context):
+        return [
+            {'location': Position},
+            {'face': VarInt if context.protocol_version >= 69 else Byte},
+            {'hand': VarInt},
+            {'x': Float if context.protocol_version >= 309 else Byte},
+            {'y': Float if context.protocol_version >= 309 else Byte},
+            {'z': Float if context.protocol_version >= 309 else Byte},
+        ]
+
+    # PlayerBlockPlacementPacket.Hand is an alias for RelativeHand.
+    Hand = RelativeHand
+
+    # PlayerBlockPlacementPacket.Face is an alias for BlockFace.
+    Face = BlockFace
