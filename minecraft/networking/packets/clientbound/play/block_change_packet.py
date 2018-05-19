@@ -54,9 +54,6 @@ class MultiBlockChangePacket(Packet):
             self.y = y_coordinate
             self.z = (horizontal_position & 0x0F)
 
-        def __str__(self):
-            return self.__repr__()
-
         @classmethod
         def get_subclass(cls, context):
             return MultiBlockChangePacket.OpaqueRecord \

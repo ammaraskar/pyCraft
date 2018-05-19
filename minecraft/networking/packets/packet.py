@@ -102,7 +102,7 @@ class Packet(object):
 
         self._write_buffer(socket, packet_buffer, compression_threshold)
 
-    def __str__(self):
+    def __repr__(self):
         str = type(self).__name__
         if self.id is not None:
             str = '0x%02X %s' % (self.id, str)

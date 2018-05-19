@@ -3,7 +3,7 @@ from minecraft.networking.packets import (
 )
 
 from minecraft.networking.types import (
-    VarInt, Byte, Boolean, UnsignedByte, VarIntPrefixedByteArray
+    VarInt, Byte, Boolean, UnsignedByte, VarIntPrefixedByteArray, String
 )
 
 
@@ -19,19 +19,17 @@ class MapPacket(Packet):
     packet_name = 'map'
 
     class MapIcon(object):
-        __slots__ = 'type', 'direction', 'location'
+        __slots__ = 'type', 'direction', 'location', 'display_name'
 
-        def __init__(self, type, direction, location):
+        def __init__(self, type, direction, location, display_name=None):
             self.type = type
             self.direction = direction
             self.location = location
+            self.display_name = display_name
 
         def __repr__(self):
-            return ('MapIcon(type=%s, direction=%s, location=%s)'
-                    % (self.type, self.direction, self.location))
-
-        def __str__(self):
-            return self.__repr__()
+            fs = ('%s=%r' % (at, getattr(self, at)) for at in self.__slots__)
+            return 'MapIcon(%s)' % ', '.join(fs)
 
     class Map(object):
         __slots__ = ('id', 'scale', 'icons', 'pixels', 'width', 'height',
@@ -47,11 +45,8 @@ class MapPacket(Packet):
             self.is_tracking_position = True
 
         def __repr__(self):
-            return ('Map(id=%s, scale=%s, icons=%s, width=%s, height=%s)' % (
-                    self.id, self.scale, self.icons, self.width, self.height))
-
-        def __str__(self):
-            return self.__repr__()
+            fs = ('%s=%r' % (at, getattr(self, at)) for at in self.__slots__)
+            return 'Map(%s)' % ', '.join(fs)
 
     class MapSet(object):
         __slots__ = 'maps_by_id'
@@ -60,11 +55,8 @@ class MapPacket(Packet):
             self.maps_by_id = dict()
 
         def __repr__(self):
-            maps = [str(map) for map in self.maps_by_id.values()]
+            maps = (str(map) for map in self.maps_by_id.values())
             return 'MapSet(%s)' % ', '.join(maps)
-
-        def __str__(self):
-            return self.__repr__()
 
     def read(self, file_object):
         self.map_id = VarInt.read(file_object)
@@ -78,11 +70,22 @@ class MapPacket(Packet):
         icon_count = VarInt.read(file_object)
         self.icons = []
         for i in range(icon_count):
-            type, direction = divmod(UnsignedByte.read(file_object), 16)
+            if self.context.protocol_version >= 373:
+                type = VarInt.read(file_object)
+            else:
+                type, direction = divmod(UnsignedByte.read(file_object), 16)
             x = Byte.read(file_object)
             z = Byte.read(file_object)
-            icon = MapPacket.MapIcon(type, direction, (x, z))
+            if self.context.protocol_version >= 373:
+                direction = UnsignedByte.read(file_object)
+            if self.context.protocol_version >= 364:
+                has_name = Boolean.read(file_object)
+                display_name = String.read(file_object) if has_name else None
+            else:
+                display_name = None
+            icon = MapPacket.MapIcon(type, direction, (x, z), display_name)
             self.icons.append(icon)
+
         self.width = UnsignedByte.read(file_object)
         if self.width:
             self.height = UnsignedByte.read(file_object)
@@ -140,10 +143,7 @@ class MapPacket(Packet):
         self._write_buffer(socket, packet_buffer, compression_threshold)
 
     def __repr__(self):
-        return 'MapPacket(%s)' % ', '.join(
-            '%s=%r' % (k, v)
-            for (k, v) in self.__dict__.items()
-            if k != 'pixels')
-
-    def __str__(self):
-        return self.__repr__()
+        return '%sMapPacket(%s)' % (
+            ('0x%02X ' % self.id) if self.id is not None else '',
+            ', '.join('%s=%r' % (k, v) for (k, v) in self.__dict__.items()
+                      if k not in ('pixels', '_context', 'id', 'definition')))
