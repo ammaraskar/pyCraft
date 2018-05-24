@@ -105,6 +105,7 @@ SUPPORTED_MINECRAFT_VERSIONS = {
     '18w20a':      375,
     '18w20b':      376,
     '18w20c':      377,
+    '18w21a':      378,
 }
 
 SUPPORTED_PROTOCOL_VERSIONS = \
