@@ -39,9 +39,9 @@ Although pyCraft is compatible any supported server, only a subset of all
 packets are currently decoded or encoded by the library: those necessary
 to remain connected to the server, those used for chat, and some others.
 
-Developers wishing to use other functionality with pyCraft can contribute
-by implementing the desired packets in `<minecraft/networking/packets.py>`_
-and sending a pull request.
+Developers wishing to use other functionality with pyCraft can contribute by
+implementing packet classes for the desired packets, adding them under
+`<minecraft/networking/packets>`_, and sending a pull request.
 
 Supported Python versions
 -------------------------
@@ -55,7 +55,7 @@ pyCraft is compatible with (at least) the following Python implementations:
 
 Requirements
 ------------
-- `cryptography <https://github.com/pyca/cryptography#cryptography>`_ (<=1.9 for Python 3.3)
+- `cryptography <https://github.com/pyca/cryptography#cryptography>`_
 - `requests <http://docs.python-requests.org/en/latest/>`_
 - `future <http://python-future.org/>`_
 
