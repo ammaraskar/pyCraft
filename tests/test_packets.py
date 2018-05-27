@@ -6,9 +6,11 @@ from random import choice
 
 from minecraft import SUPPORTED_PROTOCOL_VERSIONS
 from minecraft.networking.connection import ConnectionContext
-from minecraft.networking.types import VarInt, Enum, BitFieldEnum
+from minecraft.networking.types import VarInt, Enum, BitFieldEnum, Vector
 from minecraft.networking.packets import (
-    Packet, PacketBuffer, PacketListener, KeepAlivePacket, serverbound)
+    Packet, PacketBuffer, PacketListener, KeepAlivePacket, serverbound,
+    clientbound,
+)
 
 
 class PacketBufferTest(unittest.TestCase):
@@ -35,7 +37,7 @@ class PacketBufferTest(unittest.TestCase):
         self.assertEqual(packet_buffer.get_writable(), message)
 
 
-class PacketSerializatonTest(unittest.TestCase):
+class PacketSerializationTest(unittest.TestCase):
 
     def test_packet(self):
         for protocol_version in SUPPORTED_PROTOCOL_VERSIONS:
@@ -173,3 +175,58 @@ class BitFieldEnumTest(unittest.TestCase):
             list(map(Example2.name_from_value, range(9))),
             ['0', 'ONE', 'TWO', 'ONE|TWO', 'FOUR',
              'ONE|FOUR', 'TWO|FOUR', 'ONE|TWO|FOUR', None])
+
+
+class TestReadWritePackets(unittest.TestCase):
+    maxDiff = None
+
+    def setUp(self):
+        self.context = ConnectionContext()
+        self.context.protocol_version = SUPPORTED_PROTOCOL_VERSIONS[-1]
+
+    def tearDown(self):
+        del self.context
+
+    def test_explosion_packet(self):
+        Record = clientbound.play.ExplosionPacket.Record
+        packet = clientbound.play.ExplosionPacket(
+                    position=Vector(787, -37, 0), radius=15,
+                    records=[Record(-14, -116, -5), Record(-77, 34, -36),
+                             Record(-35, -127, 95), Record(11, 113, -8)],
+                    player_motion=Vector(4, 5, 0))
+        self._test_read_write_packet(packet)
+
+    def test_combat_event_packet(self):
+        packet = clientbound.play.CombatEventPacket()
+        for event in (
+            packet.EnterCombatEvent(),
+            packet.EndCombatEvent(duration=415, entity_id=91063502),
+            packet.EntityDeadEvent(player_id=178, entity_id=36, message='RIP'),
+        ):
+            packet.event = event
+            self._test_read_write_packet(packet)
+
+    def test_multi_block_change_packet(self):
+        Record = clientbound.play.MultiBlockChangePacket.Record
+        packet = clientbound.play.MultiBlockChangePacket(
+                   chunk_x=167, chunk_z=15, records=[
+                     Record(x=1, y=2, z=3, blockId=56, blockMeta=13),
+                     Record(position=Vector(1, 2, 3), block_state_id=909),
+                     Record(position=(1, 2, 3), blockStateId=909)])
+        self.assertEqual(packet.records[0], packet.records[1])
+        self.assertEqual(packet.records[1], packet.records[2])
+        self._test_read_write_packet(packet)
+
+    def _test_read_write_packet(self, packet_in):
+        packet_in.context = self.context
+        packet_buffer = PacketBuffer()
+        packet_in.write(packet_buffer)
+        packet_buffer.reset_cursor()
+        VarInt.read(packet_buffer)
+        packet_id = VarInt.read(packet_buffer)
+        self.assertEqual(packet_id, packet_in.id)
+
+        packet_out = type(packet_in)(context=self.context)
+        packet_out.read(packet_buffer)
+        self.assertIs(type(packet_in), type(packet_out))
+        self.assertEqual(packet_in.__dict__, packet_out.__dict__)

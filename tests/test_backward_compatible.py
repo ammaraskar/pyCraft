@@ -1,5 +1,7 @@
 import unittest
 
+from minecraft import SUPPORTED_PROTOCOL_VERSIONS
+from minecraft.networking.connection import ConnectionContext
 from minecraft.networking import packets
 from minecraft.networking import types
 from minecraft.networking.packets import clientbound
@@ -91,3 +93,11 @@ class ClassMemberAliasesTest(unittest.TestCase):
                          types.AbsoluteHand.LEFT)
         self.assertEqual(serverbound.play.ClientSettingsPacket.Hand.RIGHT,
                          types.AbsoluteHand.RIGHT)
+
+    def test_block_change_packet(self):
+        context = ConnectionContext()
+        context.protocol_version = SUPPORTED_PROTOCOL_VERSIONS[-1]
+        bi, bm = 358, 9
+        packet = clientbound.play.BlockChangePacket(blockId=bi, blockMeta=bm)
+        self.assertEqual((packet.blockId, packet.blockMeta), (bi, bm))
+        self.assertEqual(packet.blockStateId, packet.block_state_id)

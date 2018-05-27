@@ -7,6 +7,11 @@ import uuid
 from collections import namedtuple
 
 
+# NOTE: subclasses of 'Vector' should have '__slots__ = ()' to avoid the
+# creation of a '__dict__' attribute, which would waste space.
+Vector = namedtuple('Vector', ('x', 'y', 'z'))
+
+
 class Type(object):
     __slots__ = ()
 
@@ -241,7 +246,7 @@ class UUID(Type):
         socket.send(uuid.UUID(value).bytes)
 
 
-class Position(Type, namedtuple('Position', ('x', 'y', 'z'))):
+class Position(Type, Vector):
     __slots__ = ()
 
     @staticmethod

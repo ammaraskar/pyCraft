@@ -1,7 +1,4 @@
-from minecraft.networking.packets import (
-    Packet, PacketBuffer
-)
-
+from minecraft.networking.packets import Packet
 from minecraft.networking.types import (
     VarInt, Byte, Boolean, UnsignedByte, VarIntPrefixedByteArray, String
 )
@@ -116,10 +113,7 @@ class MapPacket(Packet):
             map_set.maps_by_id[self.map_id] = map
         self.apply_to_map(map)
 
-    def write(self, socket, compression_threshold=None):
-        packet_buffer = PacketBuffer()
-        VarInt.send(self.id, packet_buffer)
-
+    def write_fields(self, packet_buffer):
         VarInt.send(self.map_id, packet_buffer)
         Byte.send(self.scale, packet_buffer)
         if self.context.protocol_version >= 107:
@@ -139,8 +133,6 @@ class MapPacket(Packet):
             UnsignedByte.send(self.offset[0], packet_buffer)  # x
             UnsignedByte.send(self.offset[1], packet_buffer)  # z
             VarIntPrefixedByteArray.send(self.pixels, packet_buffer)
-
-        self._write_buffer(socket, packet_buffer, compression_threshold)
 
     def __repr__(self):
         return '%sMapPacket(%s)' % (

@@ -25,9 +25,9 @@ class Packet(object):
     #  2. Override `get_definition' in a subclass and return the correct
     #     definition for the given ConnectionContext. This may be necessary
     #     if the layout has changed across protocol versions, for example; or
-    #  3. Override the methods `read' and/or `write' in a subclass. This may be
-    #     necessary if the packet layout cannot be described as a list of
-    #     fields.
+    #  3. Override the methods `read' and/or `write_fields' in a subclass.
+    #     This may be necessary if the packet layout cannot be described as a
+    #     simple list of fields.
     @classmethod
     def get_definition(cls, context):
         return cls.definition
@@ -95,12 +95,16 @@ class Packet(object):
         # write packet's id right off the bat in the header
         VarInt.send(self.id, packet_buffer)
         # write every individual field
+        self.write_fields(packet_buffer)
+        self._write_buffer(socket, packet_buffer, compression_threshold)
+
+    def write_fields(self, packet_buffer):
+        # Write the fields comprising the body of the packet (excluding the
+        # length, packet ID, compression and encryption) into a PacketBuffer.
         for field in self.definition:
             for var_name, data_type in field.items():
                 data = getattr(self, var_name)
                 data_type.send(data, packet_buffer)
-
-        self._write_buffer(socket, packet_buffer, compression_threshold)
 
     def __repr__(self):
         str = type(self).__name__

@@ -19,48 +19,84 @@ class CombatEventPacket(Packet):
 
     packet_name = 'combat event'
 
+    # The abstract type of the 'event' field of this packet.
     class EventType(object):
-        def read(self, file_object):
-            self._read(file_object)
+        __slots__ = ()
+        type_from_id_dict = {}
 
-        def _read(self, file_object):
+        def __init__(self, **kwds):
+            for attr, value in kwds.items():
+                setattr(self, attr, value)
+
+        def __repr__(self, **kwds):
+            return '%s(%s)' % (type(self).__name__, ', '.join(
+                   '%s=%r' % (a, getattr(self, a)) for a in self.__slots__))
+
+        def __eq__(self, other):
+            return type(self) is type(other) and all(
+                getattr(self, a) == getattr(other, a) for a in self.__slots__)
+
+        # Read the fields of the event (not including the ID) from the file.
+        def read(self, file_object):
+            raise NotImplementedError(
+                'This abstract method must be overridden in a subclass.')
+
+        # Write the fields of the event (not including the ID) to the buffer.
+        def write(self, packet_buffer):
             raise NotImplementedError(
                 'This abstract method must be overridden in a subclass.')
 
         @classmethod
         def type_from_id(cls, event_id):
-            subcls = {
-                0: CombatEventPacket.EnterCombatEvent,
-                1: CombatEventPacket.EndCombatEvent,
-                2: CombatEventPacket.EntityDeadEvent
-            }.get(event_id)
+            subcls = cls.type_from_id_dict.get(event_id)
             if subcls is None:
-                raise ValueError("Unknown combat event ID: %s."
-                                 % event_id)
+                raise ValueError('Unknown combat event ID: %s.' % event_id)
             return subcls
 
     class EnterCombatEvent(EventType):
-        def _read(self, file_object):
+        __slots__ = ()
+        id = 0
+
+        def read(self, file_object):
             pass
+
+        def write(self, packet_buffer):
+            pass
+    EventType.type_from_id_dict[EnterCombatEvent.id] = EnterCombatEvent
 
     class EndCombatEvent(EventType):
         __slots__ = 'duration', 'entity_id'
+        id = 1
 
-        def _read(self, file_object):
+        def read(self, file_object):
             self.duration = VarInt.read(file_object)
             self.entity_id = Integer.read(file_object)
 
+        def write(self, packet_buffer):
+            VarInt.send(self.duration, packet_buffer)
+            Integer.send(self.entity_id, packet_buffer)
+    EventType.type_from_id_dict[EndCombatEvent.id] = EndCombatEvent
+
     class EntityDeadEvent(EventType):
         __slots__ = 'player_id', 'entity_id', 'message'
+        id = 2
 
-        def _read(self, file_object):
+        def read(self, file_object):
             self.player_id = VarInt.read(file_object)
             self.entity_id = Integer.read(file_object)
             self.message = String.read(file_object)
 
+        def write(self, packet_buffer):
+            VarInt.send(self.player_id, packet_buffer)
+            Integer.send(self.entity_id, packet_buffer)
+            String.send(self.message, packet_buffer)
+    EventType.type_from_id_dict[EntityDeadEvent.id] = EntityDeadEvent
+
     def read(self, file_object):
         event_id = VarInt.read(file_object)
-        self.event_type = CombatEventPacket.EventType.type_from_id(event_id)
+        self.event = CombatEventPacket.EventType.type_from_id(event_id)()
+        self.event.read(file_object)
 
-    def write(self, socket, compression_threshold=None):
-        raise NotImplementedError
+    def write_fields(self, packet_buffer):
+        VarInt.send(self.event.id, packet_buffer)
+        self.event.write(packet_buffer)

@@ -1,8 +1,6 @@
-from minecraft.networking.packets import (
-    Packet, PacketBuffer
-)
+from minecraft.networking.packets import Packet
 from minecraft.networking.types import (
-    VarInt, Integer, UnsignedByte, Position
+    VarInt, Integer, UnsignedByte, Position, Vector
 )
 
 
@@ -16,23 +14,25 @@ class BlockChangePacket(Packet):
                0x23
 
     packet_name = 'block change'
+    definition = [
+        {'location': Position},
+        {'block_state_id': VarInt}]
+    block_state_id = 0
 
-    def read(self, file_object):
-        self.location = Position.read(file_object)
-        blockData = VarInt.read(file_object)
-        if self.context.protocol_version >= 347:
-            # See comments on MultiBlockChangePacket.OpaqueRecord.
-            self.blockStateId = blockData
-        else:
-            self.blockId = (blockData >> 4)
-            self.blockMeta = (blockData & 0xF)
+    # For protocols < 347: an accessor for (block_state_id >> 4).
+    def blockId(self, block_id):
+        self.block_state_id = (self.block_state_id & 0xF) | (block_id << 4)
+    blockId = property(lambda self: self.block_state_id >> 4, blockId)
 
-    def write(self, socket, compression_threshold=None):
-        packet_buffer = PacketBuffer()
-        Position.send(self.location, packet_buffer)
-        blockData = ((self.blockId << 4) | (self.blockMeta & 0xF))
-        VarInt.send(blockData)
-        self._write_buffer(socket, packet_buffer, compression_threshold)
+    # For protocols < 347: an accessor for (block_state_id & 0xF).
+    def blockMeta(self, meta):
+        self.block_state_id = (self.block_state_id & ~0xF) | (meta & 0xF)
+    blockMeta = property(lambda self: self.block_state_id & 0xF, blockMeta)
+
+    # This alias is retained for backward compatibility.
+    def blockStateId(self, block_state_id):
+        self.block_state_id = block_state_id
+    blockStateId = property(lambda self: self.block_state_id, blockStateId)
 
 
 class MultiBlockChangePacket(Packet):
@@ -46,60 +46,66 @@ class MultiBlockChangePacket(Packet):
 
     packet_name = 'multi block change'
 
-    class BaseRecord(object):
-        __slots__ = 'x', 'y', 'z'
+    class Record(object):
+        __slots__ = 'x', 'y', 'z', 'block_state_id'
 
-        def __init__(self, horizontal_position, y_coordinate):
-            self.x = (horizontal_position & 0xF0) >> 4
-            self.y = y_coordinate
-            self.z = (horizontal_position & 0x0F)
-
-        @classmethod
-        def get_subclass(cls, context):
-            return MultiBlockChangePacket.OpaqueRecord \
-                   if context.protocol_version >= 347 else \
-                   MultiBlockChangePacket.Record
-
-    class Record(BaseRecord):
-        __slots__ = 'blockId', 'blockMeta'
-
-        def __init__(self, h_position, y_coordinate, blockData):
-            super(MultiBlockChangePacket.Record, self).__init__(
-                h_position, y_coordinate)
-            self.blockId = (blockData >> 4)
-            self.blockMeta = (blockData & 0xF)
+        def __init__(self, **kwds):
+            self.block_state_id = 0
+            for attr, value in kwds.items():
+                setattr(self, attr, value)
 
         def __repr__(self):
-            return ('Record(x=%s, y=%s, z=%s, blockId=%s)'
-                    % (self.x, self.y, self.z, self.blockId))
+            return '%s(%s)' % (type(self).__name__, ', '.join(
+                   '%s=%r' % (a, getattr(self, a)) for a in self.__slots__))
 
-    '''The structure of the block data changed in protocol 347 (17w47b,
-       between 1.12.2 and 1.13), which this class reflects: instead of a
-       separate blockId and blockMeta number, there is a single opaque
-       blockStateId whose meaning may change between minor versions.'''
-    class OpaqueRecord(BaseRecord):
-        __slots__ = 'blockStateId'
+        def __eq__(self, other):
+            return type(self) is type(other) and all(
+                getattr(self, a) == getattr(other, a) for a in self.__slots__)
 
-        def __init__(self, h_position, y_coordinate, blockData):
-            super(MultiBlockChangePacket.OpaqueRecord, self).__init__(
-                h_position, y_coordinate)
-            self.blockStateId = blockData
+        # Access the 'x', 'y', 'z' fields as a Vector of ints.
+        def position(self, position):
+            self.x, self.y, self.z = position
+        position = property(lambda r: Vector(r.x, r.y, r.z), position)
 
-        def __repr__(self):
-            return ('OpaqueRecord(x=%s, y=%s, z=%s, blockStateId=%s)'
-                    % (self.x, self.y, self.z, self.blockStateId))
+        # For protocols < 347: an accessor for (block_state_id >> 4).
+        def blockId(self, block_id):
+            self.block_state_id = self.block_state_id & 0xF | block_id << 4
+        blockId = property(lambda r: r.block_state_id >> 4, blockId)
+
+        # For protocols < 347: an accessor for (block_state_id & 0xF).
+        def blockMeta(self, meta):
+            self.block_state_id = self.block_state_id & ~0xF | meta & 0xF
+        blockMeta = property(lambda r: r.block_state_id & 0xF, blockMeta)
+
+        # This alias is retained for backward compatibility.
+        def blockStateId(self, block_state_id):
+            self.block_state_id = block_state_id
+        blockStateId = property(lambda r: r.block_state_id, blockStateId)
+
+        def read(self, file_object):
+            h_position = UnsignedByte.read(file_object)
+            self.x, self.z = h_position >> 4, h_position & 0xF
+            self.y = UnsignedByte.read(file_object)
+            self.block_state_id = VarInt.read(file_object)
+
+        def write(self, packet_buffer):
+            UnsignedByte.send(self.x << 4 | self.z & 0xF, packet_buffer)
+            UnsignedByte.send(self.y, packet_buffer)
+            VarInt.send(self.block_state_id, packet_buffer)
 
     def read(self, file_object):
         self.chunk_x = Integer.read(file_object)
         self.chunk_z = Integer.read(file_object)
         records_count = VarInt.read(file_object)
-        record_type = self.BaseRecord.get_subclass(self.context)
         self.records = []
         for i in range(records_count):
-            record = record_type(h_position=UnsignedByte.read(file_object),
-                                 y_coordinate=UnsignedByte.read(file_object),
-                                 blockData=VarInt.read(file_object))
+            record = self.Record()
+            record.read(file_object)
             self.records.append(record)
 
-    def write(self, socket, compression_threshold=None):
-        raise NotImplementedError
+    def write_fields(self, packet_buffer):
+        Integer.send(self.chunk_x, packet_buffer)
+        Integer.send(self.chunk_z, packet_buffer)
+        VarInt.send(len(self.records), packet_buffer)
+        for record in self.records:
+            record.write(packet_buffer)

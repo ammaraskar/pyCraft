@@ -156,5 +156,5 @@ class PlayerListItemPacket(Packet):
         for action in self.actions:
             action.apply(player_list)
 
-    def write(self, socket, compression_threshold=None):
+    def write_fields(self, packet_buffer):
         raise NotImplementedError

@@ -72,5 +72,5 @@ class SpawnObjectPacket(Packet):
             self.velocity_y = Short.read(file_object)
             self.velocity_z = Short.read(file_object)
 
-    def write(self, socket, compression_threshold=None):
+    def write_fields(self, packet_buffer):
         raise NotImplementedError
