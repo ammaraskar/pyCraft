@@ -114,11 +114,20 @@ class MapPacket(Packet):
 
         VarInt.send(len(self.icons), packet_buffer)
         for icon in self.icons:
-            type_and_direction = (icon.direction << 4) & 0xF0
-            type_and_direction |= (icon.type & 0xF)
-            UnsignedByte.send(type_and_direction, packet_buffer)
+            if self.context.protocol_version >= 373:
+                VarInt.send(icon.type, packet_buffer)
+            else:
+                type_and_direction = (icon.type << 4) & 0xF0
+                type_and_direction |= (icon.direction & 0xF)
+                UnsignedByte.send(type_and_direction, packet_buffer)
             Byte.send(icon.location[0], packet_buffer)
             Byte.send(icon.location[1], packet_buffer)
+            if self.context.protocol_version >= 373:
+                UnsignedByte.send(icon.direction, packet_buffer)
+            if self.context.protocol_version >= 364:
+                Boolean.send(icon.display_name is not None, packet_buffer)
+                if icon.display_name is not None:
+                    String.send(icon.display_name, packet_buffer)
 
         UnsignedByte.send(self.width, packet_buffer)
         if self.width:

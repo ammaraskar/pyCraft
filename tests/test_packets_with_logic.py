@@ -45,26 +45,28 @@ class MapPacketTest(unittest.TestCase):
     @staticmethod
     def make_map_packet(
             context, width=2, height=2, offset=(2, 2), pixels=b"this"):
+
         packet = MapPacket(context)
 
         packet.map_id = 1
         packet.scale = 42
         packet.is_tracking_position = True
         packet.icons = []
-        packet.icons.append(
-            MapPacket.MapIcon(type=2, direction=2, location=(1, 1))
-        )
-        packet.icons.append(
-            MapPacket.MapIcon(type=3, direction=3, location=(3, 3))
-        )
+        d_name = u'Marshmallow' if context.protocol_version >= 364 else None
+        packet.icons.append(MapPacket.MapIcon(
+            type=2, direction=2, location=(1, 1), display_name=d_name
+        ))
+        packet.icons.append(MapPacket.MapIcon(
+            type=3, direction=3, location=(3, 3)
+        ))
         packet.width = width
-        packet.height = height
-        packet.offset = offset
-        packet.pixels = pixels
+        packet.height = height if width else 0
+        packet.offset = offset if width else None
+        packet.pixels = pixels if width else None
         return packet
 
-    def packet_roundtrip(self, context):
-        packet = self.make_map_packet(context)
+    def packet_roundtrip(self, context, **kwds):
+        packet = self.make_map_packet(context, **kwds)
 
         packet_buffer = PacketBuffer()
         packet.write(packet_buffer)
@@ -93,6 +95,9 @@ class MapPacketTest(unittest.TestCase):
     def test_packet_roundtrip(self):
         self.packet_roundtrip(ConnectionContext(protocol_version=106))
         self.packet_roundtrip(ConnectionContext(protocol_version=107))
+        self.packet_roundtrip(ConnectionContext(protocol_version=379))
+        self.packet_roundtrip(ConnectionContext(protocol_version=379),
+                              width=0)
 
     def test_map_set(self):
         map_set = MapPacket.MapSet()

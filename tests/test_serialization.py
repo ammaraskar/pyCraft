@@ -4,7 +4,8 @@ import unittest
 from minecraft.networking.types import (
     Type, Boolean, UnsignedByte, Byte, Short, UnsignedShort,
     Integer, VarInt, Long, Float, Double, ShortPrefixedByteArray,
-    VarIntPrefixedByteArray, UUID, String as StringType
+    VarIntPrefixedByteArray, UUID, String as StringType, Position,
+    TrailingByteArray, UnsignedLong,
 )
 from minecraft.networking.packets import PacketBuffer
 
@@ -15,6 +16,7 @@ TEST_DATA = {
     Byte: [-22, 22],
     Short: [-340, 22, 350],
     UnsignedShort: [0, 400],
+    UnsignedLong: [0, 400],
     Integer: [-1000, 1000],
     VarInt: [1, 250, 50000, 10000000],
     Long: [50000000],
@@ -22,8 +24,10 @@ TEST_DATA = {
     Double: [36.004002],
     ShortPrefixedByteArray: [bytes(245)],
     VarIntPrefixedByteArray: [bytes(1234)],
+    TrailingByteArray: [b'Q^jO<5*|+o  LGc('],
     UUID: ["12345678-1234-5678-1234-567812345678"],
-    StringType: ["hello world"]
+    StringType: ["hello world"],
+    Position: [(758, 0, 691)],
 }
 
 
