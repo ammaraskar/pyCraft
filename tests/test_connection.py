@@ -1,8 +1,13 @@
 from minecraft import SUPPORTED_MINECRAFT_VERSIONS
 from minecraft.networking.packets import clientbound, serverbound
 from minecraft.networking.connection import IgnorePacket
+from minecraft.compat import unicode
 
 from . import fake_server
+
+import sys
+import re
+import io
 
 
 class ConnectTest(fake_server._FakeServerTest):
@@ -29,6 +34,37 @@ class PingTest(ConnectTest):
             assert 0 <= latency_ms < 60000
             raise fake_server.FakeServerTestSuccess
         client.status(handle_status=False, handle_ping=handle_ping)
+
+
+class StatusTest(ConnectTest):
+    def _start_client(self, client):
+        def handle_status(status_dict):
+            assert status_dict['description'] == {'text': 'FakeServer'}
+            raise fake_server.FakeServerTestSuccess
+        client.status(handle_status=handle_status, handle_ping=False)
+
+
+class DefaultStatusTest(ConnectTest):
+    def setUp(self):
+        class FakeStdOut(io.BytesIO):
+            def write(self, data):
+                if isinstance(data, unicode):
+                    data = data.encode('utf8')
+                super(FakeStdOut, self).write(data)
+        sys.stdout, self.old_stdout = FakeStdOut(), sys.stdout
+
+    def tearDown(self):
+        sys.stdout, self.old_stdout = self.old_stdout, None
+
+    def _start_client(self, client):
+        def handle_exit():
+            output = sys.stdout.getvalue()
+            assert re.match(b'{.*}\\nPing: \\d+ ms\\n$', output), \
+                'Invalid stdout contents: %r.' % output
+            raise fake_server.FakeServerTestSuccess
+        client.handle_exit = handle_exit
+
+        client.status(handle_status=None, handle_ping=None)
 
 
 class ConnectCompressionLowTest(ConnectTest):
@@ -189,3 +225,22 @@ class IgnorePacketTest(ConnectTest):
                    'Returned keep-alive IDs %r != %r' % \
                    (self._keep_alive_ids_returned, [3])
             raise fake_server.FakeServerTestSuccess
+
+
+class HandleExceptionTest(ConnectTest):
+    ignore_extra_exceptions = True
+
+    def _start_client(self, client):
+        message = 'Min skoldpadda ar inte snabb, men den ar en skoldpadda.'
+
+        def handle_login_success(_packet):
+            raise Exception(message)
+        client.register_packet_listener(
+            handle_login_success, clientbound.login.LoginSuccessPacket)
+
+        def handle_exception(exc, exc_info):
+            assert isinstance(exc, Exception) and exc.args == (message,)
+            raise fake_server.FakeServerTestSuccess
+        client.handle_exception = handle_exception
+
+        client.connect()

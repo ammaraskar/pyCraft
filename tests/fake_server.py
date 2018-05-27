@@ -395,6 +395,10 @@ class _FakeServerTest(unittest.TestCase):
     public_key_bytes = None
     # The serialised RSA public key used by the server: see 'FakeServer'.
 
+    ignore_extra_exceptions = False
+    # If True, any occurrence of the 'FakeServerTestSuccess' exception is
+    # considered a success, even if other exceptions are raised.
+
     def _start_client(self, client):
         game_joined = [False]
 
@@ -479,6 +483,8 @@ class _FakeServerTest(unittest.TestCase):
                     if thread is not None and thread.is_alive():
                         errors.append({
                             'msg': 'Thread "%s" timed out.' % thread.name})
+                if client_exc_info[0] is None:
+                    client_exc_info[0] = client.exc_info
         except Exception:
             errors.insert(0, {
                 'msg': 'Exception in main thread',
@@ -492,11 +498,14 @@ class _FakeServerTest(unittest.TestCase):
                 with lock:
                     if exc_info is None:
                         continue
+                    timeout = False
                     if not issubclass(exc_info[0], FakeServerTestSuccess):
                         errors.insert(0, {
                             'msg': 'Exception in %s:' % thread_name,
                             'exc_info': exc_info})
-                    timeout = False
+                    elif self.ignore_extra_exceptions:
+                        del errors[:]
+                        break
             if timeout:
                 errors.insert(0, {'msg': 'Test timed out.'})
 

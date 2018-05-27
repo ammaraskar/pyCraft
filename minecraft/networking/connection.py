@@ -57,6 +57,7 @@ class Connection(object):
         initial_version=None,
         allowed_versions=None,
         handle_exception=None,
+        handle_exit=None,
     ):
         """Sets up an instance of this object to be able to connect to a
         minecraft server.
@@ -90,6 +91,11 @@ class Connection(object):
                                  will terminate, the exception will be
                                  available via the 'exception' and 'exc_info'
                                  attributes of the 'Connection' instance.
+        :param handle_exit: A function to be called when a connection to a
+                            server terminates, not caused by an exception,
+                            and not with the intention to automatically
+                            reconnect. Exceptions raised in this handler
+                            will be handled by handle_exception.
         """  # NOQA
 
         # This lock is re-entrant because it may be acquired in a re-entrant
@@ -132,9 +138,11 @@ class Connection(object):
         self.options.port = port
         self.auth_token = auth_token
         self.username = username
+        self.connected = False
 
         self.handle_exception = handle_exception
         self.exception, self.exc_info = None, None
+        self.handle_exit = handle_exit
 
         # The reactor handles all the default responses to packets,
         # it should be changed per networking state
@@ -323,9 +331,12 @@ class Connection(object):
         self.socket = socket.socket(ai_faml, ai_type, ai_prot)
         self.socket.connect(ai_addr)
         self.file_object = self.socket.makefile("rb", 0)
+        self.connected = True
 
     def disconnect(self):
         """ Terminate the existing server connection, if there is one. """
+        self.connected = False
+
         with self._write_lock:  # pylint: disable=not-context-manager
             if self.socket is not None:
                 # Flush any packets remaining in the queue.
@@ -336,18 +347,12 @@ class Connection(object):
                 self.networking_thread.interrupt = True
 
         if self.socket is not None:
-            if hasattr(self.socket, 'actual_socket'):
-                # pylint: disable=no-member
-                actual_socket = self.socket.actual_socket
-            else:
-                actual_socket = self.socket
-
             try:
-                actual_socket.shutdown(socket.SHUT_RDWR)
+                self.socket.shutdown(socket.SHUT_RDWR)
             except socket.error:
                 pass
             finally:
-                actual_socket.close()
+                self.socket.close()
                 self.socket = None
 
     def _handshake(self, next_state=STATE_PLAYING):
@@ -360,21 +365,28 @@ class Connection(object):
         self.write_packet(handshake)
 
     def _handle_exception(self, exc, exc_info):
+        handle_exception = self.handle_exception
+        try:
+            if self.reactor.handle_exception(exc, exc_info):
+                return
+            if handle_exception not in (None, False):
+                self.handle_exception(exc, exc_info)
+        except BaseException as new_exc:
+            exc, exc_info = new_exc, sys.exc_info()
+
         try:
             exc.exc_info = exc_info  # For backward compatibility.
         except (TypeError, AttributeError):
             pass
 
-        if self.reactor.handle_exception(exc, exc_info):
-            return
-
-        self.disconnect()
-
         self.exception, self.exc_info = exc, exc_info
-        if self.handle_exception is None:
+        self.disconnect()
+        if handle_exception is None:
             raise_(*exc_info)
-        elif self.handle_exception is not False:
-            self.handle_exception(exc, exc_info)
+
+    def _handle_exit(self):
+        if not self.connected and self.handle_exit is not None:
+            self.handle_exit()
 
     def _react(self, packet):
         try:
@@ -405,6 +417,7 @@ class NetworkingThread(threading.Thread):
                 self.previous_thread = None
                 self.connection.networking_thread = self
             self._run()
+            self.connection._handle_exit()
         except BaseException as e:
             self.connection._handle_exception(e, sys.exc_info())
         finally:
