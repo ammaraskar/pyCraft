@@ -1,7 +1,7 @@
 from minecraft.networking.packets import Packet
 
 from minecraft.networking.types import (
-    VarInt, Integer, String
+    VarInt, Integer, String, MutableRecord
 )
 
 
@@ -20,21 +20,9 @@ class CombatEventPacket(Packet):
     packet_name = 'combat event'
 
     # The abstract type of the 'event' field of this packet.
-    class EventType(object):
+    class EventType(MutableRecord):
         __slots__ = ()
         type_from_id_dict = {}
-
-        def __init__(self, **kwds):
-            for attr, value in kwds.items():
-                setattr(self, attr, value)
-
-        def __repr__(self, **kwds):
-            return '%s(%s)' % (type(self).__name__, ', '.join(
-                   '%s=%r' % (a, getattr(self, a)) for a in self.__slots__))
-
-        def __eq__(self, other):
-            return type(self) is type(other) and all(
-                getattr(self, a) == getattr(other, a) for a in self.__slots__)
 
         # Read the fields of the event (not including the ID) from the file.
         def read(self, file_object):

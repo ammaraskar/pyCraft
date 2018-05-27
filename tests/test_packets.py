@@ -6,10 +6,12 @@ from random import choice
 
 from minecraft import SUPPORTED_PROTOCOL_VERSIONS
 from minecraft.networking.connection import ConnectionContext
-from minecraft.networking.types import VarInt, Enum, BitFieldEnum, Vector
+from minecraft.networking.types import (
+    VarInt, Enum, BitFieldEnum, Vector, PositionAndLook
+)
 from minecraft.networking.packets import (
     Packet, PacketBuffer, PacketListener, KeepAlivePacket, serverbound,
-    clientbound,
+    clientbound
 )
 
 
@@ -213,9 +215,46 @@ class TestReadWritePackets(unittest.TestCase):
                      Record(x=1, y=2, z=3, blockId=56, blockMeta=13),
                      Record(position=Vector(1, 2, 3), block_state_id=909),
                      Record(position=(1, 2, 3), blockStateId=909)])
+        self.assertEqual(packet.records[0].blockId, 56)
+        self.assertEqual(packet.records[0].blockMeta, 13)
+        self.assertEqual(packet.records[0].blockStateId, 909)
+        self.assertEqual(packet.records[0].position, Vector(1, 2, 3))
         self.assertEqual(packet.records[0], packet.records[1])
         self.assertEqual(packet.records[1], packet.records[2])
         self._test_read_write_packet(packet)
+
+    def test_spawn_object_packet(self):
+        EntityType = clientbound.play.SpawnObjectPacket.EntityType
+
+        object_uuid = 'd9568851-85bc-4a10-8d6a-261d130626fa'
+        pos_look = PositionAndLook(x=68.0, y=38.0, z=76.0, yaw=16, pitch=23)
+        velocity = Vector(21, 55, 41)
+        entity_id, type_name, type_id = 49846, 'EGG', EntityType.EGG
+
+        packet = clientbound.play.SpawnObjectPacket(
+                    x=pos_look.x, y=pos_look.y, z=pos_look.z,
+                    yaw=pos_look.yaw, pitch=pos_look.pitch,
+                    velocity_x=velocity.x, velocity_y=velocity.y,
+                    velocity_z=velocity.z, object_uuid=object_uuid,
+                    entity_id=entity_id, type_id=type_id, data=1)
+        self.assertEqual(packet.position_and_look, pos_look)
+        self.assertEqual(packet.position, pos_look.position)
+        self.assertEqual(packet.velocity, velocity)
+        self.assertEqual(packet.objectUUID, object_uuid)
+        self.assertEqual(packet.type, type_name)
+
+        packet2 = clientbound.play.SpawnObjectPacket(
+                     position_and_look=pos_look, velocity=velocity,
+                     type=type_name, object_uuid=object_uuid,
+                     entity_id=entity_id, data=1)
+        self.assertEqual(packet.__dict__, packet2.__dict__)
+
+        packet2.position = pos_look.position
+        self.assertEqual(packet.position, packet2.position)
+
+        packet2.data = 0
+        self._test_read_write_packet(packet)
+        self._test_read_write_packet(packet2)
 
     def _test_read_write_packet(self, packet_in):
         packet_in.context = self.context

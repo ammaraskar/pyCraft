@@ -1,6 +1,6 @@
 from minecraft.networking.packets import Packet
 from minecraft.networking.types import (
-    VarInt, Integer, UnsignedByte, Position, Vector
+    VarInt, Integer, UnsignedByte, Position, Vector, MutableRecord
 )
 
 
@@ -46,21 +46,12 @@ class MultiBlockChangePacket(Packet):
 
     packet_name = 'multi block change'
 
-    class Record(object):
+    class Record(MutableRecord):
         __slots__ = 'x', 'y', 'z', 'block_state_id'
 
         def __init__(self, **kwds):
             self.block_state_id = 0
-            for attr, value in kwds.items():
-                setattr(self, attr, value)
-
-        def __repr__(self):
-            return '%s(%s)' % (type(self).__name__, ', '.join(
-                   '%s=%r' % (a, getattr(self, a)) for a in self.__slots__))
-
-        def __eq__(self, other):
-            return type(self) is type(other) and all(
-                getattr(self, a) == getattr(other, a) for a in self.__slots__)
+            super(MultiBlockChangePacket.Record, self).__init__(**kwds)
 
         # Access the 'x', 'y', 'z' fields as a Vector of ints.
         def position(self, position):

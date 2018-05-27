@@ -1,7 +1,7 @@
 from minecraft.networking.packets import Packet
 
 from minecraft.networking.types import (
-    Double, Float, Byte, VarInt, BitFieldEnum
+    Double, Float, Byte, VarInt, BitFieldEnum, PositionAndLook
 )
 
 
@@ -36,12 +36,8 @@ class PlayerPositionAndLookPacket(Packet, BitFieldEnum):
     FLAG_REL_YAW = 0x08
     FLAG_REL_PITCH = 0x10
 
-    class PositionAndLook(object):
-        __slots__ = 'x', 'y', 'z', 'yaw', 'pitch'
-
-        def __init__(self, **kwds):
-            for attr in self.__slots__:
-                setattr(self, attr, kwds.get(attr))
+    # This alias is retained for backward compatibility.
+    PositionAndLook = PositionAndLook
 
     # Update a PositionAndLook instance using this packet.
     def apply(self, target):

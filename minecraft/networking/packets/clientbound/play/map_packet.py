@@ -1,6 +1,7 @@
 from minecraft.networking.packets import Packet
 from minecraft.networking.types import (
-    VarInt, Byte, Boolean, UnsignedByte, VarIntPrefixedByteArray, String
+    VarInt, Byte, Boolean, UnsignedByte, VarIntPrefixedByteArray, String,
+    MutableRecord
 )
 
 
@@ -15,7 +16,7 @@ class MapPacket(Packet):
 
     packet_name = 'map'
 
-    class MapIcon(object):
+    class MapIcon(MutableRecord):
         __slots__ = 'type', 'direction', 'location', 'display_name'
 
         def __init__(self, type, direction, location, display_name=None):
@@ -24,11 +25,7 @@ class MapPacket(Packet):
             self.location = location
             self.display_name = display_name
 
-        def __repr__(self):
-            fs = ('%s=%r' % (at, getattr(self, at)) for at in self.__slots__)
-            return 'MapIcon(%s)' % ', '.join(fs)
-
-    class Map(object):
+    class Map(MutableRecord):
         __slots__ = ('id', 'scale', 'icons', 'pixels', 'width', 'height',
                      'is_tracking_position')
 
@@ -40,10 +37,6 @@ class MapPacket(Packet):
             self.height = height
             self.pixels = bytearray(0 for i in range(width*height))
             self.is_tracking_position = True
-
-        def __repr__(self):
-            fs = ('%s=%r' % (at, getattr(self, at)) for at in self.__slots__)
-            return 'Map(%s)' % ', '.join(fs)
 
     class MapSet(object):
         __slots__ = 'maps_by_id'
