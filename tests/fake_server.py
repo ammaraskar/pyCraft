@@ -6,7 +6,11 @@ from minecraft.networking import types
 from minecraft.networking import packets
 from minecraft.networking.packets import clientbound
 from minecraft.networking.packets import serverbound
+from minecraft.networking.encryption import (
+    create_AES_cipher, EncryptedFileObjectWrapper, EncryptedSocketWrapper
+)
 
+from cryptography.hazmat.primitives.asymmetric.padding import PKCS1v15
 from future.utils import raise_
 
 import unittest
@@ -155,6 +159,9 @@ class FakeClientHandler(object):
         packet = self.read_packet()
         assert isinstance(packet, serverbound.login.LoginStartPacket)
 
+        if self.server.private_key is not None:
+            self._run_login_encryption()
+
         if self.server.compression_threshold is not None:
             self.write_packet(clientbound.login.SetCompressionPacket(
                 threshold=self.server.compression_threshold))
@@ -163,11 +170,29 @@ class FakeClientHandler(object):
         self.user_name = packet.name
         self.user_uuid = uuid.UUID(bytes=hashlib.md5(
             ('OfflinePlayer:%s' % self.user_name).encode('utf8')).digest())
-
         self.write_packet(clientbound.login.LoginSuccessPacket(
             UUID=str(self.user_uuid), Username=self.user_name))
 
         self._run_playing()
+
+    def _run_login_encryption(self):
+        # Set up protocol encryption with the client, then return.
+        server_token = b'\x89\x82\x9a\x01'  # Guaranteed to be random.
+        self.write_packet(clientbound.login.EncryptionRequestPacket(
+            server_id='', verify_token=server_token,
+            public_key=self.server.public_key_bytes))
+
+        packet = self.read_packet()
+        assert isinstance(packet, serverbound.login.EncryptionResponsePacket)
+        private_key = self.server.private_key
+        client_token = private_key.decrypt(packet.verify_token, PKCS1v15())
+        assert client_token == server_token
+        shared_secret = private_key.decrypt(packet.shared_secret, PKCS1v15())
+
+        cipher = create_AES_cipher(shared_secret)
+        enc, dec = cipher.encryptor(), cipher.decryptor()
+        self.socket = EncryptedSocketWrapper(self.socket, enc, dec)
+        self.socket_file = EncryptedFileObjectWrapper(self.socket_file, dec)
 
     def _run_playing(self):
         # Enter the playing state of the connection.
@@ -247,27 +272,37 @@ class FakeServer(object):
         The server listens on a local TCP socket and accepts client connections
         in serial, in a single-threaded manner. It responds to status queries,
         performs handshake and login, and, by default, echoes any chat messages
-        back to the client until it disconnects.1~
+        back to the client until it disconnects.
 
         The behaviour of the server can be customised by writing subclasses of
         FakeClientHandler, overriding its public methods of the form
         'handle_*', and providing the class to the FakeServer as its
         'client_handler_type'.
+
+        If 'private_key' is not None, it must be an instance of
+        'cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey',
+        'public_key_bytes' must be the corresponding public key serialised in
+        DER format with PKCS1 encoding, and encryption will be enabled for all
+        client sessions; otherwise, if it is None, encryption is disabled.
     """
 
     __slots__ = 'listen_socket', 'compression_threshold', 'context', \
                 'minecraft_version', 'client_handler_type', \
                 'packets_handshake', 'packets_login', 'packets_playing', \
-                'packets_status', 'lock', 'stopping'
+                'packets_status', 'lock', 'stopping', 'private_key', \
+                'public_key_bytes',
 
     def __init__(self, minecraft_version=None, compression_threshold=None,
-                 client_handler_type=FakeClientHandler):
+                 client_handler_type=FakeClientHandler, private_key=None,
+                 public_key_bytes=None):
         if minecraft_version is None:
             minecraft_version = VERSIONS[-1][0]
 
         self.minecraft_version = minecraft_version
         self.compression_threshold = compression_threshold
         self.client_handler_type = client_handler_type
+        self.private_key = private_key
+        self.public_key_bytes = public_key_bytes
 
         protocol_version = SUPPORTED_MINECRAFT_VERSIONS[minecraft_version]
         self.context = connection.ConnectionContext(
@@ -329,11 +364,11 @@ class _FakeServerTest(unittest.TestCase):
         if a 'JoinGamePacket' is received before a 'DisconnectPacket'.
 
         Customise by making subclasses that:
-         1. Overrides the attributes present in this class, where desired, so
-            that they will apply to all tests; and/or
+         1. Override the attributes present in this class, where desired, so
+            that they will apply to all tests; and
          2. Define tests (or override 'runTest') to call '_test_connect' with
-            the arguments specified as necessary to override class attributes.
-         3. Overrides '_start_client' in order to set event listeners and
+            the necessary arguments to override class attributes; and
+         3. Override '_start_client' in order to set event listeners and
             change the connection mode, if necessary.
         To terminate the test and indicate that it finished successfully, a
         client packet handler or a handler method of the 'FakeClientHandler'
@@ -354,6 +389,12 @@ class _FakeServerTest(unittest.TestCase):
     # The compression threshold that the server will dictate.
     # If None, compression is disabled.
 
+    private_key = None
+    # The RSA private key used by the server: see 'FakeServer'.
+
+    public_key_bytes = None
+    # The serialised RSA public key used by the server: see 'FakeServer'.
+
     def _start_client(self, client):
         game_joined = [False]
 
@@ -371,7 +412,8 @@ class _FakeServerTest(unittest.TestCase):
         client.connect()
 
     def _test_connect(self, client_versions=None, server_version=None,
-                      client_handler_type=None, compression_threshold=None):
+                      client_handler_type=None, compression_threshold=None,
+                      private_key=None, public_key_bytes=None):
         if client_versions is None:
             client_versions = self.client_versions
         if server_version is None:
@@ -380,10 +422,16 @@ class _FakeServerTest(unittest.TestCase):
             compression_threshold = self.compression_threshold
         if client_handler_type is None:
             client_handler_type = self.client_handler_type
+        if private_key is None:
+            private_key = self.private_key
+        if public_key_bytes is None:
+            public_key_bytes = self.public_key_bytes
 
         server = FakeServer(minecraft_version=server_version,
                             compression_threshold=compression_threshold,
-                            client_handler_type=client_handler_type)
+                            client_handler_type=client_handler_type,
+                            private_key=private_key,
+                            public_key_bytes=public_key_bytes)
         addr = "localhost"
         port = server.listen_socket.getsockname()[1]
 

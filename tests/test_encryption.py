@@ -11,6 +11,8 @@ from minecraft.networking.encryption import (
     EncryptedFileObjectWrapper,
     EncryptedSocketWrapper
 )
+from minecraft.networking.packets import clientbound
+from tests import test_connection
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric.padding import PKCS1v15
@@ -18,6 +20,24 @@ from cryptography.hazmat.primitives.serialization import load_der_private_key
 
 KEY_LOCATION = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                             "encryption")
+
+
+def setUpModule():
+    global private_key, public_key, token
+
+    with open(os.path.join(KEY_LOCATION, "priv_key.bin"), "rb") as f:
+        private_key = f.read()
+    private_key = load_der_private_key(private_key, None, default_backend())
+
+    with open(os.path.join(KEY_LOCATION, "pub_key.bin"), "rb") as f:
+        public_key = f.read()
+
+    token = generate_shared_secret()
+
+
+def tearDownModule():
+    global private_key, public_key, token
+    del private_key, public_key, token
 
 
 class Hashing(unittest.TestCase):
@@ -34,31 +54,19 @@ class Hashing(unittest.TestCase):
 
 class Encryption(unittest.TestCase):
 
-    def setUp(self):
-        with open(os.path.join(KEY_LOCATION, "priv_key.bin"), "rb") as f:
-            self.private_key = f.read()
-        self.private_key = load_der_private_key(self.private_key, None,
-                                                default_backend())
-
-        with open(os.path.join(KEY_LOCATION, "pub_key.bin"), "rb") as f:
-            self.public_key = f.read()
-        self.token = generate_shared_secret()
-
     def test_token_secret_encryption(self):
         secret = generate_shared_secret()
-        token, encrypted_secret = encrypt_token_and_secret(self.public_key,
-                                                           self.token, secret)
-        decrypted_token = self.private_key.decrypt(token,
-                                                   PKCS1v15())
-        decrypted_secret = self.private_key.decrypt(encrypted_secret,
-                                                    PKCS1v15())
+        encrypted_token, encrypted_secret = \
+            encrypt_token_and_secret(public_key, token, secret)
+        decrypted_token = private_key.decrypt(encrypted_token, PKCS1v15())
+        decrypted_secret = private_key.decrypt(encrypted_secret, PKCS1v15())
 
-        self.assertEquals(self.token, decrypted_token)
+        self.assertEquals(token, decrypted_token)
         self.assertEquals(secret, decrypted_secret)
 
     def test_generate_hash(self):
         verification_hash = generate_verification_hash(
-            u"", "secret".encode('utf-8'),  self.public_key)
+            u"", "secret".encode('utf-8'),  public_key)
         self.assertEquals("1f142e737a84a974a5f2a22f6174a78d80fd97f5",
                           verification_hash)
 
@@ -102,6 +110,25 @@ class Encryption(unittest.TestCase):
         test_data = "hello".encode('utf-8')
         wrapper.send(test_data)
         self.assertEqual(test_data, mock_socket.received)
+
+
+class EncryptedConnection(test_connection.ConnectTest):
+    def test_connect(self):
+        self._test_connect(private_key=private_key,
+                           public_key_bytes=public_key)
+
+    def _start_client(self, client):
+        def handle_login_success(_packet):
+            assert isinstance(client.socket, EncryptedSocketWrapper)
+            assert isinstance(client.file_object, EncryptedFileObjectWrapper)
+        client.register_packet_listener(
+            handle_login_success, clientbound.login.LoginSuccessPacket)
+        super(EncryptedConnection, self)._start_client(client)
+
+
+class EncryptedCompressedConnection(EncryptedConnection,
+                                    test_connection.ConnectCompressionLowTest):
+    pass
 
 
 class MockSocket(object):
