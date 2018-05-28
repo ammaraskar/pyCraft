@@ -9,6 +9,7 @@ import timeit
 import select
 import sys
 import json
+import re
 
 from future.utils import raise_
 
@@ -16,9 +17,8 @@ from .types import VarInt
 from .packets import clientbound, serverbound
 from . import packets
 from . import encryption
-from .. import SUPPORTED_PROTOCOL_VERSIONS
-from .. import SUPPORTED_MINECRAFT_VERSIONS
-from ..exceptions import VersionMismatch
+from .. import SUPPORTED_PROTOCOL_VERSIONS, SUPPORTED_MINECRAFT_VERSIONS
+from ..exceptions import VersionMismatch, LoginDisconnect, IgnorePacket
 
 
 STATE_STATUS = 1
@@ -384,6 +384,21 @@ class Connection(object):
         if handle_exception is None:
             raise_(*exc_info)
 
+    def _version_mismatch(self, server_protocol=None, server_version=None):
+        if server_protocol is None:
+            server_protocol = SUPPORTED_MINECRAFT_VERSIONS.get(server_version)
+
+        if server_protocol is None:
+            vs = 'version' if server_version is None else \
+                 ('version of %s' % server_version)
+        else:
+            vs = ('protocol version of %d' % server_protocol) + \
+                 ('' if server_version is None else ' (%s)' % server_version)
+        ss = 'supported, but not allowed for this connection' \
+             if server_protocol in SUPPORTED_PROTOCOL_VERSIONS \
+             else 'not supported'
+        raise VersionMismatch("Server's %s is %s." % (vs, ss))
+
     def _handle_exit(self):
         if not self.connected and self.handle_exit is not None:
             self.handle_exit()
@@ -463,16 +478,6 @@ class NetworkingThread(threading.Thread):
 
             if exc_info is not None:
                 raise_(*exc_info)
-
-
-class IgnorePacket(Exception):
-    """
-    This exception may be raised from within a packet handler, such as
-    `PacketReactor.react' or a packet listener added with
-    `Connection.register_packet_listener', to stop any subsequent handlers from
-    being called on that particular packet.
-    """
-    pass
 
 
 class PacketReactor(object):
@@ -581,7 +586,19 @@ class LoginReactor(PacketReactor):
                     self.connection.file_object, decryptor)
 
         if packet.packet_name == "disconnect":
-            self.connection.disconnect()
+            # Receiving a disconnect packet in the login state indicates an
+            # abnormal condition. Raise an exception explaining the situation.
+            try:
+                msg = json.loads(packet.json_data)['text']
+            except (ValueError, TypeError, KeyError):
+                msg = packet.json_data
+            match = re.match(r"Outdated (client! Please use|server!"
+                             r" I'm still on) (?P<ver>\S+)$", msg)
+            if match:
+                ver = match.group('ver')
+                self.connection._version_mismatch(server_version=ver)
+            raise LoginDisconnect('The server rejected our login attempt '
+                                  'with: "%s".' % msg)
 
         if packet.packet_name == "login success":
             self.connection.reactor = PlayingReactor(self.connection)
@@ -671,12 +688,9 @@ class PlayingStatusReactor(StatusReactor):
 
         proto = status['version']['protocol']
         if proto not in self.connection.allowed_proto_versions:
-            vstr = ('%d (%s)' % (proto, status['version']['name'])) \
-                   if 'name' in status['version'] else str(proto)
-            sstr = 'supported, but not allowed for this connection' \
-                   if proto in SUPPORTED_PROTOCOL_VERSIONS else 'not supported'
-            raise VersionMismatch("Server's protocol version of %s is %s."
-                                  % (vstr, sstr))
+            self.connection._version_mismatch(
+                server_protocol=proto,
+                server_version=status['version'].get('name'))
 
         self.handle_proto_version(proto)
 
