@@ -69,6 +69,13 @@ class LoginDisconnect(ConnectionFailure):
     """
 
 
+class InvalidState(ConnectionFailure):
+    """Raised by 'minecraft.networking.Connection' when a connection attempt
+       fails due to to the internal state of the Connection being unsuitable,
+       for example if there is an existing ongoing connection.
+    """
+
+
 class IgnorePacket(Exception):
     """This exception may be raised from within a packet handler, such as
        `PacketReactor.react' or a packet listener added with
