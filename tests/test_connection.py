@@ -1,6 +1,10 @@
 from minecraft import SUPPORTED_MINECRAFT_VERSIONS
+from minecraft import SUPPORTED_PROTOCOL_VERSIONS
 from minecraft.networking.packets import clientbound, serverbound
-from minecraft.networking.connection import IgnorePacket
+from minecraft.networking.connection import Connection, IgnorePacket
+from minecraft.exceptions import (
+    VersionMismatch, LoginDisconnect, InvalidState
+)
 from minecraft.compat import unicode
 
 from . import fake_server
@@ -96,6 +100,38 @@ class AllowedVersionsTest(fake_server._FakeServerTest):
                 if p <= proto}
             self._test_connect(
                 server_version=version, client_versions=client_versions)
+
+
+class LoginDisconnectTest(fake_server._FakeServerTest):
+    def test_login_disconnect(self):
+        with self.assertRaisesRegexp(LoginDisconnect, r'You are banned'):
+            self._test_connect()
+
+    class client_handler_type(fake_server.FakeClientHandler):
+        def handle_login(self, login_start_packet):
+            raise fake_server.FakeServerDisconnect('You are banned.')
+
+
+class ConnectTwiceTest(fake_server._FakeServerTest):
+    def test_connect(self):
+        with self.assertRaisesRegexp(InvalidState, 'existing connection'):
+            self._test_connect()
+
+    class client_handler_type(fake_server.FakeClientHandler):
+        def handle_play_start(self):
+            super(ConnectTwiceTest.client_handler_type, self) \
+                .handle_play_start()
+            raise fake_server.FakeServerDisconnect('Test complete.')
+
+    def _start_client(self, client):
+        client.connect()
+        client.connect()
+
+
+class ConnectStatusTest(ConnectTwiceTest):
+    def _start_client(self, client):
+        client.connect()
+        client.status()
 
 
 class EarlyPacketListenerTest(ConnectTest):
@@ -244,3 +280,85 @@ class HandleExceptionTest(ConnectTest):
         client.handle_exception = handle_exception
 
         client.connect()
+
+
+class VersionNegotiationEdgeCases(fake_server._FakeServerTest):
+    lowest_version = min(SUPPORTED_PROTOCOL_VERSIONS)
+    highest_version = max(SUPPORTED_PROTOCOL_VERSIONS)
+    impossible_version = highest_version + 1
+
+    def test_client_protocol_unsupported(self):
+        self._test_client_protocol(version=self.impossible_version)
+
+    def test_client_protocol_unknown(self):
+        self._test_client_protocol(version='surprise me!')
+
+    def test_client_protocol_invalid(self):
+        self._test_client_protocol(version=object())
+
+    def _test_client_protocol(self, version):
+        with self.assertRaisesRegexp(ValueError, 'Unsupported version'):
+            self._test_connect(client_versions={version})
+
+    def test_server_protocol_unsupported(self, client_versions=None):
+        with self.assertRaisesRegexp(VersionMismatch, 'not supported'):
+            self._test_connect(client_versions=client_versions,
+                               server_version=self.impossible_version)
+
+    def test_server_protocol_unsupported_direct(self):
+        self.test_server_protocol_unsupported({self.highest_version})
+
+    def test_server_protocol_disallowed(self, client_versions=None):
+        if client_versions is None:
+            client_versions = set(SUPPORTED_PROTOCOL_VERSIONS) \
+                              - {self.highest_version}
+        with self.assertRaisesRegexp(VersionMismatch, 'not allowed'):
+            self._test_connect(client_versions={self.lowest_version},
+                               server_version=self.highest_version)
+
+    def test_server_protocol_disallowed_direct(self):
+        self.test_server_protocol_disallowed({self.lowest_version})
+
+    def test_default_protocol_version(self, status_response=None):
+        if status_response is None:
+            status_response = '{"description": {"text": "FakeServer"}}'
+
+        class ClientHandler(fake_server.FakeClientHandler):
+            def _run_status(self):
+                packet = clientbound.status.ResponsePacket()
+                packet.json_response = status_response
+                self.write_packet(packet)
+
+            def handle_play_start(self):
+                super(ClientHandler, self).handle_play_start()
+                raise fake_server.FakeServerDisconnect('Test complete.')
+
+        def make_connection(*args, **kwds):
+            kwds['initial_version'] = self.lowest_version
+            return Connection(*args, **kwds)
+
+        self._test_connect(server_version=self.lowest_version,
+                           client_handler_type=ClientHandler,
+                           connection_type=make_connection)
+
+    def test_default_protocol_version_empty(self):
+        with self.assertRaisesRegexp(IOError, 'Invalid server status'):
+            self.test_default_protocol_version(status_response='{}')
+
+    def test_default_protocol_version_eof(self):
+        class ClientHandler(fake_server.FakeClientHandler):
+            def handle_status(self, request_packet):
+                raise fake_server.FakeServerDisconnect(
+                      'Refusing to handle status request, for test purposes.')
+
+            def handle_play_start(self):
+                super(ClientHandler, self).handle_play_start()
+                raise fake_server.FakeServerDisconnect('Test complete.')
+
+        def make_connection(*args, **kwds):
+            kwds['initial_version'] = self.lowest_version
+            return Connection(*args, **kwds)
+
+        self._test_connect(server_version=self.lowest_version,
+                           client_handler_type=ClientHandler,
+                           connection_type=make_connection)
