@@ -3,8 +3,8 @@ from minecraft.networking.packets import (
 )
 
 from minecraft.networking.types import (
-    Integer, UnsignedByte, Byte, Boolean, UUID, Short, VarInt, Double, Float,
-    String, Enum,
+    Integer, FixedPointInteger, UnsignedByte, Byte, Boolean, UUID, Short,
+    VarInt, Double, Float, String, Enum,
 )
 
 from .combat_event_packet import CombatEventPacket
@@ -126,9 +126,12 @@ class SpawnPlayerPacket(Packet):
     get_definition = staticmethod(lambda context: [
         {'entity_id': VarInt},
         {'player_UUID': UUID},
-        {'x': Double} if context.protocol_version >= 100 else {'x': Integer},
-        {'y': Double} if context.protocol_version >= 100 else {'y': Integer},
-        {'z': Double} if context.protocol_version >= 100 else {'z': Integer},
+        {'x': Double} if context.protocol_version >= 100
+        else {'x': FixedPointInteger},
+        {'y': Double} if context.protocol_version >= 100
+        else {'y': FixedPointInteger},
+        {'z': Double} if context.protocol_version >= 100
+        else {'z': FixedPointInteger},
         {'yaw': Float},
         {'pitch': Float},
         # TODO: read entity metadata

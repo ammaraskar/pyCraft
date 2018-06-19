@@ -120,6 +120,16 @@ class Integer(Type):
         socket.send(struct.pack('>i', value))
 
 
+class FixedPointInteger(Type):
+    @staticmethod
+    def read(file_object):
+        return Integer.read(file_object) / 32
+
+    @staticmethod
+    def send(value, socket):
+        Integer.send(value * 32, socket)
+
+
 class VarInt(Type):
     @staticmethod
     def read(file_object):
