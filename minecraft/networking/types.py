@@ -2,6 +2,7 @@
 Each type has a method which is used to read and write it.
 These definitions and methods are used by the packet definitions
 """
+from __future__ import division
 import struct
 import uuid
 from collections import namedtuple
