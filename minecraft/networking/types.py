@@ -127,7 +127,7 @@ class FixedPointInteger(Type):
 
     @staticmethod
     def send(value, socket):
-        Integer.send(value * 32, socket)
+        Integer.send(int(value * 32), socket)
 
 
 class VarInt(Type):
