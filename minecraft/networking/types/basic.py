@@ -5,45 +5,16 @@ These definitions and methods are used by the packet definitions
 from __future__ import division
 import struct
 import uuid
-from collections import namedtuple
+
+from .utility import Vector
 
 
-# NOTE: subclasses of 'Vector' should have '__slots__ = ()' to avoid the
-# creation of a '__dict__' attribute, which would waste space.
-Vector = namedtuple('Vector', ('x', 'y', 'z'))
-
-
-class MutableRecord(object):
-    __slots__ = ()
-
-    def __init__(self, **kwds):
-        for attr, value in kwds.items():
-            setattr(self, attr, value)
-
-    def __repr__(self):
-        return '%s(%s)' % (type(self).__name__, ', '.join(
-               '%s=%r' % (a, getattr(self, a)) for a in self.__slots__))
-
-    def __eq__(self, other):
-        return type(self) is type(other) and \
-            all(getattr(self, a) == getattr(other, a) for a in self.__slots__)
-
-    def __hash__(self):
-        return hash(getattr(self, a) for a in self.__slots__)
-
-
-class PositionAndLook(MutableRecord):
-    __slots__ = 'x', 'y', 'z', 'yaw', 'pitch'
-
-    # Access the fields 'x', 'y', 'z' as a Vector.
-    def position(self, position):
-        self.x, self.y, self.z = position
-    position = property(lambda self: Vector(self.x, self.y, self.z), position)
-
-    # Access the fields 'yaw', 'pitch' as a tuple.
-    def look(self, look):
-        self.yaw, self.pitch = look
-    look = property(lambda self: (self.yaw, self.pitch), look)
+__all__ = (
+    'Type', 'Boolean', 'UnsignedByte', 'Byte', 'Short', 'UnsignedShort',
+    'Integer', 'FixedPointInteger', 'VarInt', 'Long', 'UnsignedLong', 'Float',
+    'Double', 'ShortPrefixedByteArray', 'VarIntPrefixedByteArray',
+    'TrailingByteArray', 'String', 'UUID', 'Position',
+)
 
 
 class Type(object):
@@ -56,9 +27,6 @@ class Type(object):
     @staticmethod
     def send(value, socket):
         raise NotImplementedError("Base data type not serializable")
-
-
-# =========================================================
 
 
 class Boolean(Type):
@@ -317,71 +285,3 @@ class Position(Type, Vector):
         x, y, z = position
         value = ((x & 0x3FFFFFF) << 38) | ((y & 0xFFF) << 26) | (z & 0x3FFFFFF)
         UnsignedLong.send(value, socket)
-
-
-class Enum(object):
-    @classmethod
-    def name_from_value(cls, value):
-        for name, name_value in cls.__dict__.items():
-            if name.isupper() and name_value == value:
-                return name
-
-
-class BitFieldEnum(Enum):
-    @classmethod
-    def name_from_value(cls, value):
-        if not isinstance(value, int):
-            return
-        ret_names = []
-        ret_value = 0
-        for cls_name, cls_value in sorted(
-            [(n, v) for (n, v) in cls.__dict__.items()
-             if isinstance(v, int) and n.isupper() and v | value == value],
-            reverse=True, key=lambda p: p[1]
-        ):
-            if ret_value | cls_value != ret_value or cls_value == value:
-                ret_names.append(cls_name)
-                ret_value |= cls_value
-        if ret_value == value:
-            return '|'.join(reversed(ret_names)) if ret_names else '0'
-
-
-# Designation of one of a player's hands, in absolute terms.
-class AbsoluteHand(Enum):
-    LEFT = 0
-    RIGHT = 1
-
-
-# Designation of one a player's hands, relative to a choice of main/off hand.
-class RelativeHand(Enum):
-    MAIN = 0
-    OFF = 1
-
-
-# Designation of one of a block's 6 faces.
-class BlockFace(Enum):
-    BOTTOM = 0  # -Y
-    TOP = 1     # +Y
-    NORTH = 2   # -Z
-    SOUTH = 3   # +Z
-    WEST = 4    # -X
-    EAST = 5    # +X
-
-    # A dict mapping Position tuples to the corresponding BlockFace values.
-    # When accessing this dict, plain tuples also match. For example:
-    #   >>> BlockFace.from_vector[0, 0, -1] == BlockFace.NORTH
-    #   True
-    from_vector = {
-        Position(0, -1, 0): BOTTOM,
-        Position(0, +1, 0): TOP,
-        Position(0, 0, -1): NORTH,
-        Position(0, 0, +1): SOUTH,
-        Position(-1, 0, 0): WEST,
-        Position(+1, 0, 0): EAST,
-    }
-
-    # A dict mapping BlockFace values to unit Position tuples.
-    # This is the inverse mapping of face_by_position. For example:
-    #   >>> BlockFace.to_vector[BlockFace.NORTH]
-    #   Position(x=0, y=0, z=-1)
-    to_vector = {fce: pos for (pos, fce) in from_vector.items()}
