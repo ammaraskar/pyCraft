@@ -45,7 +45,10 @@ class SerializationTest(unittest.TestCase):
                     packet_buffer.reset_cursor()
 
                     deserialized = data_type.read(packet_buffer)
-                    if data_type is Float or data_type is Double:
+                    if data_type is FixedPointInteger:
+                        self.assertAlmostEqual(
+                            test_data, deserialized, delta=1.0/32.0)
+                    elif data_type is Float or data_type is Double:
                         self.assertAlmostEquals(test_data, deserialized, 3)
                     else:
                         self.assertEqual(test_data, deserialized)
