@@ -3,9 +3,9 @@
 import unittest
 from minecraft.networking.types import (
     Type, Boolean, UnsignedByte, Byte, Short, UnsignedShort,
-    Integer, VarInt, Long, Float, Double, ShortPrefixedByteArray,
-    VarIntPrefixedByteArray, UUID, String as StringType, Position,
-    TrailingByteArray, UnsignedLong,
+    Integer, FixedPointInteger, VarInt, Long, Float, Double,
+    ShortPrefixedByteArray, VarIntPrefixedByteArray, UUID,
+    String as StringType, Position, TrailingByteArray, UnsignedLong,
 )
 from minecraft.networking.packets import PacketBuffer
 
@@ -18,6 +18,7 @@ TEST_DATA = {
     UnsignedShort: [0, 400],
     UnsignedLong: [0, 400],
     Integer: [-1000, 1000],
+    FixedPointInteger: [float(-13098.3435), float(-0.83), float(1000)],
     VarInt: [1, 250, 50000, 10000000],
     Long: [50000000],
     Float: [21.000301],
@@ -44,7 +45,10 @@ class SerializationTest(unittest.TestCase):
                     packet_buffer.reset_cursor()
 
                     deserialized = data_type.read(packet_buffer)
-                    if data_type is Float or data_type is Double:
+                    if data_type is FixedPointInteger:
+                        self.assertAlmostEqual(
+                            test_data, deserialized, delta=1.0/32.0)
+                    elif data_type is Float or data_type is Double:
                         self.assertAlmostEquals(test_data, deserialized, 3)
                     else:
                         self.assertEqual(test_data, deserialized)

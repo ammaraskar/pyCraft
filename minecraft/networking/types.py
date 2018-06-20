@@ -2,6 +2,7 @@
 Each type has a method which is used to read and write it.
 These definitions and methods are used by the packet definitions
 """
+from __future__ import division
 import struct
 import uuid
 from collections import namedtuple
@@ -118,6 +119,16 @@ class Integer(Type):
     @staticmethod
     def send(value, socket):
         socket.send(struct.pack('>i', value))
+
+
+class FixedPointInteger(Type):
+    @staticmethod
+    def read(file_object):
+        return Integer.read(file_object) / 32
+
+    @staticmethod
+    def send(value, socket):
+        Integer.send(int(value * 32), socket)
 
 
 class VarInt(Type):
