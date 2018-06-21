@@ -69,3 +69,7 @@ class PositionAndLookTest(unittest.TestCase):
         self.assertEqual(pos_look_1.look, pos_look_2.look)
         self.assertEqual(hash(pos_look_1), hash(pos_look_2))
         self.assertEqual(str(pos_look_1), string_repr)
+
+        self.assertFalse(pos_look_1 != pos_look_2)
+        pos_look_1.position += Vector(1, 1, 1)
+        self.assertTrue(pos_look_1 != pos_look_2)

@@ -67,7 +67,7 @@ class MutableRecord(object):
         return type(self) is type(other) and \
             all(getattr(self, a) == getattr(other, a) for a in self.__slots__)
 
-    def __neq__(self, other):
+    def __ne__(self, other):
         return not (self == other)
 
     def __hash__(self):

@@ -28,7 +28,7 @@ TEST_DATA = {
     TrailingByteArray: [b'Q^jO<5*|+o  LGc('],
     UUID: ["12345678-1234-5678-1234-567812345678"],
     StringType: ["hello world"],
-    Position: [(758, 0, 691)],
+    Position: [(758, 0, 691), (-500, -12, -684)],
 }
 
 
