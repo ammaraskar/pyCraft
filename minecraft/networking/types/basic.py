@@ -259,6 +259,7 @@ class UUID(Type):
 
 
 class Position(Type, Vector):
+    """3D position vectors with a specific, compact network representation."""
     __slots__ = ()
 
     @staticmethod
