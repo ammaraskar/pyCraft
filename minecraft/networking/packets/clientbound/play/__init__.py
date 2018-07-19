@@ -46,7 +46,8 @@ def get_packets(context):
 class KeepAlivePacket(AbstractKeepAlivePacket):
     @staticmethod
     def get_id(context):
-        return 0x20 if context.protocol_version >= 345 else \
+        return 0x21 if context.protocol_version >= 389 else \
+               0x20 if context.protocol_version >= 345 else \
                0x1F if context.protocol_version >= 332 else \
                0x20 if context.protocol_version >= 318 else \
                0x1F if context.protocol_version >= 107 else \
@@ -56,7 +57,8 @@ class KeepAlivePacket(AbstractKeepAlivePacket):
 class JoinGamePacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x24 if context.protocol_version >= 345 else \
+        return 0x25 if context.protocol_version >= 389 else \
+               0x24 if context.protocol_version >= 345 else \
                0x23 if context.protocol_version >= 332 else \
                0x24 if context.protocol_version >= 318 else \
                0x23 if context.protocol_version >= 107 else \
@@ -142,7 +144,8 @@ class SpawnPlayerPacket(Packet):
 class EntityVelocityPacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x40 if context.protocol_version >= 352 else \
+        return 0x41 if context.protocol_version >= 389 else \
+               0x40 if context.protocol_version >= 352 else \
                0x3F if context.protocol_version >= 345 else \
                0x3E if context.protocol_version >= 336 else \
                0x3D if context.protocol_version >= 332 else \
@@ -163,7 +166,8 @@ class EntityVelocityPacket(Packet):
 class UpdateHealthPacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x43 if context.protocol_version >= 352 else \
+        return 0x44 if context.protocol_version >= 389 else \
+               0x43 if context.protocol_version >= 352 else \
                0x42 if context.protocol_version >= 345 else \
                0x41 if context.protocol_version >= 336 else \
                0x40 if context.protocol_version >= 318 else \

@@ -13,3 +13,5 @@ class PacketListener(object):
         for packet_type in self.packets_to_listen:
             if isinstance(packet, packet_type):
                 self.callback(packet)
+                return True
+        return False

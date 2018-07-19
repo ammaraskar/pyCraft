@@ -112,6 +112,15 @@ SUPPORTED_MINECRAFT_VERSIONS = {
     '18w22c':      382,
     '1.13-pre1':   383,
     '1.13-pre2':   384,
+    '1.13-pre3':   385,
+    '1.13-pre4':   386,
+    '1.13-pre5':   387,
+    '1.13-pre6':   388,
+    '1.13-pre7':   389,
+    '1.13-pre8':   390,
+    '1.13-pre9':   391,
+    '1.13-pre10':  392,
+    '1.13':        393,
 }
 
 SUPPORTED_PROTOCOL_VERSIONS = \

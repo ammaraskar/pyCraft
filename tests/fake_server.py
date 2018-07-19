@@ -89,11 +89,11 @@ class FakeClientHandler(object):
         # Handshake packet, which is provided as an argument.
         pass
 
-    def handle_login(self, join_game_packet):
+    def handle_login(self, login_start_packet):
         # Called to transition from the login state to the play state, after
         # compression and encryption, if applicable, have been set up. The
         # client's LoginStartPacket is given as an argument.
-        self.user_name = join_game_packet.name
+        self.user_name = login_start_packet.name
         self.user_uuid = uuid.UUID(bytes=hashlib.md5(
             ('OfflinePlayer:%s' % self.user_name).encode('utf8')).digest())
         self.write_packet(clientbound.login.LoginSuccessPacket(

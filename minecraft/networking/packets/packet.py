@@ -110,11 +110,16 @@ class Packet(object):
         str = type(self).__name__
         if self.id is not None:
             str = '0x%02X %s' % (self.id, str)
-        if self.definition is not None:
-            str = '%s(%s)' % (str, ', '.join(
-                '%s=%s' % (a, self.field_string(a))
-                for d in self.definition for a in d))
+        fields = self.fields
+        if fields is not None:
+            str = '%s(%s)' % (str, ', '.join('%s=%s' %
+                              (a, self.field_string(a)) for a in fields))
         return str
+
+    @property
+    def fields(self):
+        """ An iterable of the names of the packet's fields, or None. """
+        return (field for defn in self.definition for field in defn)
 
     def field_string(self, field):
         """ The string representation of the value of a the given named field

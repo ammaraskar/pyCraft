@@ -1,9 +1,9 @@
 from minecraft import SUPPORTED_MINECRAFT_VERSIONS
 from minecraft import SUPPORTED_PROTOCOL_VERSIONS
 from minecraft.networking.packets import clientbound, serverbound
-from minecraft.networking.connection import Connection, IgnorePacket
+from minecraft.networking.connection import Connection
 from minecraft.exceptions import (
-    VersionMismatch, LoginDisconnect, InvalidState
+    VersionMismatch, LoginDisconnect, InvalidState, IgnorePacket
 )
 from minecraft.compat import unicode
 
@@ -132,6 +132,51 @@ class ConnectStatusTest(ConnectTwiceTest):
     def _start_client(self, client):
         client.connect()
         client.status()
+
+
+class LoginPluginTest(fake_server._FakeServerTest):
+    class client_handler_type(fake_server.FakeClientHandler):
+        def handle_login(self, login_start_packet):
+            request = clientbound.login.PluginRequestPacket(
+                message_id=1, channel='pyCraft:tests/fail', data=b'ignored')
+            self.write_packet(request)
+            response = self.read_packet()
+            assert isinstance(response, serverbound.login.PluginResponsePacket)
+            assert response.message_id == request.message_id
+            assert response.successful is False
+            assert response.data is None
+
+            request = clientbound.login.PluginRequestPacket(
+                message_id=2, channel='pyCraft:tests/echo', data=b'hello')
+            self.write_packet(request)
+            response = self.read_packet()
+            assert isinstance(response, serverbound.login.PluginResponsePacket)
+            assert response.message_id == request.message_id
+            assert response.successful is True
+            assert response.data == request.data
+
+            super(LoginPluginTest.client_handler_type, self) \
+                .handle_login(login_start_packet)
+
+        def handle_play_start(self):
+            super(LoginPluginTest.client_handler_type, self) \
+                .handle_play_start()
+            raise fake_server.FakeServerDisconnect
+
+    def _start_client(self, client):
+        def handle_plugin_request(packet):
+            if packet.channel == 'pyCraft:tests/echo':
+                client.write_packet(serverbound.login.PluginResponsePacket(
+                    message_id=packet.message_id, data=packet.data))
+                raise IgnorePacket
+        client.register_packet_listener(
+            handle_plugin_request, clientbound.login.PluginRequestPacket,
+            early=True)
+
+        super(LoginPluginTest, self)._start_client(client)
+
+    def test_login_plugin_messages(self):
+        self._test_connect()
 
 
 class EarlyPacketListenerTest(ConnectTest):

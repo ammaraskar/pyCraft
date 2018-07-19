@@ -3,10 +3,15 @@ try:
     from unittest import mock
 except ImportError:
     import mock
+
+from minecraft import SUPPORTED_PROTOCOL_VERSIONS
 from minecraft.networking.connection import (
     LoginReactor, PlayingReactor, ConnectionContext
 )
 from minecraft.networking.packets import clientbound
+
+
+max_proto_ver = max(SUPPORTED_PROTOCOL_VERSIONS)
 
 
 class LoginReactorTest(unittest.TestCase):
@@ -14,6 +19,7 @@ class LoginReactorTest(unittest.TestCase):
     @mock.patch('minecraft.networking.connection.encryption')
     def test_encryption_online_server(self, encrypt):
         connection = mock.MagicMock()
+        connection.context = ConnectionContext(protocol_version=max_proto_ver)
         reactor = LoginReactor(connection)
 
         packet = clientbound.login.EncryptionRequestPacket()
@@ -37,6 +43,7 @@ class LoginReactorTest(unittest.TestCase):
     @mock.patch('minecraft.networking.connection.encryption')
     def test_encryption_offline_server(self, encrypt):
         connection = mock.MagicMock()
+        connection.context = ConnectionContext(protocol_version=max_proto_ver)
         reactor = LoginReactor(connection)
 
         packet = clientbound.login.EncryptionRequestPacket()

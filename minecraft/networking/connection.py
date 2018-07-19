@@ -568,13 +568,18 @@ class PacketReactor(object):
             return None
 
     def react(self, packet):
+        """Called with each incoming packet after early packet listeners are
+           run (if none of them raise 'IgnorePacket'), but before regular
+           packet listeners are run. If this method raises 'IgnorePacket', no
+           subsequent packet listeners will be called for this packet.
+        """
         raise NotImplementedError("Call to base reactor")
 
-    """ Called when an exception is raised in the networking thread. If this
-        method returns True, the default action will be prevented and the
-        exception ignored (but the networking thread will still terminate).
-    """
     def handle_exception(self, exc, exc_info):
+        """Called when an exception is raised in the networking thread. If this
+           method returns True, the default action will be prevented and the
+           exception ignored (but the networking thread will still terminate).
+        """
         return False
 
 
@@ -613,7 +618,7 @@ class LoginReactor(PacketReactor):
                 encryption.EncryptedFileObjectWrapper(
                     self.connection.file_object, decryptor)
 
-        if packet.packet_name == "disconnect":
+        elif packet.packet_name == "disconnect":
             # Receiving a disconnect packet in the login state indicates an
             # abnormal condition. Raise an exception explaining the situation.
             try:
@@ -628,12 +633,23 @@ class LoginReactor(PacketReactor):
             raise LoginDisconnect('The server rejected our login attempt '
                                   'with: "%s".' % msg)
 
-        if packet.packet_name == "login success":
+        elif packet.packet_name == "login success":
             self.connection.reactor = PlayingReactor(self.connection)
 
-        if packet.packet_name == "set compression":
+        elif packet.packet_name == "set compression":
             self.connection.options.compression_threshold = packet.threshold
             self.connection.options.compression_enabled = True
+
+        elif packet.packet_name == "login plugin request":
+            self.connection.write_packet(
+                serverbound.login.PluginResponsePacket(
+                    message_id=packet.message_id, successful=False))
+
+    def react_not_handled(self, packet):
+        if packet.name == "login plugin request":
+            self.connection.write_packet(
+                serverbound.login.PluginResponsePacket(
+                    message_id=packet.message_id, successful=False))
 
 
 class PlayingReactor(PacketReactor):
@@ -644,12 +660,12 @@ class PlayingReactor(PacketReactor):
             self.connection.options.compression_threshold = packet.threshold
             self.connection.options.compression_enabled = True
 
-        if packet.packet_name == "keep alive":
+        elif packet.packet_name == "keep alive":
             keep_alive_packet = serverbound.play.KeepAlivePacket()
             keep_alive_packet.keep_alive_id = packet.keep_alive_id
             self.connection.write_packet(keep_alive_packet)
 
-        if packet.packet_name == "player position and look":
+        elif packet.packet_name == "player position and look":
             if self.connection.context.protocol_version >= 107:
                 teleport_confirm = serverbound.play.TeleportConfirmPacket()
                 teleport_confirm.teleport_id = packet.teleport_id
@@ -665,7 +681,7 @@ class PlayingReactor(PacketReactor):
                 self.connection.write_packet(position_response)
             self.connection.spawned = True
 
-        if packet.packet_name == "disconnect":
+        elif packet.packet_name == "disconnect":
             self.connection.disconnect()
 
 
@@ -689,10 +705,11 @@ class StatusReactor(PacketReactor):
                 self.connection.disconnect()
             self.handle_status(status_dict)
 
-        elif packet.packet_name == "ping" and self.do_ping:
-            now = int(1000 * timeit.default_timer())
-            self.connection.disconnect()
-            self.handle_ping(now - packet.time)
+        elif packet.packet_name == "ping":
+            if self.do_ping:
+                now = int(1000 * timeit.default_timer())
+                self.connection.disconnect()
+                self.handle_ping(now - packet.time)
 
     def handle_status(self, status_dict):
         print(status_dict)

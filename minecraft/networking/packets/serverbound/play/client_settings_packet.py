@@ -8,7 +8,8 @@ from minecraft.networking.types import (
 class ClientSettingsPacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x03 if context.protocol_version >= 343 else \
+        return 0x04 if context.protocol_version >= 389 else \
+               0x03 if context.protocol_version >= 343 else \
                0x04 if context.protocol_version >= 336 else \
                0x05 if context.protocol_version >= 318 else \
                0x04 if context.protocol_version >= 94 else \
