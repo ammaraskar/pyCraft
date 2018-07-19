@@ -645,12 +645,6 @@ class LoginReactor(PacketReactor):
                 serverbound.login.PluginResponsePacket(
                     message_id=packet.message_id, successful=False))
 
-    def react_not_handled(self, packet):
-        if packet.name == "login plugin request":
-            self.connection.write_packet(
-                serverbound.login.PluginResponsePacket(
-                    message_id=packet.message_id, successful=False))
-
 
 class PlayingReactor(PacketReactor):
     get_clientbound_packets = staticmethod(clientbound.play.get_packets)
