@@ -69,7 +69,14 @@ class AuthenticationToken(object):
     AGENT_NAME = "Minecraft"
     AGENT_VERSION = 1
 
-    def __init__(self, username=None, access_token=None, client_token=None, profile_id=None, profile_name=None):
+    def __init__(
+        self,
+        username=None,
+        access_token=None,
+        client_token=None,
+        profile_id=None,
+        profile_name=None
+    ):
         """
         Constructs an `AuthenticationToken` based on `access_token` and
         `client_token`.
