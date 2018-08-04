@@ -1,5 +1,7 @@
 import requests
 import json
+import os
+import uuid
 from .exceptions import YggdrasilError
 
 #: The base url for Ygdrassil requests
@@ -8,6 +10,26 @@ SESSION_SERVER = "https://sessionserver.mojang.com/session/minecraft"
 # Need this content type, or authserver will complain
 CONTENT_TYPE = "application/json"
 HEADERS = {"content-type": CONTENT_TYPE}
+
+
+class ProfilesFile(dict):
+    """
+    An optional class which extends your launcher_profiles.json
+    with open and save methods.
+    """
+    def __init__(self, filename):
+        if os.path.isfile(filename):
+            with open(filename) as f:
+                super().__init__(json.load(f))
+        else:
+            super().__init__()
+        self.filename = filename
+        self['client_token'] = self.get('client_token', str(uuid.uuid4()))
+        self['database'] = self.get('database', {})
+
+    def save(self):
+        with open(self.filename, 'w') as f:
+            json.dump(self, f, sort_keys=True, indent=4)
 
 
 class Profile(object):
@@ -47,7 +69,7 @@ class AuthenticationToken(object):
     AGENT_NAME = "Minecraft"
     AGENT_VERSION = 1
 
-    def __init__(self, username=None, access_token=None, client_token=None):
+    def __init__(self, username=None, access_token=None, client_token=None, profile_id=None, profile_name=None):
         """
         Constructs an `AuthenticationToken` based on `access_token` and
         `client_token`.
@@ -62,7 +84,10 @@ class AuthenticationToken(object):
         self.username = username
         self.access_token = access_token
         self.client_token = client_token
-        self.profile = Profile()
+        self.profile = Profile(
+            id_ = profile_id, 
+            name = profile_name
+        )
 
     @property
     def authenticated(self):
@@ -84,7 +109,7 @@ class AuthenticationToken(object):
 
         return True
 
-    def authenticate(self, username, password):
+    def authenticate(self, username, password, launcher_profiles_dict=None):
         """
         Authenticates the user against https://authserver.mojang.com using
         `username` and `password` parameters.
@@ -107,7 +132,8 @@ class AuthenticationToken(object):
                 "version": self.AGENT_VERSION
             },
             "username": username,
-            "password": password
+            "password": password,
+            "clientToken": self.client_token
         }
 
         res = _make_request(AUTH_SERVER, "authenticate", payload)
@@ -122,9 +148,23 @@ class AuthenticationToken(object):
         self.profile.id_ = json_resp["selectedProfile"]["id"]
         self.profile.name = json_resp["selectedProfile"]["name"]
 
+        if launcher_profiles_dict is not None:
+            database = launcher_profiles_dict.get('database', {})
+            key = self.profile.id_.replace('-', '')
+            entry = {
+                'username' : self.username,
+                'access_token': self.access_token,
+                'profile': {
+                    'name': self.profile.name,
+                    'id': self.profile.id_
+                }
+            }
+
+            database[key] = entry
+
         return True
 
-    def refresh(self):
+    def refresh(self, launcher_profiles_dict=None):
         """
         Refreshes the `AuthenticationToken`. Used to keep a user logged in
         between sessions and is preferred over storing a user's password in a
@@ -158,6 +198,15 @@ class AuthenticationToken(object):
         self.profile.id_ = json_resp["selectedProfile"]["id"]
         self.profile.name = json_resp["selectedProfile"]["name"]
 
+        if launcher_profiles_dict is not None:
+            database = launcher_profiles_dict.get('database', {})
+            key = self.profile.id_.replace('-', '')
+            entry = database.get(key)
+
+            entry['access_token'] = self.access_token
+            entry['profile']['name'] = self.profile.name
+            entry['profile']['id'] = self.profile.id_
+
         return True
 
     def validate(self):
@@ -178,7 +227,8 @@ class AuthenticationToken(object):
             raise ValueError("'access_token' not set!")
 
         res = _make_request(AUTH_SERVER, "validate",
-                            {"accessToken": self.access_token})
+                            {"accessToken": self.access_token,
+                             "clientToken": self.client_token})
 
         # Validate returns 204 to indicate success
         # http://wiki.vg/Authentication#Response_3
@@ -186,7 +236,7 @@ class AuthenticationToken(object):
             return True
 
     @staticmethod
-    def sign_out(username, password):
+    def sign_out(username, password, launcher_profiles_dict=None):
         """
         Invalidates `access_token`s using an account's
         `username` and `password`.
@@ -205,7 +255,13 @@ class AuthenticationToken(object):
         res = _make_request(AUTH_SERVER, "signout",
                             {"username": username, "password": password})
 
-        if _raise_from_response(res) is None:
+        if _raise_from_response(res) is None:     
+            if launcher_profiles_dict is not None:
+                database = launcher_profiles_dict.get('database', {})
+                for entry in database:
+                    if entry['username'] == username:
+                        del database[entry]             
+
             return True
 
     def invalidate(self):
