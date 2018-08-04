@@ -91,10 +91,7 @@ class AuthenticationToken(object):
         self.username = username
         self.access_token = access_token
         self.client_token = client_token
-        self.profile = Profile(
-            id_ = profile_id, 
-            name = profile_name
-        )
+        self.profile = Profile(id_=profile_id, name=profile_name)
 
     @property
     def authenticated(self):
@@ -159,7 +156,7 @@ class AuthenticationToken(object):
             database = launcher_profiles_dict.get('database', {})
             key = self.profile.id_.replace('-', '')
             entry = {
-                'username' : self.username,
+                'username': self.username,
                 'access_token': self.access_token,
                 'profile': {
                     'name': self.profile.name,
@@ -262,12 +259,12 @@ class AuthenticationToken(object):
         res = _make_request(AUTH_SERVER, "signout",
                             {"username": username, "password": password})
 
-        if _raise_from_response(res) is None:     
+        if _raise_from_response(res) is None:
             if launcher_profiles_dict is not None:
                 database = launcher_profiles_dict.get('database', {})
                 for entry in database:
                     if entry['username'] == username:
-                        del database[entry]             
+                        del database[entry]
 
             return True
 
