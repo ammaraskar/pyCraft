@@ -251,8 +251,7 @@ class AuthenticationToken(object):
         self._authenticated = True
         return True
 
-    @staticmethod
-    def sign_out(username, password, launcher_profiles_dict=None):
+    def sign_out(self, username, password, launcher_profiles_dict=None):
         """
         Invalidates `access_token`s using an account's
         `username` and `password`.
