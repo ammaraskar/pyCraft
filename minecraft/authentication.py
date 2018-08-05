@@ -93,6 +93,8 @@ class AuthenticationToken(object):
         self.client_token = client_token
         self.profile = Profile(id_=profile_id, name=profile_name)
 
+        self._authenticated = False
+
     @property
     def authenticated(self):
         """
@@ -109,6 +111,9 @@ class AuthenticationToken(object):
             return False
 
         if not self.profile:
+            return False
+
+        if not self._authenticated:
             return False
 
         return True
@@ -166,6 +171,8 @@ class AuthenticationToken(object):
 
             database[key] = entry
 
+        self._authenticated = True
+
         return True
 
     def refresh(self, launcher_profiles_dict=None):
@@ -211,6 +218,8 @@ class AuthenticationToken(object):
             entry['profile']['name'] = self.profile.name
             entry['profile']['id'] = self.profile.id_
 
+        self._authenticated = True
+
         return True
 
     def validate(self):
@@ -239,6 +248,7 @@ class AuthenticationToken(object):
         if res.status_code != 204:
             _raise_from_response(res)
 
+        self._authenticated = True
         return True
 
     @staticmethod
@@ -267,6 +277,9 @@ class AuthenticationToken(object):
                 for entry in database:
                     if entry['username'] == username:
                         del database[entry]
+                        break
+
+            self._authenticated = False
 
             return True
 
@@ -287,6 +300,9 @@ class AuthenticationToken(object):
 
         if res.status_code != 204:
             _raise_from_response(res)
+
+        self._authenticated = False
+
         return True
 
     def join(self, server_id):
@@ -315,6 +331,7 @@ class AuthenticationToken(object):
 
         if res.status_code != 204:
             _raise_from_response(res)
+
         return True
 
 
