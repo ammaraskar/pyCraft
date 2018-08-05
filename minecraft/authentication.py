@@ -163,10 +163,7 @@ class AuthenticationToken(object):
             entry = {
                 'username': self.username,
                 'access_token': self.access_token,
-                'profile': {
-                    'name': self.profile.name,
-                    'id': self.profile.id_
-                }
+                'profile': self.profile.to_dict()
             }
 
             database[key] = entry
@@ -215,7 +212,7 @@ class AuthenticationToken(object):
             entry = database.get(key)
 
             entry['access_token'] = self.access_token
-            entry['profile'] = self.profile.to_dict
+            entry['profile'] = self.profile.to_dict()
 
         self._authenticated = True
 
