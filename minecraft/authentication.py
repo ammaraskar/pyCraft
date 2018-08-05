@@ -215,8 +215,7 @@ class AuthenticationToken(object):
             entry = database.get(key)
 
             entry['access_token'] = self.access_token
-            entry['profile']['name'] = self.profile.name
-            entry['profile']['id'] = self.profile.id_
+            entry['profile'] = self.profile.to_dict
 
         self._authenticated = True
 
@@ -329,6 +328,13 @@ class AuthenticationToken(object):
                              "serverId": server_id})
 
         if res.status_code != 204:
+            # https://wiki.vg/Authentication#Validate
+            # An accessToken may be unusable for authentication with a
+            # Minecraft server, but still be good enough for /refresh.
+            # In this event, we must ensure token is not authentic
+            # and a refresh is necessary.
+            self._authenticated = False
+
             _raise_from_response(res)
 
         return True
