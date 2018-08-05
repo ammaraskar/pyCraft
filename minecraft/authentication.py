@@ -236,8 +236,10 @@ class AuthenticationToken(object):
 
         # Validate returns 204 to indicate success
         # http://wiki.vg/Authentication#Response_3
-        if res.status_code == 204:
-            return True
+        if res.status_code != 204:
+            _raise_from_response(res)
+
+        return True
 
     @staticmethod
     def sign_out(username, password, launcher_profiles_dict=None):
