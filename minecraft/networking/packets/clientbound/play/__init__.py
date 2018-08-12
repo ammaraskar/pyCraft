@@ -97,7 +97,7 @@ class ServerDifficultyPacket(Packet):
 
     packet_name = 'server difficulty'
     get_definition = staticmethod(lambda context: [
-        {'difficulty_enum': UnsignedByte}
+        {'difficulty': UnsignedByte}
     ])
 
     # ServerDifficultyPacket.Difficulty is an alias for Difficulty
