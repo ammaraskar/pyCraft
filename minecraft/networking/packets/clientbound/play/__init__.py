@@ -21,6 +21,7 @@ def get_packets(context):
     packets = {
         KeepAlivePacket,
         JoinGamePacket,
+        ServerDifficultyPacket,
         ChatMessagePacket,
         PlayerPositionAndLookPacket,
         MapPacket,
@@ -73,7 +74,21 @@ class JoinGamePacket(Packet):
         {'difficulty': UnsignedByte},
         {'max_players': UnsignedByte},
         {'level_type': String},
-        {'reduced_debug_info': Boolean}])
+        {'reduced_debug_info': Boolean}
+    ])
+
+
+class ServerDifficultyPacket(Packet):
+    def get_id(context):
+        return 0x0D if context.protocol_version >= 332 else \
+               0x0E if context.protocol_version >= 318 else \
+               0x0D if context.protocol_version >= 67 else \
+               0x41
+
+    packet_name = 'server difficulty'
+    get_definition = staticmethod(lambda context: [
+        {'difficulty': UnsignedByte}
+    ])
 
 
 class ChatMessagePacket(Packet):
