@@ -83,7 +83,7 @@ class ServerDifficultyPacket(Packet):
     def get_id(context):
         return 0x0D if context.protocol_version >= 332 else \
                0x0E if context.protocol_version >= 318 else \
-               0x0D if context.protocol_version >= 67 else \
+               0x0D if context.protocol_version >= 70 else \
                0x41
 
     packet_name = 'server difficulty'
