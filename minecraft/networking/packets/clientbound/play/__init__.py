@@ -34,6 +34,7 @@ def get_packets(context):
         SpawnObjectPacket,
         BlockChangePacket,
         MultiBlockChangePacket,
+        RespawnPacket,
         PluginMessagePacket,
     }
     if context.protocol_version <= 47:
@@ -181,6 +182,27 @@ class UpdateHealthPacket(Packet):
         {'health': Float},
         {'food': VarInt},
         {'food_saturation': Float}
+    ])
+
+
+class RespawnPacket(Packet):
+    @staticmethod
+    def get_id(context):
+        return 0x38 if context.protocol_version >= 389 else \
+               0x37 if context.protocol_version >= 352 else \
+               0x36 if context.protocol_version >= 345 else \
+               0x35 if context.protocol_version >= 336 else \
+               0x34 if context.protocol_version >= 332 else \
+               0x35 if context.protocol_version >= 318 else \
+               0x33 if context.protocol_version >= 70 else \
+               0x07
+
+    packet_name = 'respawn'
+    get_definition = staticmethod(lambda context: [
+        {'dimension': Integer},
+        {'difficulty': UnsignedByte},
+        {'game_mode': UnsignedByte},
+        {'level_type': String}
     ])
 
 
