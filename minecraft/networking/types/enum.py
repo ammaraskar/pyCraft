@@ -12,6 +12,7 @@ from .utility import Vector
 
 __all__ = (
     'Enum', 'BitFieldEnum', 'AbsoluteHand', 'RelativeHand', 'BlockFace',
+    'Difficulty', 'Dimension', 'Gamemode'
 )
 
 
@@ -82,3 +83,26 @@ class BlockFace(Enum):
     #   >>> BlockFace.to_vector[BlockFace.NORTH]
     #   Position(x=0, y=0, z=-1)
     to_vector = {fce: pos for (pos, fce) in from_vector.items()}
+
+
+# Designation of a world's difficulty.
+class Difficulty(Enum):
+    PEACEFUL = 0
+    EASY = 1
+    NORMAL = 2
+    HARD = 3
+
+
+# Designation of a world's dimension.
+class Dimension(Enum):
+    NETHER = -1
+    OVERWORLD = 0
+    END = 1
+
+
+# Designation of a player's gamemode.
+class Gamemode(Enum):
+    SURVIVAL = 0
+    CREATIVE = 1
+    ADVENTURE = 2
+    SPECTATOR = 3
