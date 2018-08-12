@@ -4,7 +4,7 @@ from minecraft.networking.packets import (
 
 from minecraft.networking.types import (
     Integer, FixedPointInteger, UnsignedByte, Byte, Boolean, UUID, Short,
-    VarInt, Double, Float, String, Enum,
+    VarInt, Double, Float, String, Enum, Difficulty, Dimension, Gamemode
 )
 
 from .combat_event_packet import CombatEventPacket
