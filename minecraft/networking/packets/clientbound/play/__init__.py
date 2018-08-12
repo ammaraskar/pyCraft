@@ -79,6 +79,7 @@ class JoinGamePacket(Packet):
 
 
 class ServerDifficultyPacket(Packet):
+    @staticmethod
     def get_id(context):
         return 0x0D if context.protocol_version >= 332 else \
                0x0E if context.protocol_version >= 318 else \
