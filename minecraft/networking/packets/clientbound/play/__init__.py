@@ -77,6 +77,15 @@ class JoinGamePacket(Packet):
         {'reduced_debug_info': Boolean}
     ])
 
+    # JoinGamePacket.Difficulty is an alias for Difficulty
+    Difficulty = Difficulty
+
+    # JoinGamePacket.Gamemode is an alias for Gamemode
+    Gamemode = Gamemode
+
+    # JoinGamePacket.Dimension is an alias for Dimension
+    Dimension = Dimension
+
 
 class ServerDifficultyPacket(Packet):
     @staticmethod
@@ -88,8 +97,11 @@ class ServerDifficultyPacket(Packet):
 
     packet_name = 'server difficulty'
     get_definition = staticmethod(lambda context: [
-        {'difficulty': UnsignedByte}
+        {'difficulty_enum': UnsignedByte}
     ])
+
+    # ServerDifficultyPacket.Difficulty is an alias for Difficulty
+    Difficulty = Difficulty
 
 
 class ChatMessagePacket(Packet):
@@ -220,6 +232,15 @@ class RespawnPacket(Packet):
         {'game_mode': UnsignedByte},
         {'level_type': String}
     ])
+
+    # RespawnPacket.Difficulty is an alias for Difficulty.
+    Difficulty = Difficulty
+
+    # RespawnPacket.Dimension is an alias for Dimension.
+    Dimension = Dimension
+
+    # RespawnPacket.Gamemode is an alias for Gamemode.
+    Gamemode = Gamemode
 
 
 class PluginMessagePacket(AbstractPluginMessagePacket):
