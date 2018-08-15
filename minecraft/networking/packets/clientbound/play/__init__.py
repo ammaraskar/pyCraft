@@ -4,7 +4,7 @@ from minecraft.networking.packets import (
 
 from minecraft.networking.types import (
     Integer, FixedPointInteger, UnsignedByte, Byte, Boolean, UUID, Short,
-    VarInt, Double, Float, String, Enum, Difficulty, Dimension, Gamemode
+    VarInt, Double, Float, String, Enum, Difficulty, Dimension, GameMode
 )
 
 from .combat_event_packet import CombatEventPacket
@@ -81,7 +81,7 @@ class JoinGamePacket(Packet):
     Difficulty = Difficulty
 
     # JoinGamePacket.Gamemode is an alias for Gamemode
-    Gamemode = Gamemode
+    GameMode = GameMode
 
     # JoinGamePacket.Dimension is an alias for Dimension
     Dimension = Dimension
@@ -240,7 +240,7 @@ class RespawnPacket(Packet):
     Dimension = Dimension
 
     # RespawnPacket.Gamemode is an alias for Gamemode.
-    Gamemode = Gamemode
+    GameMode = GameMode
 
 
 class PluginMessagePacket(AbstractPluginMessagePacket):

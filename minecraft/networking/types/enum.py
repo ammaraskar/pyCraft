@@ -12,7 +12,7 @@ from .utility import Vector
 
 __all__ = (
     'Enum', 'BitFieldEnum', 'AbsoluteHand', 'RelativeHand', 'BlockFace',
-    'Difficulty', 'Dimension', 'Gamemode'
+    'Difficulty', 'Dimension', 'GameMode'
 )
 
 
@@ -101,7 +101,7 @@ class Dimension(Enum):
 
 
 # Designation of a player's gamemode.
-class Gamemode(Enum):
+class GameMode(Enum):
     SURVIVAL = 0
     CREATIVE = 1
     ADVENTURE = 2
