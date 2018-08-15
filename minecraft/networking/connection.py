@@ -193,6 +193,7 @@ class Connection(object):
         """
         def _method_func(method):
             self.register_packet_listener(method, *packet_types, **kwds)
+            return method
 
         return _method_func
 
