@@ -127,6 +127,8 @@ SUPPORTED_MINECRAFT_VERSIONS = {
     '18w32a':      397,
     '18w33a':      398,
     '1.13.1-pre1': 399,
+    '1.13.1-pre2': 400,
+    '1.13.1':      401,
 }
 
 SUPPORTED_PROTOCOL_VERSIONS = \
