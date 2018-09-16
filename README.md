@@ -1,3 +1,5 @@
+### :warning: Greetings, traveller! Note that you're looking at the `bots` branch of pyCraft, which has not been updated since 2013 and only supports Minecraft 1.6.4. To use pyCraft with modern Minecraft versions, use the [`master`](//github.com/ammaraskar/pyCraft) branch.
+
 pyCraft
 ====
 
