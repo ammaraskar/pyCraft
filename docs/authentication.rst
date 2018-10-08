@@ -28,10 +28,10 @@ is provided or the web request failed.
     :members:
 
 
-Arbitary Requests
+Arbitrary Requests
 ~~~~~~~~~~~~~~~~~~~~
 
-You may make any arbitary request to the Yggdrasil service with the _make_request
+You may make any arbitrary request to the Yggdrasil service with the _make_request
 method passing in the AUTH_SERVER as the server parameter.
 
 .. automodule:: minecraft.authentication
@@ -43,7 +43,7 @@ method passing in the AUTH_SERVER as the server parameter.
 ---------------
  Example Usage
 ---------------
-An example of making an arbitary request can be seen here::
+An example of making an arbitrary request can be seen here::
 
     payload = {'username': username,
                'password': password}
