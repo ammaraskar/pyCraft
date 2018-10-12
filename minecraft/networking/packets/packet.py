@@ -119,6 +119,8 @@ class Packet(object):
     @property
     def fields(self):
         """ An iterable of the names of the packet's fields, or None. """
+        if self.definition is None:
+            return None
         return (field for defn in self.definition for field in defn)
 
     def field_string(self, field):

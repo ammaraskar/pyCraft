@@ -32,6 +32,46 @@ class ConnectTest(fake_server._FakeServerTest):
                 raise fake_server.FakeServerDisconnect
 
 
+class ReconnectTest(ConnectTest):
+    phase = 0
+
+    def _start_client(self, client):
+        def handle_login_disconnect(packet):
+            if 'Please reconnect' in packet.json_data:
+                # Override the default behaviour of raising a fatal exception.
+                client.disconnect()
+                client.connect()
+                raise IgnorePacket
+        client.register_packet_listener(
+            handle_login_disconnect, clientbound.login.DisconnectPacket,
+            early=True)
+
+        def handle_play_disconnect(packet):
+            if 'Please reconnect' in packet.json_data:
+                client.connect()
+            elif 'Test successful' in packet.json_data:
+                raise fake_server.FakeServerTestSuccess
+        client.register_packet_listener(
+            handle_play_disconnect, clientbound.play.DisconnectPacket)
+
+        client.connect()
+
+    class client_handler_type(fake_server.FakeClientHandler):
+        def handle_login(self, packet):
+            if self.server.test_case.phase == 0:
+                self.server.test_case.phase = 1
+                raise fake_server.FakeServerDisconnect('Please reconnect (0).')
+            super(ReconnectTest.client_handler_type, self).handle_login(packet)
+
+        def handle_play_start(self):
+            if self.server.test_case.phase == 1:
+                self.server.test_case.phase = 2
+                raise fake_server.FakeServerDisconnect('Please reconnect (1).')
+            else:
+                assert self.server.test_case.phase == 2
+                raise fake_server.FakeServerDisconnect('Test successful (2).')
+
+
 class PingTest(ConnectTest):
     def _start_client(self, client):
         def handle_ping(latency_ms):
