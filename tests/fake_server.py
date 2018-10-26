@@ -275,7 +275,7 @@ class FakeClientHandler(object):
                 return
             assert isinstance(packet, serverbound.status.PingPacket)
             self.handle_ping(packet)
-        except FakeServerDisconnect as e:
+        except FakeServerDisconnect:
             pass
 
     def _read_packet_buffer(self):
