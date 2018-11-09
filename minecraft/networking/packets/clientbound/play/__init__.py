@@ -35,6 +35,7 @@ def get_packets(context):
         BlockChangePacket,
         MultiBlockChangePacket,
         PluginMessagePacket,
+        PlayerListHeaderAndFooterPacket,
     }
     if context.protocol_version <= 47:
         packets |= {
@@ -192,3 +193,19 @@ class PluginMessagePacket(AbstractPluginMessagePacket):
                0x19 if context.protocol_version >= 318 else \
                0x18 if context.protocol_version >= 70 else \
                0x3F
+
+
+class PlayerListHeaderAndFooterPacket(Packet):
+    @staticmethod
+    def get_id(context):
+        return 0x4E if context.protocol_version >= 393 else \
+               0x4A if context.protocol_version >= 338 else \
+               0x49 if context.protocol_version >= 335 else \
+               0x47 if context.protocol_version >= 110 else \
+               0x48 if context.protocol_version >= 107 else \
+               0x47
+
+    packet_name = 'player list header and footer'
+    definition = [
+        {'header': String},
+        {'footer': String}]
