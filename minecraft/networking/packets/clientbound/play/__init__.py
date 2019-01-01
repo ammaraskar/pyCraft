@@ -36,6 +36,7 @@ def get_packets(context):
         MultiBlockChangePacket,
         PluginMessagePacket,
         PlayerListHeaderAndFooterPacket,
+        SoundEffectPacket,
     }
     if context.protocol_version <= 47:
         packets |= {
@@ -209,3 +210,43 @@ class PlayerListHeaderAndFooterPacket(Packet):
     definition = [
         {'header': String},
         {'footer': String}]
+
+
+class SoundEffectPacket(Packet):
+    @staticmethod
+    def get_id(context):
+        return 0x4E if context.protocol_version >= 451 else \
+               0x4D if context.protocol_version >= 389 else \
+               0x4C if context.protocol_version >= 352 else \
+               0x4B if context.protocol_version >= 345 else \
+               0x4A if context.protocol_version >= 343 else \
+               0x49 if context.protocol_version >= 336 else \
+               0x48 if context.protocol_version >= 318 else \
+               0x46 if context.protocol_version >= 110 else \
+               0x47 if context.protocol_version >= 94 else \
+               0x23 if context.protocol_version >= 72 else \
+               0x29 if context.protocol_version >= 0 else \
+               0x2C
+
+    packet_name = 'sound effect'
+    @staticmethod
+    def get_definition(context):
+        definition = [
+            {'effect_position_x': Integer},
+            {'effect_position_y': Integer},
+            {'effect_position_z': Integer},
+            {'volume': Float},
+            {'pitch': Float},
+        ]
+
+        if context.protocol_version >= 94:
+            definition.insert(0, {'sound_id': VarInt})
+        else:
+            definition.insert(0, {'sound_name': String})
+
+        if context.protocol_version >= 95:
+            definition.insert(1, {'sound_category': VarInt})
+        elif context.protocol_version == 0:
+            definition.append({'sound_category': UnsignedByte})
+
+        return definition
