@@ -278,7 +278,7 @@ def _make_request(server, endpoint, data):
         A `requests.Request` object.
     """
     res = requests.post(server + "/" + endpoint, data=json.dumps(data),
-                        headers=HEADERS)
+                        headers=HEADERS, timeout=15)
     return res
 
 
