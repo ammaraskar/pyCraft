@@ -300,6 +300,10 @@ class NormalConnectionProcedure(unittest.TestCase):
 
         def mocked_make_request(server, endpoint, data):
             if endpoint == "authenticate":
+                if "accessToken" in data:
+                    response = successful_res.copy()
+                    response.json["accessToken"] = data["accessToken"]
+                    return response
                 return successful_res
             if endpoint == "refresh" and data["accessToken"] == "token":
                 return successful_res
@@ -323,6 +327,9 @@ class NormalConnectionProcedure(unittest.TestCase):
             self.assertFalse(a.authenticated)
             self.assertTrue(a.authenticate("username", "password"))
 
+            _make_request_mock.assert_called_once()
+            self.assertIn("clientToken", _make_request_mock.call_args[0][2])
+
             self.assertTrue(a.authenticated)
 
             self.assertTrue(a.refresh())
@@ -337,9 +344,35 @@ class NormalConnectionProcedure(unittest.TestCase):
 
             self.assertEqual(_make_request_mock.call_count, 6)
 
+        # Test that we send a provided clientToken if the authenticationToken
+        # is initialized with one
+        with mock.patch("minecraft.authentication._make_request",
+                side_effect=mocked_make_request) as _make_request_mock:
+            a = AuthenticationToken(client_token="existing_token")
+
+            self.assertTrue(a.authenticate("username", "password", invalidate_previous=False))
+
+            _make_request_mock.assert_called_once()
+            self.assertEqual("existing_token", _make_request_mock.call_args[0][2]["clientToken"])
+
+        # Test that we invalidate previous tokens properly
+        with mock.patch("minecraft.authentication._make_request",
+                side_effect=mocked_make_request) as _make_request_mock:
+            a = AuthenticationToken()
+
+            self.assertFalse(a.authenticated)
+            self.assertTrue(
+                a.authenticate("username", "password", invalidate_previous=True)
+            )
+
+            self.assertTrue(a.authenticated)
+            self.assertEqual(a.access_token, "token")
+            _make_request_mock.assert_called_once()
+            self.assertNotIn("clientToken", _make_request_mock.call_args[0][2])
+
         a = AuthenticationToken(username="username",
-                                access_token="token",
-                                client_token="token")
+                        access_token="token",
+                        client_token="token")
 
         # Failures
         with mock.patch("minecraft.authentication._make_request",
