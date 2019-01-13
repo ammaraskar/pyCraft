@@ -229,24 +229,21 @@ class SoundEffectPacket(Packet):
                0x2C
 
     packet_name = 'sound effect'
+
     @staticmethod
     def get_definition(context):
         definition = [
+            {'sound_id': VarInt},
+            {'sound_category': VarInt} if context.protocol_version >= 95 else {},
+            {'parrotted_entity_type': String} if 326 > context.protocol_version >= 321 else {},
             {'effect_position_x': Integer},
             {'effect_position_y': Integer},
             {'effect_position_z': Integer},
             {'volume': Float},
-            {'pitch': Float},
+            {'pitch': Float if context.protocol_version >= 201 else UnsignedByte}
         ]
 
-        if context.protocol_version >= 94:
-            definition.insert(0, {'sound_id': VarInt})
-        else:
-            definition.insert(0, {'sound_name': String})
-
-        if context.protocol_version >= 95:
-            definition.insert(1, {'sound_category': VarInt})
-        elif context.protocol_version == 0:
-            definition.append({'sound_category': UnsignedByte})
-
+        if 326 > context.protocol_version >= 321:
+            # Swaps the position of sound category and -id
+            definition[0], definition[1] = definition[1], definition[0]
         return definition
