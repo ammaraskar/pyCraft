@@ -132,6 +132,7 @@ SUPPORTED_MINECRAFT_VERSIONS = {
     '1.13.2-pre1': 402,
     '1.13.2-pre2': 403,
     '1.13.2':      404,
+    '1.14':        477,
 }
 
 SUPPORTED_PROTOCOL_VERSIONS = \

@@ -58,6 +58,11 @@ class MapPacket(Packet):
         else:
             self.is_tracking_position = True
 
+        if self.context.protocol_version >= 477:
+            self.locked = Boolean.read(file_object)
+        else:
+            self.locked = False
+
         icon_count = VarInt.read(file_object)
         self.icons = []
         for i in range(icon_count):
