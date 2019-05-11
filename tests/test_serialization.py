@@ -8,6 +8,8 @@ from minecraft.networking.types import (
     String as StringType, Position, TrailingByteArray, UnsignedLong,
 )
 from minecraft.networking.packets import PacketBuffer
+from minecraft.networking.connection import ConnectionContext
+from minecraft import SUPPORTED_PROTOCOL_VERSIONS
 
 
 TEST_DATA = {
@@ -33,25 +35,29 @@ TEST_DATA = {
 
 
 class SerializationTest(unittest.TestCase):
-
     def test_serialization(self):
-        for data_type in Type.__subclasses__():
-            if data_type in TEST_DATA:
-                test_cases = TEST_DATA[data_type]
+        for protocol_version in SUPPORTED_PROTOCOL_VERSIONS:
+            context = ConnectionContext(protocol_version=protocol_version)
 
-                for test_data in test_cases:
-                    packet_buffer = PacketBuffer()
-                    data_type.send(test_data, packet_buffer)
-                    packet_buffer.reset_cursor()
+            for data_type in Type.__subclasses__():
+                if data_type in TEST_DATA:
+                    test_cases = TEST_DATA[data_type]
 
-                    deserialized = data_type.read(packet_buffer)
-                    if data_type is FixedPointInteger:
-                        self.assertAlmostEqual(
-                            test_data, deserialized, delta=1.0/32.0)
-                    elif data_type is Float or data_type is Double:
-                        self.assertAlmostEquals(test_data, deserialized, 3)
-                    else:
-                        self.assertEqual(test_data, deserialized)
+                    for test_data in test_cases:
+                        packet_buffer = PacketBuffer()
+                        data_type.send_with_context(
+                            test_data, packet_buffer, context)
+                        packet_buffer.reset_cursor()
+
+                        deserialized = data_type.read_with_context(
+                            packet_buffer, context)
+                        if data_type is FixedPointInteger:
+                            self.assertAlmostEqual(
+                                test_data, deserialized, delta=1.0/32.0)
+                        elif data_type is Float or data_type is Double:
+                            self.assertAlmostEquals(test_data, deserialized, 3)
+                        else:
+                            self.assertEqual(test_data, deserialized)
 
     def test_exceptions(self):
         base_type = Type()
@@ -59,7 +65,19 @@ class SerializationTest(unittest.TestCase):
             base_type.read(None)
 
         with self.assertRaises(NotImplementedError):
+            base_type.read_with_context(None, None)
+
+        with self.assertRaises(NotImplementedError):
             base_type.send(None, None)
+
+        with self.assertRaises(NotImplementedError):
+            base_type.send_with_context(None, None, None)
+
+        with self.assertRaises(TypeError):
+            Position.read(None)
+
+        with self.assertRaises(TypeError):
+            Position.send(None, None)
 
         empty_socket = PacketBuffer()
         with self.assertRaises(Exception):

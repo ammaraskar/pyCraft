@@ -187,7 +187,8 @@ class TestReadWritePackets(unittest.TestCase):
         self._test_read_write_packet(packet)
 
     def test_spawn_object_packet(self):
-        EntityType = clientbound.play.SpawnObjectPacket.EntityType
+        EntityType = clientbound.play.SpawnObjectPacket.field_enum(
+                        'type_id', self.context)
 
         object_uuid = 'd9568851-85bc-4a10-8d6a-261d130626fa'
         pos_look = PositionAndLook(x=68.0, y=38.0, z=76.0, yaw=16, pitch=23)
@@ -195,6 +196,7 @@ class TestReadWritePackets(unittest.TestCase):
         entity_id, type_name, type_id = 49846, 'EGG', EntityType.EGG
 
         packet = clientbound.play.SpawnObjectPacket(
+                    context=self.context,
                     x=pos_look.x, y=pos_look.y, z=pos_look.z,
                     yaw=pos_look.yaw, pitch=pos_look.pitch,
                     velocity_x=velocity.x, velocity_y=velocity.y,
@@ -207,9 +209,9 @@ class TestReadWritePackets(unittest.TestCase):
         self.assertEqual(packet.type, type_name)
 
         packet2 = clientbound.play.SpawnObjectPacket(
-                     position_and_look=pos_look, velocity=velocity,
-                     type=type_name, object_uuid=object_uuid,
-                     entity_id=entity_id, data=1)
+                    context=self.context, position_and_look=pos_look,
+                    velocity=velocity, type=type_name,
+                    object_uuid=object_uuid, entity_id=entity_id, data=1)
         self.assertEqual(packet.__dict__, packet2.__dict__)
 
         packet2.position = pos_look.position

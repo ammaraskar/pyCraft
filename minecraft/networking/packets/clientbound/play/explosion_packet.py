@@ -5,7 +5,8 @@ from minecraft.networking.packets import Packet
 class ExplosionPacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x1E if context.protocol_version >= 389 else \
+        return 0x1C if context.protocol_version >= 471 else \
+               0x1E if context.protocol_version >= 389 else \
                0x1D if context.protocol_version >= 345 else \
                0x1C if context.protocol_version >= 332 else \
                0x1D if context.protocol_version >= 318 else \

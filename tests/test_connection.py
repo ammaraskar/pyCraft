@@ -409,7 +409,7 @@ class VersionNegotiationEdgeCases(fake_server._FakeServerTest):
             status_response = '{"description": {"text": "FakeServer"}}'
 
         class ClientHandler(fake_server.FakeClientHandler):
-            def _run_status(self):
+            def handle_status(self, request_packet):
                 packet = clientbound.status.ResponsePacket()
                 packet.json_response = status_response
                 self.write_packet(packet)
