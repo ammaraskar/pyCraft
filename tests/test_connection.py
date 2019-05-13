@@ -224,26 +224,23 @@ class EarlyPacketListenerTest(ConnectTest):
         the early packet listener is registered afterwards.
     """
     def _start_client(self, client):
+        @client.listener(clientbound.play.JoinGamePacket)
         def handle_join(packet):
             assert early_handle_join.called, \
                    'Ordinary listener called before early listener.'
             handle_join.called = True
         handle_join.called = False
-        client.register_packet_listener(
-            handle_join, clientbound.play.JoinGamePacket)
 
+        @client.listener(clientbound.play.JoinGamePacket, early=True)
         def early_handle_join(packet):
             early_handle_join.called = True
-        client.register_packet_listener(
-            early_handle_join, clientbound.play.JoinGamePacket, early=True)
         early_handle_join.called = False
 
+        @client.listener(clientbound.play.DisconnectPacket)
         def handle_disconnect(packet):
             assert early_handle_join.called, 'Early listener not called.'
             assert handle_join.called, 'Ordinary listener not called.'
             raise fake_server.FakeServerTestSuccess
-        client.register_packet_listener(
-            handle_disconnect, clientbound.play.DisconnectPacket)
 
         client.connect()
 
