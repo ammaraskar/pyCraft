@@ -187,6 +187,16 @@ class Connection(object):
         else:
             self._outgoing_packet_queue.append(packet)
 
+    def listener(self, *packet_types, **kwds):
+        """
+        Shorthand decorator to register a function as a packet listener.
+        """
+        def _method_func(method):
+            self.register_packet_listener(method, *packet_types, **kwds)
+            return method
+
+        return _method_func
+
     def register_packet_listener(self, method, *packet_types, **kwds):
         """
         Registers a listener method which will be notified when a packet of

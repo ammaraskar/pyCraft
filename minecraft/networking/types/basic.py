@@ -20,13 +20,31 @@ __all__ = (
 class Type(object):
     __slots__ = ()
 
-    @staticmethod
-    def read(file_object):
-        raise NotImplementedError("Base data type not serializable")
+    @classmethod
+    def read_with_context(cls, file_object, _context):
+        return cls.read(file_object)
 
-    @staticmethod
-    def send(value, socket):
-        raise NotImplementedError("Base data type not serializable")
+    @classmethod
+    def send_with_context(cls, value, socket, _context):
+        return cls.send(value, socket)
+
+    @classmethod
+    def read(cls, file_object):
+        if cls.read_with_context == Type.read_with_context:
+            raise NotImplementedError('One of "read" or "read_with_context" '
+                                      'must be overridden in a subclass.')
+        else:
+            raise TypeError('This type requires a ConnectionContext: '
+                            'call "read_with_context" instead of "read".')
+
+    @classmethod
+    def send(cls, value, socket):
+        if cls.send_with_context == Type.send_with_context:
+            raise NotImplementedError('One of "send" or "send_with_context" '
+                                      'must be overridden in a subclass.')
+        else:
+            raise TypeError('This type requires a ConnectionContext: '
+                            'call "send_with_context" instead of "send".')
 
 
 class Boolean(Type):
@@ -263,11 +281,16 @@ class Position(Type, Vector):
     __slots__ = ()
 
     @staticmethod
-    def read(file_object):
+    def read_with_context(file_object, context):
         location = UnsignedLong.read(file_object)
-        x = int(location >> 38)
-        y = int((location >> 26) & 0xFFF)
-        z = int(location & 0x3FFFFFF)
+        x = int(location >> 38)                # 26 most significant bits
+
+        if context.protocol_version >= 443:
+            z = int((location >> 12) & 0x3FFFFFF)  # 26 intermediate bits
+            y = int(location & 0xFFF)              # 12 least signficant bits
+        else:
+            y = int((location >> 26) & 0xFFF)      # 12 intermediate bits
+            z = int(location & 0x3FFFFFF)          # 26 least significant bits
 
         if x >= pow(2, 25):
             x -= pow(2, 26)
@@ -281,8 +304,10 @@ class Position(Type, Vector):
         return Position(x=x, y=y, z=z)
 
     @staticmethod
-    def send(position, socket):
+    def send_with_context(position, socket, context):
         # 'position' can be either a tuple or Position object.
         x, y, z = position
-        value = ((x & 0x3FFFFFF) << 38) | ((y & 0xFFF) << 26) | (z & 0x3FFFFFF)
+        value = ((x & 0x3FFFFFF) << 38 | (z & 0x3FFFFFF) << 12 | (y & 0xFFF)
+                 if context.protocol_version >= 443 else
+                 (x & 0x3FFFFFF) << 38 | (y & 0xFFF) << 26 | (z & 0x3FFFFFF))
         UnsignedLong.send(value, socket)
