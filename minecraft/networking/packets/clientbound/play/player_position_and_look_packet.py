@@ -8,7 +8,9 @@ from minecraft.networking.types import (
 class PlayerPositionAndLookPacket(Packet, BitFieldEnum):
     @staticmethod
     def get_id(context):
-        return 0x32 if context.protocol_version >= 389 else \
+        return 0x35 if context.protocol_version >= 471 else \
+               0x33 if context.protocol_version >= 451 else \
+               0x32 if context.protocol_version >= 389 else \
                0x31 if context.protocol_version >= 352 else \
                0x30 if context.protocol_version >= 345 else \
                0x2F if context.protocol_version >= 336 else \
@@ -29,7 +31,7 @@ class PlayerPositionAndLookPacket(Packet, BitFieldEnum):
     ])
 
     field_enum = classmethod(
-        lambda cls, field: cls if field == 'flags' else None)
+        lambda cls, field, context: cls if field == 'flags' else None)
 
     FLAG_REL_X = 0x01
     FLAG_REL_Y = 0x02

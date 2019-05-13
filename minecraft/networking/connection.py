@@ -362,6 +362,8 @@ class Connection(object):
         self.socket = socket.socket(ai_faml, ai_type, ai_prot)
         self.socket.connect(ai_addr)
         self.file_object = self.socket.makefile("rb", 0)
+        self.options.compression_enabled = False
+        self.options.compression_threshold = -1
         self.connected = True
 
     def disconnect(self, immediate=False):
@@ -510,7 +512,7 @@ class NetworkingThread(threading.Thread):
 
                 # Ignore the earlier exception if a disconnect packet is
                 # received, as it may have been caused by trying to write to
-                # thw closed socket, which does not represent a program error.
+                # the closed socket, which does not represent a program error.
                 if exc_info is not None and packet.packet_name == "disconnect":
                     exc_info = None
 

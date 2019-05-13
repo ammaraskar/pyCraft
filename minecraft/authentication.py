@@ -1,5 +1,6 @@
 import requests
 import json
+import uuid
 from .exceptions import YggdrasilError
 
 #: The base url for Ygdrassil requests
@@ -84,7 +85,7 @@ class AuthenticationToken(object):
 
         return True
 
-    def authenticate(self, username, password):
+    def authenticate(self, username, password, invalidate_previous=False):
         """
         Authenticates the user against https://authserver.mojang.com using
         `username` and `password` parameters.
@@ -93,6 +94,8 @@ class AuthenticationToken(object):
             username - An `str` object with the username (unmigrated accounts)
                 or email address for a Mojang account.
             password - An `str` object with the password.
+            invalidate_previous - A `bool`. When `True`, invalidate
+                all previously acquired `access_token`s across all clients.
 
         Returns:
             Returns `True` if successful.
@@ -109,6 +112,12 @@ class AuthenticationToken(object):
             "username": username,
             "password": password
         }
+
+        if not invalidate_previous:
+            # Include a `client_token` in the payload to prevent existing
+            # `access_token`s from being invalidated. If `self.client_token`
+            # is `None` generate a `client_token` using uuid4
+            payload["clientToken"] = self.client_token or uuid.uuid4().hex
 
         res = _make_request(AUTH_SERVER, "authenticate", payload)
 
@@ -269,7 +278,7 @@ def _make_request(server, endpoint, data):
         A `requests.Request` object.
     """
     res = requests.post(server + "/" + endpoint, data=json.dumps(data),
-                        headers=HEADERS)
+                        headers=HEADERS, timeout=15)
     return res
 
 

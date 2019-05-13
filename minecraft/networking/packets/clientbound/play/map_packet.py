@@ -28,7 +28,7 @@ class MapPacket(Packet):
 
     class Map(MutableRecord):
         __slots__ = ('id', 'scale', 'icons', 'pixels', 'width', 'height',
-                     'is_tracking_position')
+                     'is_tracking_position', 'is_locked')
 
         def __init__(self, id=None, scale=None, width=128, height=128):
             self.id = id
@@ -38,6 +38,7 @@ class MapPacket(Packet):
             self.height = height
             self.pixels = bytearray(0 for i in range(width*height))
             self.is_tracking_position = True
+            self.is_locked = False
 
     class MapSet(object):
         __slots__ = 'maps_by_id'
@@ -57,6 +58,11 @@ class MapPacket(Packet):
             self.is_tracking_position = Boolean.read(file_object)
         else:
             self.is_tracking_position = True
+
+        if self.context.protocol_version >= 452:
+            self.is_locked = Boolean.read(file_object)
+        else:
+            self.is_locked = False
 
         icon_count = VarInt.read(file_object)
         self.icons = []
@@ -99,6 +105,7 @@ class MapPacket(Packet):
                 z = self.offset[1] + i // self.width
                 map.pixels[x + map.width * z] = self.pixels[i]
         map.is_tracking_position = self.is_tracking_position
+        map.is_locked = self.is_locked
 
     def apply_to_map_set(self, map_set):
         map = map_set.maps_by_id.get(self.map_id)

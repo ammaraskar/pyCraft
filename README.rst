@@ -28,7 +28,8 @@ pyCraft is compatible with the following Minecraft releases:
 * 1.10, 1.10.1, 1.10.2
 * 1.11, 1.11.1, 1.11.2
 * 1.12, 1.12.1, 1.12.2
-* 1.13
+* 1.13, 1.13.1, 1.13.2
+* 1.14
 
 In addition, some development snapshots and pre-release versions are supported:
 `<minecraft/__init__.py>`_ contains a full list of supported Minecraft versions

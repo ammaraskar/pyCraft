@@ -131,6 +131,12 @@ class EncryptedCompressedConnection(EncryptedConnection,
     pass
 
 
+# Regression test for <https://github.com/ammaraskar/pyCraft/issues/109>.
+class EncryptedCompressedReconnect(test_connection.ReconnectTest,
+                                   EncryptedCompressedConnection):
+    pass
+
+
 class MockSocket(object):
 
     def __init__(self, encryptor, decryptor):
