@@ -4,7 +4,7 @@ from minecraft.networking.packets import (
 
 from minecraft.networking.types import (
     Integer, FixedPointInteger, UnsignedByte, Byte, Boolean, UUID, Short,
-    VarInt, Double, Float, String, Enum, Difficulty, Dimension, GameMode
+    VarInt, Double, Float, String, Enum, Difficulty, Dimension, GameMode,
 )
 
 from .combat_event_packet import CombatEventPacket
@@ -14,6 +14,7 @@ from .player_position_and_look_packet import PlayerPositionAndLookPacket
 from .spawn_object_packet import SpawnObjectPacket
 from .block_change_packet import BlockChangePacket, MultiBlockChangePacket
 from .explosion_packet import ExplosionPacket
+from .sound_effect_packet import SoundEffectPacket
 
 
 # Formerly known as state_playing_clientbound.
@@ -42,6 +43,10 @@ def get_packets(context):
     if context.protocol_version <= 47:
         packets |= {
             SetCompressionPacket,
+        }
+    if context.protocol_version >= 94:
+        packets |= {
+            SoundEffectPacket,
         }
     return packets
 

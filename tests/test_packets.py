@@ -221,6 +221,13 @@ class TestReadWritePackets(unittest.TestCase):
         self._test_read_write_packet(packet)
         self._test_read_write_packet(packet2)
 
+    def test_sound_effect_packet(self):
+        SoundCategory = clientbound.play.SoundEffectPacket.SoundCategory
+        packet = clientbound.play.SoundEffectPacket(
+            sound_category=SoundCategory.NEUTRAL, sound_id=545,
+            effect_position=Vector(0.125, 300.0, 50.5), volume=0.75, pitch=1.5)
+        self._test_read_write_packet(packet)
+
     def _test_read_write_packet(self, packet_in):
         packet_in.context = self.context
         packet_buffer = PacketBuffer()

@@ -22,6 +22,10 @@ def get_packets(context):
         PluginMessagePacket,
         PlayerBlockPlacementPacket,
     }
+    if context.protocol_version >= 69:
+        packets |= {
+            UseItemPacket,
+        }
     if context.protocol_version >= 107:
         packets |= {
             TeleportConfirmPacket,
@@ -211,3 +215,25 @@ class PlayerBlockPlacementPacket(Packet):
 
     # PlayerBlockPlacementPacket.Face is an alias for BlockFace.
     Face = BlockFace
+
+
+class UseItemPacket(Packet):
+    @staticmethod
+    def get_id(context):
+        return 0x2D if context.protocol_version >= 468 else \
+               0x2C if context.protocol_version >= 464 else \
+               0x2A if context.protocol_version >= 389 else \
+               0x28 if context.protocol_version >= 386 else \
+               0x20 if context.protocol_version >= 345 else \
+               0x1F if context.protocol_version >= 343 else \
+               0x20 if context.protocol_version >= 332 else \
+               0x1F if context.protocol_version >= 318 else \
+               0x1D if context.protocol_version >= 94 else \
+               0x1A if context.protocol_version >= 70 else \
+               0x08
+
+    packet_name = "use item"
+    get_definition = staticmethod(lambda context: [
+        {'hand': VarInt}])
+
+    Hand = RelativeHand
