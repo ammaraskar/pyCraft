@@ -100,7 +100,8 @@ class ServerDifficultyPacket(Packet):
 
     packet_name = 'server difficulty'
     get_definition = staticmethod(lambda context: [
-        {'difficulty': UnsignedByte}
+        {'difficulty': UnsignedByte},
+        {'is_locked': Boolean} if context.protocol_version >= 464 else {},
     ])
 
     # ServerDifficultyPacket.Difficulty is an alias for Difficulty
@@ -226,7 +227,10 @@ class UpdateHealthPacket(Packet):
 class RespawnPacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x38 if context.protocol_version >= 389 else \
+        return 0x3A if context.protocol_version >= 471 else \
+               0x38 if context.protocol_version >= 461 else \
+               0x39 if context.protocol_version >= 451 else \
+               0x38 if context.protocol_version >= 389 else \
                0x37 if context.protocol_version >= 352 else \
                0x36 if context.protocol_version >= 345 else \
                0x35 if context.protocol_version >= 336 else \
@@ -238,9 +242,9 @@ class RespawnPacket(Packet):
     packet_name = 'respawn'
     get_definition = staticmethod(lambda context: [
         {'dimension': Integer},
-        {'difficulty': UnsignedByte},
+        {'difficulty': UnsignedByte} if context.protocol_version < 464 else {},
         {'game_mode': UnsignedByte},
-        {'level_type': String}
+        {'level_type': String},
     ])
 
     # RespawnPacket.Difficulty is an alias for Difficulty.
