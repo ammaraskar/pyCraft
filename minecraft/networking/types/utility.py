@@ -6,7 +6,7 @@ from collections import namedtuple
 
 
 __all__ = (
-    'Vector', 'MutableRecord', 'PositionAndLook',
+    'Vector', 'MutableRecord', 'descriptor',
 )
 
 
