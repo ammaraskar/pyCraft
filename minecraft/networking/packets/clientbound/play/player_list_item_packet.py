@@ -8,7 +8,9 @@ from minecraft.networking.types import (
 class PlayerListItemPacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x30 if context.protocol_version >= 389 else \
+        return 0x33 if context.protocol_version >= 471 else \
+               0x31 if context.protocol_version >= 451 else \
+               0x30 if context.protocol_version >= 389 else \
                0x2F if context.protocol_version >= 345 else \
                0x2E if context.protocol_version >= 336 else \
                0x2D if context.protocol_version >= 332 else \

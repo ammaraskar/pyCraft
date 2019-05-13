@@ -90,3 +90,50 @@ class PositionAndLook(MutableRecord):
     def look(self, look):
         self.yaw, self.pitch = look
     look = property(lambda self: (self.yaw, self.pitch), look)
+
+
+class descriptor(object):
+    """Behaves identically to the builtin 'property' function of Python,
+       except that the getter, setter and deleter functions given by the
+       user are used as the raw __get__, __set__ and __delete__ functions
+       as defined in Python's descriptor protocol.
+    """
+    __slots__ = '_fget', '_fset', '_fdel'
+
+    def __init__(self, fget=None, fset=None, fdel=None):
+        self._fget = fget if fget is not None else self._default_get
+        self._fset = fset if fset is not None else self._default_set
+        self._fdel = fdel if fdel is not None else self._default_del
+
+    def getter(self, fget):
+        self._fget = fget
+        return self
+
+    def setter(self, fset):
+        self._fset = fset
+        return self
+
+    def deleter(self, fdel):
+        self._fdel = fdel
+        return self
+
+    @staticmethod
+    def _default_get(instance, owner):
+        raise AttributeError('unreadable attribute')
+
+    @staticmethod
+    def _default_set(instance, value):
+        raise AttributeError("can't set attribute")
+
+    @staticmethod
+    def _default_del(instance):
+        raise AttributeError("can't delete attribute")
+
+    def __get__(self, instance, owner):
+        return self._fget(self, instance, owner)
+
+    def __set__(self, instance, value):
+        return self._fset(self, instance, value)
+
+    def __delete__(self, instance):
+        return self._fdel(self, instance)

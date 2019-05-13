@@ -103,7 +103,7 @@ class FakeClientHandler(object):
         # Called upon entering the play state.
         self.write_packet(clientbound.play.JoinGamePacket(
             entity_id=0, game_mode=0, dimension=0, difficulty=2, max_players=1,
-            level_type='default', reduced_debug_info=False))
+            level_type='default', reduced_debug_info=False, render_distance=9))
 
     def handle_play_packet(self, packet):
         # Called upon each packet received after handle_play_start() returns.
@@ -275,7 +275,7 @@ class FakeClientHandler(object):
                 return
             assert isinstance(packet, serverbound.status.PingPacket)
             self.handle_ping(packet)
-        except FakeServerDisconnect as e:
+        except FakeServerDisconnect:
             pass
 
     def _read_packet_buffer(self):
@@ -326,14 +326,14 @@ class FakeServer(object):
     """
 
     __slots__ = 'listen_socket', 'compression_threshold', 'context', \
-                'minecraft_version', 'client_handler_type', \
+                'minecraft_version', 'client_handler_type', 'server_type', \
                 'packets_handshake', 'packets_login', 'packets_playing', \
                 'packets_status', 'lock', 'stopping', 'private_key', \
-                'public_key_bytes',
+                'public_key_bytes', 'test_case',
 
     def __init__(self, minecraft_version=None, compression_threshold=None,
                  client_handler_type=FakeClientHandler, private_key=None,
-                 public_key_bytes=None):
+                 public_key_bytes=None, test_case=None):
         if minecraft_version is None:
             minecraft_version = VERSIONS[-1][0]
 
@@ -352,6 +352,7 @@ class FakeServer(object):
         self.client_handler_type = client_handler_type
         self.private_key = private_key
         self.public_key_bytes = public_key_bytes
+        self.test_case = test_case
 
         self.packets_handshake = {
             p.get_id(self.context): p for p in
@@ -427,6 +428,9 @@ class _FakeServerTest(unittest.TestCase):
     # The set of Minecraft version names or protocol version numbers that the
     # client will support. If None, the client supports all possible versions.
 
+    server_type = FakeServer
+    # A subclass of FakeServer to be used in tests.
+
     client_handler_type = FakeClientHandler
     # A subclass of FakeClientHandler to be used in tests.
 
@@ -464,13 +468,16 @@ class _FakeServerTest(unittest.TestCase):
         client.connect()
 
     def _test_connect(self, client_versions=None, server_version=None,
-                      client_handler_type=None, connection_type=None,
-                      compression_threshold=None, private_key=None,
-                      public_key_bytes=None, ignore_extra_exceptions=None):
+                      server_type=None, client_handler_type=None,
+                      connection_type=None, compression_threshold=None,
+                      private_key=None, public_key_bytes=None,
+                      ignore_extra_exceptions=None):
         if client_versions is None:
             client_versions = self.client_versions
         if server_version is None:
             server_version = self.server_version
+        if server_type is None:
+            server_type = self.server_type
         if client_handler_type is None:
             client_handler_type = self.client_handler_type
         if connection_type is None:
@@ -484,11 +491,12 @@ class _FakeServerTest(unittest.TestCase):
         if ignore_extra_exceptions is None:
             ignore_extra_exceptions = self.ignore_extra_exceptions
 
-        server = FakeServer(minecraft_version=server_version,
-                            compression_threshold=compression_threshold,
-                            client_handler_type=client_handler_type,
-                            private_key=private_key,
-                            public_key_bytes=public_key_bytes)
+        server = server_type(minecraft_version=server_version,
+                             compression_threshold=compression_threshold,
+                             client_handler_type=client_handler_type,
+                             private_key=private_key,
+                             public_key_bytes=public_key_bytes,
+                             test_case=self)
         addr = "localhost"
         port = server.listen_socket.getsockname()[1]
 

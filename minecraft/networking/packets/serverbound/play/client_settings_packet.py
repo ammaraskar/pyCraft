@@ -8,7 +8,8 @@ from minecraft.networking.types import (
 class ClientSettingsPacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x04 if context.protocol_version >= 389 else \
+        return 0x05 if context.protocol_version >= 464 else \
+               0x04 if context.protocol_version >= 389 else \
                0x03 if context.protocol_version >= 343 else \
                0x04 if context.protocol_version >= 336 else \
                0x05 if context.protocol_version >= 318 else \
@@ -26,7 +27,7 @@ class ClientSettingsPacket(Packet):
         {'main_hand': VarInt} if context.protocol_version > 49 else {}])
 
     field_enum = classmethod(
-        lambda cls, field: {
+        lambda cls, field, context: {
             'chat_mode': cls.ChatMode,
             'displayed_skin_parts': cls.SkinParts,
             'main_hand': AbsoluteHand,
