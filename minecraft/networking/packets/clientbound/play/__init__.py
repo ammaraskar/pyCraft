@@ -4,7 +4,7 @@ from minecraft.networking.packets import (
 
 from minecraft.networking.types import (
     Integer, FixedPointInteger, UnsignedByte, Byte, Boolean, UUID, Short,
-    VarInt, Double, Float, String, Enum,
+    VarInt, Double, Float, String, Enum, Difficulty, Dimension, GameMode
 )
 
 from .combat_event_packet import CombatEventPacket
@@ -21,6 +21,7 @@ def get_packets(context):
     packets = {
         KeepAlivePacket,
         JoinGamePacket,
+        ServerDifficultyPacket,
         ChatMessagePacket,
         PlayerPositionAndLookPacket,
         MapPacket,
@@ -34,6 +35,7 @@ def get_packets(context):
         SpawnObjectPacket,
         BlockChangePacket,
         MultiBlockChangePacket,
+        RespawnPacket,
         PluginMessagePacket,
         PlayerListHeaderAndFooterPacket,
     }
@@ -75,7 +77,35 @@ class JoinGamePacket(Packet):
         {'max_players': UnsignedByte},
         {'level_type': String},
         {'render_distance': VarInt} if context.protocol_version >= 468 else {},
-        {'reduced_debug_info': Boolean}])
+        {'reduced_debug_info': Boolean},
+    ])
+
+    # JoinGamePacket.Difficulty is an alias for Difficulty
+    Difficulty = Difficulty
+
+    # JoinGamePacket.Gamemode is an alias for Gamemode
+    GameMode = GameMode
+
+    # JoinGamePacket.Dimension is an alias for Dimension
+    Dimension = Dimension
+
+
+class ServerDifficultyPacket(Packet):
+    @staticmethod
+    def get_id(context):
+        return 0x0D if context.protocol_version >= 332 else \
+               0x0E if context.protocol_version >= 318 else \
+               0x0D if context.protocol_version >= 70 else \
+               0x41
+
+    packet_name = 'server difficulty'
+    get_definition = staticmethod(lambda context: [
+        {'difficulty': UnsignedByte},
+        {'is_locked': Boolean} if context.protocol_version >= 464 else {},
+    ])
+
+    # ServerDifficultyPacket.Difficulty is an alias for Difficulty
+    Difficulty = Difficulty
 
 
 class ChatMessagePacket(Packet):
@@ -192,6 +222,39 @@ class UpdateHealthPacket(Packet):
         {'food': VarInt},
         {'food_saturation': Float}
     ])
+
+
+class RespawnPacket(Packet):
+    @staticmethod
+    def get_id(context):
+        return 0x3A if context.protocol_version >= 471 else \
+               0x38 if context.protocol_version >= 461 else \
+               0x39 if context.protocol_version >= 451 else \
+               0x38 if context.protocol_version >= 389 else \
+               0x37 if context.protocol_version >= 352 else \
+               0x36 if context.protocol_version >= 345 else \
+               0x35 if context.protocol_version >= 336 else \
+               0x34 if context.protocol_version >= 332 else \
+               0x35 if context.protocol_version >= 318 else \
+               0x33 if context.protocol_version >= 70 else \
+               0x07
+
+    packet_name = 'respawn'
+    get_definition = staticmethod(lambda context: [
+        {'dimension': Integer},
+        {'difficulty': UnsignedByte} if context.protocol_version < 464 else {},
+        {'game_mode': UnsignedByte},
+        {'level_type': String},
+    ])
+
+    # RespawnPacket.Difficulty is an alias for Difficulty.
+    Difficulty = Difficulty
+
+    # RespawnPacket.Dimension is an alias for Dimension.
+    Dimension = Dimension
+
+    # RespawnPacket.Gamemode is an alias for Gamemode.
+    GameMode = GameMode
 
 
 class PluginMessagePacket(AbstractPluginMessagePacket):
