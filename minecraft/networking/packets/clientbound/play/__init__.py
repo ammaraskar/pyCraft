@@ -4,7 +4,7 @@ from minecraft.networking.packets import (
 
 from minecraft.networking.types import (
     Integer, FixedPointInteger, UnsignedByte, Byte, Boolean, UUID, Short,
-    VarInt, Double, Float, String, Enum, Difficulty, Dimension, GameMode
+    VarInt, Double, Float, String, Enum, Difficulty, Dimension, GameMode,
 )
 
 from .combat_event_packet import CombatEventPacket
@@ -14,6 +14,7 @@ from .player_position_and_look_packet import PlayerPositionAndLookPacket
 from .spawn_object_packet import SpawnObjectPacket
 from .block_change_packet import BlockChangePacket, MultiBlockChangePacket
 from .explosion_packet import ExplosionPacket
+from .sound_effect_packet import SoundEffectPacket
 
 
 # Formerly known as state_playing_clientbound.
@@ -38,11 +39,14 @@ def get_packets(context):
         RespawnPacket,
         PluginMessagePacket,
         PlayerListHeaderAndFooterPacket,
-        SoundEffectPacket,
     }
     if context.protocol_version <= 47:
         packets |= {
             SetCompressionPacket,
+        }
+    if context.protocol_version >= 94:
+        packets |= {
+            SoundEffectPacket,
         }
     return packets
 
@@ -287,40 +291,3 @@ class PlayerListHeaderAndFooterPacket(Packet):
     definition = [
         {'header': String},
         {'footer': String}]
-
-
-class SoundEffectPacket(Packet):
-    @staticmethod
-    def get_id(context):
-        return 0x4E if context.protocol_version >= 451 else \
-               0x4D if context.protocol_version >= 389 else \
-               0x4C if context.protocol_version >= 352 else \
-               0x4B if context.protocol_version >= 345 else \
-               0x4A if context.protocol_version >= 343 else \
-               0x49 if context.protocol_version >= 336 else \
-               0x48 if context.protocol_version >= 318 else \
-               0x46 if context.protocol_version >= 110 else \
-               0x47 if context.protocol_version >= 94 else \
-               0x23 if context.protocol_version >= 72 else \
-               0x29 if context.protocol_version >= 0 else \
-               0x2C
-
-    packet_name = 'sound effect'
-
-    @staticmethod
-    def get_definition(context):
-        definition = [
-            {'sound_id': VarInt},
-            {'sound_category': VarInt} if context.protocol_version >= 95 else {},
-            {'parrotted_entity_type': String} if 326 > context.protocol_version >= 321 else {},
-            {'effect_position_x': Integer},
-            {'effect_position_y': Integer},
-            {'effect_position_z': Integer},
-            {'volume': Float},
-            {'pitch': Float if context.protocol_version >= 201 else UnsignedByte}
-        ]
-
-        if 326 > context.protocol_version >= 321:
-            # Swaps the position of sound category and -id
-            definition[0], definition[1] = definition[1], definition[0]
-        return definition

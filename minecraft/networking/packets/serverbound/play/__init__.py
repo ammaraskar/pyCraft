@@ -21,8 +21,11 @@ def get_packets(context):
         ClientSettingsPacket,
         PluginMessagePacket,
         PlayerBlockPlacementPacket,
-        UseItemPacket,
     }
+    if context.protocol_version >= 69:
+        packets |= {
+            UseItemPacket,
+        }
     if context.protocol_version >= 107:
         packets |= {
             TeleportConfirmPacket,
@@ -217,7 +220,9 @@ class PlayerBlockPlacementPacket(Packet):
 class UseItemPacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x2A if context.protocol_version >= 389 else \
+        return 0x2D if context.protocol_version >= 468 else \
+               0x2C if context.protocol_version >= 464 else \
+               0x2A if context.protocol_version >= 389 else \
                0x28 if context.protocol_version >= 386 else \
                0x20 if context.protocol_version >= 345 else \
                0x1F if context.protocol_version >= 343 else \
@@ -232,4 +237,3 @@ class UseItemPacket(Packet):
         {'hand': VarInt}])
 
     Hand = RelativeHand
-    HAND_MAIN, HAND_OFF = Hand.MAIN, Hand.OFF  # For backward compatibility.
