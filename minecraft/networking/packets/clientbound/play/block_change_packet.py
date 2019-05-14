@@ -1,6 +1,7 @@
 from minecraft.networking.packets import Packet
 from minecraft.networking.types import (
-    VarInt, Integer, UnsignedByte, Position, Vector, MutableRecord
+    VarInt, Integer, UnsignedByte, Position, Vector, MutableRecord,
+    attribute_alias, multi_attribute_alias,
 )
 
 
@@ -20,19 +21,25 @@ class BlockChangePacket(Packet):
     block_state_id = 0
 
     # For protocols < 347: an accessor for (block_state_id >> 4).
+    @property
+    def blockId(self):
+        return self.block_state_id >> 4
+
+    @blockId.setter
     def blockId(self, block_id):
         self.block_state_id = (self.block_state_id & 0xF) | (block_id << 4)
-    blockId = property(lambda self: self.block_state_id >> 4, blockId)
 
     # For protocols < 347: an accessor for (block_state_id & 0xF).
+    @property
+    def blockMeta(self):
+        return self.block_state_id & 0xF
+
+    @blockMeta.setter
     def blockMeta(self, meta):
         self.block_state_id = (self.block_state_id & ~0xF) | (meta & 0xF)
-    blockMeta = property(lambda self: self.block_state_id & 0xF, blockMeta)
 
     # This alias is retained for backward compatibility.
-    def blockStateId(self, block_state_id):
-        self.block_state_id = block_state_id
-    blockStateId = property(lambda self: self.block_state_id, blockStateId)
+    blockStateId = attribute_alias('block_state_id')
 
 
 class MultiBlockChangePacket(Packet):
@@ -54,24 +61,28 @@ class MultiBlockChangePacket(Packet):
             super(MultiBlockChangePacket.Record, self).__init__(**kwds)
 
         # Access the 'x', 'y', 'z' fields as a Vector of ints.
-        def position(self, position):
-            self.x, self.y, self.z = position
-        position = property(lambda r: Vector(r.x, r.y, r.z), position)
+        position = multi_attribute_alias(Vector, 'x', 'y', 'z')
 
         # For protocols < 347: an accessor for (block_state_id >> 4).
+        @property
+        def blockId(self):
+            return self.block_state_id >> 4
+
+        @blockId.setter
         def blockId(self, block_id):
             self.block_state_id = self.block_state_id & 0xF | block_id << 4
-        blockId = property(lambda r: r.block_state_id >> 4, blockId)
 
         # For protocols < 347: an accessor for (block_state_id & 0xF).
+        @property
+        def blockMeta(self):
+            return self.block_state_id & 0xF
+
+        @blockMeta.setter
         def blockMeta(self, meta):
             self.block_state_id = self.block_state_id & ~0xF | meta & 0xF
-        blockMeta = property(lambda r: r.block_state_id & 0xF, blockMeta)
 
         # This alias is retained for backward compatibility.
-        def blockStateId(self, block_state_id):
-            self.block_state_id = block_state_id
-        blockStateId = property(lambda r: r.block_state_id, blockStateId)
+        blockStateId = attribute_alias('block_state_id')
 
         def read(self, file_object):
             h_position = UnsignedByte.read(file_object)

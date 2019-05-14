@@ -1,4 +1,6 @@
-from minecraft.networking.types import Vector, Float, Byte, Integer
+from minecraft.networking.types import (
+    Vector, Float, Byte, Integer, multi_attribute_alias,
+)
 from minecraft.networking.packets import Packet
 
 
@@ -19,23 +21,10 @@ class ExplosionPacket(Packet):
     class Record(Vector):
         __slots__ = ()
 
-    @property
-    def position(self):
-        return Vector(self.x, self.y, self.x)
+    position = multi_attribute_alias(Vector, 'x', 'y', 'z')
 
-    @position.setter
-    def position(self, new_position):
-        self.x, self.y, self.z = new_position
-
-    @property
-    def player_motion(self):
-        return Vector(self.player_motion_x, self.player_motion_y,
-                      self.player_motion_z)
-
-    @player_motion.setter
-    def player_motion(self, new_player_motion):
-        self.player_motion_x, self.player_motion_y, self.player_motion_z \
-            = new_player_motion
+    player_motion = multi_attribute_alias(
+        Vector, 'player_motion_x', 'player_motion_y', 'player_motion_z')
 
     def read(self, file_object):
         self.x = Float.read(file_object)

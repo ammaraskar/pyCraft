@@ -68,7 +68,7 @@ class SoundEffectPacket(Packet):
             if context.protocol_version >= 201:
                 value = Float.read(file_object)
             else:
-                value = Byte.read(file_object) / 63.5
+                value = Byte.read(file_object)
             if context.protocol_version < 204:
                 value /= 63.5
             return value

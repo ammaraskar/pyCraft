@@ -351,15 +351,14 @@ class HandleExceptionTest(ConnectTest):
     def _start_client(self, client):
         message = 'Min skoldpadda ar inte snabb, men den ar en skoldpadda.'
 
+        @client.listener(clientbound.login.LoginSuccessPacket)
         def handle_login_success(_packet):
             raise Exception(message)
-        client.register_packet_listener(
-            handle_login_success, clientbound.login.LoginSuccessPacket)
 
-        def handle_exception(exc, exc_info):
+        @client.exception_handler()
+        def handle_exception(exc, _exc_info):
             assert isinstance(exc, Exception) and exc.args == (message,)
             raise fake_server.FakeServerTestSuccess
-        client.handle_exception = handle_exception
 
         client.connect()
 

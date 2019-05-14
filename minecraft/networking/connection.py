@@ -82,22 +82,26 @@ class Connection(object):
                                  version string or protocol version number,
                                  restricting the versions that the client may
                                  use in connecting to the server.
-        :param handle_exception: A function to be called when an exception
-                                 occurs in the client's networking thread,
-                                 taking 2 arguments: the exception object 'e'
-                                 as in 'except Exception as e', and a 3-tuple
-                                 given by sys.exc_info(); or None for the
-                                 default behaviour of raising the exception
-                                 from its original context; or False for no
-                                 action. In any case, the networking thread
-                                 will terminate, the exception will be
-                                 available via the 'exception' and 'exc_info'
-                                 attributes of the 'Connection' instance.
+        :param handle_exception: The final exception handler. This is triggered
+                                 when an exception occurs in the networking
+                                 thread that is not caught normally. After
+                                 any other user-registered exception handlers
+                                 are run, the final exception (which may be the
+                                 original exception or one raised by another
+                                 handler) is passed, regardless of whether or
+                                 not it was caught by another handler, to the
+                                 final handler, which may be a function obeying
+                                 the protocol of 'register_exception_handler';
+                                 the value 'None', meaning that if the
+                                 exception was otherwise uncaught, it is
+                                 re-raised from the networking thread after
+                                 closing the connection; or the value 'False',
+                                 meaning that the exception is never re-raised.
         :param handle_exit: A function to be called when a connection to a
                             server terminates, not caused by an exception,
                             and not with the intention to automatically
-                            reconnect. Exceptions raised in this handler
-                            will be handled by handle_exception.
+                            reconnect. Exceptions raised from this function
+                            will be handled by any matching exception handlers.
         """  # NOQA
 
         # This lock is re-entrant because it may be acquired in a re-entrant
@@ -110,6 +114,7 @@ class Connection(object):
         self.early_packet_listeners = []
         self.outgoing_packet_listeners = []
         self.early_outgoing_packet_listeners = []
+        self._exception_handlers = []
 
         def proto_version(version):
             if isinstance(version, str):
@@ -191,11 +196,21 @@ class Connection(object):
         """
         Shorthand decorator to register a function as a packet listener.
         """
-        def _method_func(method):
-            self.register_packet_listener(method, *packet_types, **kwds)
-            return method
+        def listener_decorator(handler_func):
+            self.register_packet_listener(handler_func, *packet_types, **kwds)
+            return handler_func
 
-        return _method_func
+        return listener_decorator
+
+    def exception_handler(self, *exc_types, **kwds):
+        """
+        Shorthand decorator to register a function as an exception handler.
+        """
+        def exception_handler_decorator(handler_func):
+            self.register_exception_handler(handler_func, *exc_types, **kwds)
+            return handler_func
+
+        return exception_handler_decorator
 
     def register_packet_listener(self, method, *packet_types, **kwds):
         """
@@ -228,6 +243,44 @@ class Connection(object):
             else self.outgoing_packet_listeners if not early \
             else self.early_outgoing_packet_listeners
         target.append(packets.PacketListener(method, *packet_types, **kwds))
+
+    def register_exception_handler(self, handler_func, *exc_types, **kwds):
+        """
+        Register a function to be called when an unhandled exception occurs
+        in the networking thread.
+
+        When multiple exception handlers are registered, they act like 'except'
+        clauses in a Python 'try' clause, with the earliest matching handler
+        catching the exception, and any later handlers catching any uncaught
+        exception raised from within an earlier handler.
+
+        Regardless of the presence or absence of matching handlers, any such
+        exception will cause the connection and the networking thread to
+        terminate, the final exception handler will be called (see the
+        'handle_exception' argument of the 'Connection' contructor), and the
+        original exception - or the last exception raised by a handler - will
+        be set as the 'exception' and 'exc_info' attributes of the
+        'Connection'.
+
+        :param handler_func: A function taking two arguments: the exception
+        object 'e' as in 'except Exception as e:', and the corresponding
+        3-tuple given by 'sys.exc_info()'. The return value of the function is
+        ignored, but any exception raised in it replaces the original
+        exception, and may be passed to later exception handlers.
+
+        :param exc_types: The types of exceptions that this handler shall
+        catch, as in 'except (exc_type_1, exc_type_2, ...) as e:'. If this is
+        empty, the handler will catch all exceptions.
+
+        :param early: If 'True', the exception handler is registered before
+        any existing exception handlers in the handling order.
+        """
+        early = kwds.pop('early', False)
+        assert not kwds, 'Unexpected keyword arguments: %r' % (kwds,)
+        if early:
+            self._exception_handlers.insert(0, (handler_func, exc_types))
+        else:
+            self._exception_handlers.append((handler_func, exc_types))
 
     def _pop_packet(self):
         # Pops the topmost packet off the outgoing queue and writes it out
@@ -400,25 +453,44 @@ class Connection(object):
         self.write_packet(handshake)
 
     def _handle_exception(self, exc, exc_info):
-        handle_exception = self.handle_exception
+        # Call the current PacketReactor's exception handler.
         try:
             if self.reactor.handle_exception(exc, exc_info):
                 return
-            if handle_exception not in (None, False):
-                self.handle_exception(exc, exc_info)
-        except BaseException as new_exc:
+        except Exception as new_exc:
             exc, exc_info = new_exc, sys.exc_info()
 
+        # Call the user-registered exception handlers in order.
+        for handler, exc_types in self._exception_handlers:
+            if not exc_types or isinstance(exc, exc_types):
+                try:
+                    handler(exc, exc_info)
+                    caught = True
+                    break
+                except Exception as new_exc:
+                    exc, exc_info = new_exc, sys.exc_info()
+        else:
+            caught = False
+
+        # Call the user-specified final exception handler.
+        if self.handle_exception not in (None, False):
+            try:
+                self.handle_exception(exc, exc_info)
+            except Exception as new_exc:
+                exc, exc_info = new_exc, sys.exc_info()
+
+        # For backward compatibility, try to set the 'exc_info' attribute.
         try:
-            exc.exc_info = exc_info  # For backward compatibility.
+            exc.exc_info = exc_info
         except (TypeError, AttributeError):
             pass
 
+        # Record the exception and cleanly terminate the connection.
         self.exception, self.exc_info = exc, exc_info
-        with self._write_lock:
-            if self.networking_thread and not self.networking_thread.interrupt:
-                self.disconnect(immediate=True)
-        if handle_exception is None:
+        self.disconnect(immediate=True)
+
+        # If allowed by the final exception handler, re-raise the exception.
+        if self.handle_exception is None and not caught:
             raise_(*exc_info)
 
     def _version_mismatch(self, server_protocol=None, server_version=None):
@@ -471,7 +543,7 @@ class NetworkingThread(threading.Thread):
                     self.connection.new_networking_thread = None
             self._run()
             self.connection._handle_exit()
-        except BaseException as e:
+        except Exception as e:
             self.interrupt = True
             self.connection._handle_exception(e, sys.exc_info())
         finally:

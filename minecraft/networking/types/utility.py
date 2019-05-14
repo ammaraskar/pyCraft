@@ -2,11 +2,14 @@
    network representation.
 """
 from __future__ import division
+
 from collections import namedtuple
+from itertools import chain
 
 
 __all__ = (
     'Vector', 'MutableRecord', 'PositionAndLook', 'descriptor',
+    'attribute_alias', 'multi_attribute_alias',
 )
 
 
@@ -75,21 +78,49 @@ class MutableRecord(object):
         return hash((type(self), values))
 
 
-class PositionAndLook(MutableRecord):
-    """A mutable record containing 3 spatial position coordinates
-       and 2 rotational coordinates for a look direction.
+def attribute_alias(name):
+    """An attribute descriptor that redirects access to a different attribute
+       with a given name.
     """
-    __slots__ = 'x', 'y', 'z', 'yaw', 'pitch'
+    return property(fget=(lambda self: getattr(self, name)),
+                    fset=(lambda self, value: setattr(self, name, value)),
+                    fdel=(lambda self: delattr(self, name)))
 
-    # Access the fields 'x', 'y', 'z' as a Vector.
-    def position(self, position):
-        self.x, self.y, self.z = position
-    position = property(lambda self: Vector(self.x, self.y, self.z), position)
 
-    # Access the fields 'yaw', 'pitch' as a tuple.
-    def look(self, look):
-        self.yaw, self.pitch = look
-    look = property(lambda self: (self.yaw, self.pitch), look)
+def multi_attribute_alias(container, *arg_names, **kwd_names):
+    """A descriptor for an attribute whose value is a container of a given type
+       with several fields, each of which is aliased to a different attribute
+       of the parent object.
+
+       The 'n'th name in 'arg_names' is the parent attribute that will be
+       aliased to the field of 'container' settable by the 'n'th positional
+       argument to its constructor, and accessible as its 'n'th iterable
+       element.
+
+       The name in 'kwd_names' mapped to by the key 'k' is the parent attribute
+       that will be aliased to the field of 'container' settable by the keyword
+       argument 'k' to its constructor, and accessible as its 'k' attribute.
+    """
+    @property
+    def alias(self):
+        return container(
+            *(getattr(self, name) for name in arg_names),
+            **{kwd: getattr(self, name) for (kwd, name) in kwd_names.items()})
+
+    @alias.setter
+    def alias(self, values):
+        if arg_names:
+            for name, value in zip(arg_names, values):
+                setattr(self, name, value)
+        for kwd, name in kwd_names.items():
+            setattr(self, name, getattr(values, kwd))
+
+    @alias.deleter
+    def alias(self):
+        for name in chain(arg_names, kwd_names.values()):
+            delattr(self, name)
+
+    return alias
 
 
 class descriptor(object):
@@ -137,3 +168,17 @@ class descriptor(object):
 
     def __delete__(self, instance):
         return self._fdel(self, instance)
+
+
+Direction = namedtuple('Direction', ('yaw', 'pitch'))
+
+
+class PositionAndLook(MutableRecord):
+    """A mutable record containing 3 spatial position coordinates
+       and 2 rotational coordinates for a look direction.
+    """
+    __slots__ = 'x', 'y', 'z', 'yaw', 'pitch'
+
+    position = multi_attribute_alias(Vector, 'x', 'y', 'z')
+
+    look = multi_attribute_alias(Direction, 'yaw', 'pitch')

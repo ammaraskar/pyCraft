@@ -9,8 +9,12 @@ from minecraft.networking.types import (
 )
 from minecraft.networking.packets import PacketBuffer
 from minecraft.networking.connection import ConnectionContext
-from minecraft import SUPPORTED_PROTOCOL_VERSIONS
+from minecraft import SUPPORTED_PROTOCOL_VERSIONS, RELEASE_PROTOCOL_VERSIONS
 
+
+TEST_VERSIONS = list(RELEASE_PROTOCOL_VERSIONS)
+if SUPPORTED_PROTOCOL_VERSIONS[-1] not in TEST_VERSIONS:
+    TEST_VERSIONS.append(SUPPORTED_PROTOCOL_VERSIONS[-1])
 
 TEST_DATA = {
     Boolean: [True, False],
@@ -36,7 +40,7 @@ TEST_DATA = {
 
 class SerializationTest(unittest.TestCase):
     def test_serialization(self):
-        for protocol_version in SUPPORTED_PROTOCOL_VERSIONS:
+        for protocol_version in TEST_VERSIONS:
             context = ConnectionContext(protocol_version=protocol_version)
 
             for data_type in Type.__subclasses__():

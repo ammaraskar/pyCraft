@@ -3,7 +3,7 @@ from minecraft.networking.types.utility import descriptor
 
 from minecraft.networking.types import (
     VarInt, UUID, Byte, Double, Integer, UnsignedByte, Short, Enum, Vector,
-    PositionAndLook
+    PositionAndLook, attribute_alias, multi_attribute_alias,
 )
 
 
@@ -120,6 +120,7 @@ class SpawnObjectPacket(Packet):
         else:
             Byte.send(self.type_id, packet_buffer)
 
+        # pylint: disable=no-member
         xyz_type = Double if self.context.protocol_version >= 100 else Integer
         for coord in self.x, self.y, self.z:
             xyz_type.send(coord, packet_buffer)
@@ -147,28 +148,19 @@ class SpawnObjectPacket(Packet):
                              'in order to set the "type" property.')
         self.type_id = getattr(self.EntityType, type_name)
 
-    # Access the fields 'x', 'y', 'z' as a Vector.
-    def position(self, position):
-        self.x, self.y, self.z = position
-    position = property(lambda p: Vector(p.x, p.y, p.z), position)
+    @type.deleter
+    def type(self):
+        del self.type_id
 
-    # Access the fields 'x', 'y', 'z', 'yaw', 'pitch' as a PositionAndLook.
+    position = multi_attribute_alias(Vector, 'x', 'y', 'z')
+
     # NOTE: modifying the object retrieved from this property will not change
     # the packet; it can only be changed by attribute or property assignment.
-    def position_and_look(self, position_and_look):
-        self.x, self.y, self.z = position_and_look.position
-        self.yaw, self.pitch = position_and_look.look
-    position_and_look = property(lambda p: PositionAndLook(
-                            x=p.x, y=p.y, z=p.z, yaw=p.yaw, pitch=p.pitch),
-                            position_and_look)
+    position_and_look = multi_attribute_alias(
+        PositionAndLook, x='x', y='y', z='z', yaw='yaw', pitch='pitch')
 
-    # Access the fields 'velocity_x', 'velocity_y', 'velocity_z' as a Vector.
-    def velocity(self, velocity):
-        self.velocity_x, self.velocity_y, self.velocity_z = velocity
-    velocity = property(lambda p: Vector(p.velocity_x, p.velocity_y,
-                                         p.velocity_z), velocity)
+    velocity = multi_attribute_alias(
+        Vector, 'velocity_x', 'velocity_y', 'velocity_z')
 
     # This alias is retained for backward compatibility.
-    def objectUUID(self, object_uuid):
-        self.object_uuid = object_uuid
-    objectUUID = property(lambda self: self.object_uuid, objectUUID)
+    objectUUID = attribute_alias('object_uuid')

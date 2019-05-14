@@ -1,7 +1,7 @@
 from minecraft.networking.packets import Packet
 
 from minecraft.networking.types import (
-    String, Boolean, UUID, VarInt
+    String, Boolean, UUID, VarInt,
 )
 
 
