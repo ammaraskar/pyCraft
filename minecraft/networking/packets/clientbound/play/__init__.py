@@ -15,6 +15,7 @@ from .spawn_object_packet import SpawnObjectPacket
 from .block_change_packet import BlockChangePacket, MultiBlockChangePacket
 from .explosion_packet import ExplosionPacket
 from .sound_effect_packet import SoundEffectPacket
+from . face_player_packet import FacePlayerPacket
 
 
 # Formerly known as state_playing_clientbound.
@@ -47,6 +48,10 @@ def get_packets(context):
     if context.protocol_version >= 94:
         packets |= {
             SoundEffectPacket,
+        }
+    if context.protocol_version >= 352:
+        packets |= {
+            FacePlayerPacket
         }
     return packets
 

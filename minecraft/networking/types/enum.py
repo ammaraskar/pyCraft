@@ -12,7 +12,7 @@ from .utility import Vector
 
 __all__ = (
     'Enum', 'BitFieldEnum', 'AbsoluteHand', 'RelativeHand', 'BlockFace',
-    'Difficulty', 'Dimension', 'GameMode'
+    'Difficulty', 'Dimension', 'GameMode', 'FeetEyes'
 )
 
 
@@ -106,3 +106,10 @@ class GameMode(Enum):
     CREATIVE = 1
     ADVENTURE = 2
     SPECTATOR = 3
+
+
+# Designation of an entity's head or eyes.
+# Used in the Face Player Packet
+class FeetEyes(Enum):
+    FEET = 0
+    EYES = 1
