@@ -5,6 +5,7 @@ from minecraft.networking.packets import (
 from minecraft.networking.types import (
     Integer, FixedPointInteger, UnsignedByte, Byte, Boolean, UUID, Short,
     VarInt, Double, Float, String, Enum, Difficulty, Dimension, GameMode,
+    Angle
 )
 
 from .combat_event_packet import CombatEventPacket
@@ -40,6 +41,7 @@ def get_packets(context):
         RespawnPacket,
         PluginMessagePacket,
         PlayerListHeaderAndFooterPacket,
+        EntityLookPacket
     }
     if context.protocol_version <= 47:
         packets |= {
@@ -178,8 +180,8 @@ class SpawnPlayerPacket(Packet):
         else {'y': FixedPointInteger},
         {'z': Double} if context.protocol_version >= 100
         else {'z': FixedPointInteger},
-        {'yaw': Float},
-        {'pitch': Float},
+        {'yaw': Angle},
+        {'pitch': Angle},
         # TODO: read entity metadata
         {'current_item': Short} if context.protocol_version <= 49 else {}
     ])
@@ -296,3 +298,22 @@ class PlayerListHeaderAndFooterPacket(Packet):
     definition = [
         {'header': String},
         {'footer': String}]
+
+
+class EntityLookPacket(Packet):
+    @staticmethod
+    def get_id(context):
+        return 0x2A if context.protocol_version >= 389 else \
+               0x29 if context.protocol_version >= 345 else \
+               0x28 if context.protocol_version >= 318 else \
+               0x27 if context.protocol_version >= 94 else \
+               0x28 if context.protocol_version >= 70 else \
+               0x16
+
+    packet_name = 'entity look'
+    definition = [
+        {'entity_id': VarInt},
+        {'yaw': Angle},
+        {'pitch': Angle},
+        {'on_ground': Boolean}
+    ]
