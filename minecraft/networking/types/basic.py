@@ -124,6 +124,7 @@ class Angle(Type):
         # Linearly transform angle in steps of 1/256 into steps of 1/360
         return 360 * UnsignedByte.read(file_object) / 255
 
+    @staticmethod
     def send(value, socket):
         # Normalize angle between 0 and 255 and convert to int.
         UnsignedByte.send(int(255 * (value / 360)), socket)
@@ -323,4 +324,3 @@ class Position(Type, Vector):
                  if context.protocol_version >= 443 else
                  (x & 0x3FFFFFF) << 38 | (y & 0xFFF) << 26 | (z & 0x3FFFFFF))
         UnsignedLong.send(value, socket)
-
