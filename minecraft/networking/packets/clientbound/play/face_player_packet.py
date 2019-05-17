@@ -1,5 +1,5 @@
 from minecraft.networking.types import (
-    VarInt, Double, Boolean, FeetEyes
+    VarInt, Double, Boolean, OriginPoint
 )
 
 from minecraft.networking.packets import Packet
@@ -17,7 +17,7 @@ class FacePlayerPacket(Packet):
 
     def read(self, file_object):
         if self.context.protocol_version >= 353:
-            self.feet_or_eyes = VarInt.read(file_object)
+            self.origin = VarInt.read(file_object)
             self.x = Double.read(file_object)
             self.y = Double.read(file_object)
             self.z = Double.read(file_object)
@@ -26,7 +26,7 @@ class FacePlayerPacket(Packet):
                 # If the entity given by entity ID cannot be found,
                 # this packet should be treated as if is_entity was false.
                 self.entity_id = VarInt.read(file_object)
-                self.entity_feet_or_eyes = VarInt.read(file_object)
+                self.entity_origin = VarInt.read(file_object)
 
         else:  # Protocol version 352
             is_entity = Boolean.read(file_object)
@@ -38,13 +38,13 @@ class FacePlayerPacket(Packet):
 
     def write_fields(self, packet_buffer):
         if self.context.protocol_version >= 353:
-            VarInt.send(self.feet_or_eyes, packet_buffer)
+            VarInt.send(self.origin, packet_buffer)
             Double.send(self.x, packet_buffer)
             Double.send(self.y, packet_buffer)
             Double.send(self.z, packet_buffer)
             if self.entity_id:
                 VarInt.send(self.entity_id, packet_buffer)
-                VarInt.send(self.entity_feet_or_eyes, packet_buffer)
+                VarInt.send(self.entity_origin, packet_buffer)
 
         else:  # Protocol version 352
             if self.entity_id:
@@ -56,5 +56,5 @@ class FacePlayerPacket(Packet):
                 Double.send(self.y, packet_buffer)
                 Double.send(self.z, packet_buffer)
 
-    # FacePlayerPacket.FeetEyes is an alias for FeetEyes
-    FeetEyes = FeetEyes
+    # FacePlayerPacket.OriginPoint is an alias for OriginPoint
+    OriginPoint = OriginPoint
