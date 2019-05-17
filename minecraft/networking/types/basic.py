@@ -127,7 +127,6 @@ class Angle(Type):
     @staticmethod
     def send(value, socket):
         # Normalize angle between 0 and 255 and convert to int.
-
         UnsignedByte.send(round(256 * ((value % 360) / 360)), socket)
 
 
