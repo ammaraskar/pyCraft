@@ -1,5 +1,5 @@
 from minecraft.networking.types import (
-    VarInt, Double, Boolean, OriginPoint
+    VarInt, Double, Boolean, OriginPoint, Vector, multi_attribute_alias
 )
 
 from minecraft.networking.packets import Packet
@@ -15,6 +15,9 @@ class FacePlayerPacket(Packet):
 
     packet_name = 'face player'
 
+    # Access the 'x', 'y', 'z' fields as a Vector.
+    target = multi_attribute_alias(Vector, 'x', 'y', 'z')
+
     def read(self, file_object):
         if self.context.protocol_version >= 353:
             self.origin = VarInt.read(file_object)
@@ -27,6 +30,8 @@ class FacePlayerPacket(Packet):
                 # this packet should be treated as if is_entity was false.
                 self.entity_id = VarInt.read(file_object)
                 self.entity_origin = VarInt.read(file_object)
+            else:
+                self.entity_id = None
 
         else:  # Protocol version 352
             is_entity = Boolean.read(file_object)
@@ -42,12 +47,15 @@ class FacePlayerPacket(Packet):
             Double.send(self.x, packet_buffer)
             Double.send(self.y, packet_buffer)
             Double.send(self.z, packet_buffer)
-            if self.entity_id:
+            if self.entity_id is not None:
+                Boolean.send(True, packet_buffer)
                 VarInt.send(self.entity_id, packet_buffer)
                 VarInt.send(self.entity_origin, packet_buffer)
+            else:
+                Boolean.send(False, packet_buffer)
 
         else:  # Protocol version 352
-            if self.entity_id:
+            if self.entity_id is not None:
                 Boolean.send(True, packet_buffer)
                 VarInt.send(self.entity_id, packet_buffer)
             else:
@@ -56,5 +64,6 @@ class FacePlayerPacket(Packet):
                 Double.send(self.y, packet_buffer)
                 Double.send(self.z, packet_buffer)
 
-    # FacePlayerPacket.OriginPoint is an alias for OriginPoint
-    OriginPoint = OriginPoint
+    # These aliases declare the Enum type corresponding to each field:
+    Origin = OriginPoint
+    EntityOrigin = OriginPoint

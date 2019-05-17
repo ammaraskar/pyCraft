@@ -9,7 +9,7 @@ from random import choice
 from minecraft import SUPPORTED_PROTOCOL_VERSIONS, RELEASE_PROTOCOL_VERSIONS
 from minecraft.networking.connection import ConnectionContext
 from minecraft.networking.types import (
-    VarInt, Enum, Vector, PositionAndLook
+    VarInt, Enum, Vector, PositionAndLook, OriginPoint,
 )
 from minecraft.networking.packets import (
     Packet, PacketBuffer, PacketListener, KeepAlivePacket, serverbound,
@@ -199,8 +199,8 @@ class TestReadWritePackets(unittest.TestCase):
                             'type_id', context)
 
             pos_look = PositionAndLook(
-                position=(Vector(68.0, 38.0, 76.0) if context.protocol_version
-                          >= 100 else Vector(68, 38, 76)),
+                position=(Vector(68.0, 38.0, 76.0) if protocol_version >= 100
+                          else Vector(68, 38, 76)),
                 yaw=263.494, pitch=180)
             velocity = Vector(21, 55, 41)
             entity_id, type_name, type_id = 49846, 'EGG', EntityType.EGG
@@ -212,7 +212,7 @@ class TestReadWritePackets(unittest.TestCase):
                         velocity_x=velocity.x, velocity_y=velocity.y,
                         velocity_z=velocity.z,
                         entity_id=entity_id, type_id=type_id, data=1)
-            if context.protocol_version >= 49:
+            if protocol_version >= 49:
                 object_uuid = 'd9568851-85bc-4a10-8d6a-261d130626fa'
                 packet.object_uuid = object_uuid
                 self.assertEqual(packet.objectUUID, object_uuid)
@@ -225,7 +225,7 @@ class TestReadWritePackets(unittest.TestCase):
                         context=context, position_and_look=pos_look,
                         velocity=velocity, type=type_name,
                         entity_id=entity_id, data=1)
-            if context.protocol_version >= 49:
+            if protocol_version >= 49:
                 packet2.object_uuid = object_uuid
             self.assertEqual(packet.__dict__, packet2.__dict__)
 
@@ -233,7 +233,7 @@ class TestReadWritePackets(unittest.TestCase):
             self.assertEqual(packet.position, packet2.position)
 
             packet2.data = 0
-            if context.protocol_version < 49:
+            if protocol_version < 49:
                 del packet2.velocity
             self._test_read_write_packet(packet, context,
                                          yaw=360/256, pitch=360/256)
@@ -247,13 +247,31 @@ class TestReadWritePackets(unittest.TestCase):
             packet = clientbound.play.SoundEffectPacket(
                 sound_id=545, effect_position=Vector(0.125, 300.0, 50.5),
                 volume=0.75)
-            if context.protocol_version >= 201:
+            if protocol_version >= 201:
                 packet.pitch = struct.unpack('f', struct.pack('f', 1.5))[0]
             else:
                 packet.pitch = int(1.5 / 63.5) * 63.5
             if context.protocol_version >= 95:
                 packet.sound_category = \
                     clientbound.play.SoundEffectPacket.SoundCategory.NEUTRAL
+            self._test_read_write_packet(packet, context)
+
+    def test_face_player_packet(self):
+        for protocol_version in TEST_VERSIONS:
+            context = ConnectionContext(protocol_version=protocol_version)
+
+            packet = clientbound.play.FacePlayerPacket()
+            packet.target = 1.0, -2.0, 3.5
+            packet.entity_id = None
+            if protocol_version >= 353:
+                packet.origin = OriginPoint.EYES
+            self._test_read_write_packet(packet, context)
+
+            packet.entity_id = 123
+            if protocol_version >= 353:
+                packet.entity_origin = OriginPoint.FEET
+            else:
+                del packet.target
             self._test_read_write_packet(packet, context)
 
     def _test_read_write_packet(self, packet_in, context=None, **kwargs):
