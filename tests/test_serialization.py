@@ -60,7 +60,8 @@ class SerializationTest(unittest.TestCase):
                             self.assertAlmostEqual(
                                 test_data, deserialized, delta=1.0/32.0)
                         elif data_type is Angle:
-                            self.assertAlmostEqual(test_data, deserialized, delta=360/255)
+                            self.assertAlmostEqual(test_data, deserialized,
+                                                   delta=360/255)
                         elif data_type is Float or data_type is Double:
                             self.assertAlmostEquals(test_data, deserialized, 3)
                         else:

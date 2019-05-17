@@ -201,7 +201,7 @@ class TestReadWritePackets(unittest.TestCase):
             pos_look = PositionAndLook(
                 position=(Vector(68.0, 38.0, 76.0) if context.protocol_version
                           >= 100 else Vector(68, 38, 76)),
-                yaw=16, pitch=23)
+                yaw=263.494, pitch=180)
             velocity = Vector(21, 55, 41)
             entity_id, type_name, type_id = 49846, 'EGG', EntityType.EGG
 
@@ -235,8 +235,10 @@ class TestReadWritePackets(unittest.TestCase):
             packet2.data = 0
             if context.protocol_version < 49:
                 del packet2.velocity
-            self._test_read_write_packet(packet, context)
-            self._test_read_write_packet(packet2, context)
+            self._test_read_write_packet(packet, context,
+                                         yaw=360/255, pitch=360/255)
+            self._test_read_write_packet(packet2, context,
+                                         yaw=360/255, pitch=360/255)
 
     def test_sound_effect_packet(self):
         for protocol_version in TEST_VERSIONS:
@@ -254,7 +256,12 @@ class TestReadWritePackets(unittest.TestCase):
                     clientbound.play.SoundEffectPacket.SoundCategory.NEUTRAL
             self._test_read_write_packet(packet, context)
 
-    def _test_read_write_packet(self, packet_in, context=None):
+    def _test_read_write_packet(self, packet_in, context=None, **kwargs):
+        """
+        If kwargs are specified, the key will be tested against the
+        respective delta value. Useful for testing FixedPointNumbers
+        where there is precision lost in the resulting value.
+        """
         if context is None:
             for protocol_version in TEST_VERSIONS:
                 logging.debug('protocol_version = %r' % protocol_version)
@@ -272,4 +279,12 @@ class TestReadWritePackets(unittest.TestCase):
             packet_out = type(packet_in)(context=context)
             packet_out.read(packet_buffer)
             self.assertIs(type(packet_in), type(packet_out))
+
+            for packet_attr, precision in kwargs.items():
+                packet_attribute_in = packet_in.__dict__.pop(packet_attr)
+                packet_attribute_out = packet_out.__dict__.pop(packet_attr)
+                self.assertAlmostEqual(packet_attribute_in,
+                                       packet_attribute_out,
+                                       delta=precision)
+
             self.assertEqual(packet_in.__dict__, packet_out.__dict__)
