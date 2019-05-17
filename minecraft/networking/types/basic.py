@@ -122,12 +122,13 @@ class Angle(Type):
     @staticmethod
     def read(file_object):
         # Linearly transform angle in steps of 1/256 into steps of 1/360
-        return 360 * UnsignedByte.read(file_object) / 255
+        return 360 * UnsignedByte.read(file_object) / 256
 
     @staticmethod
     def send(value, socket):
         # Normalize angle between 0 and 255 and convert to int.
-        UnsignedByte.send(round(255 * (value / 360)), socket)
+
+        UnsignedByte.send(round(256 * ((value % 360) / 360)), socket)
 
 
 class VarInt(Type):

@@ -236,9 +236,9 @@ class TestReadWritePackets(unittest.TestCase):
             if context.protocol_version < 49:
                 del packet2.velocity
             self._test_read_write_packet(packet, context,
-                                         yaw=360/255, pitch=360/255)
+                                         yaw=360/256, pitch=360/256)
             self._test_read_write_packet(packet2, context,
-                                         yaw=360/255, pitch=360/255)
+                                         yaw=360/256, pitch=360/256)
 
     def test_sound_effect_packet(self):
         for protocol_version in TEST_VERSIONS:
