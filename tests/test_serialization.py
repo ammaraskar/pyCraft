@@ -1,12 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from __future__ import division
-
 import unittest
-
 from minecraft.networking.types import (
-    Type, Boolean, UnsignedByte, Byte, Short, UnsignedShort, Integer,
-    FixedPointInteger, Angle, VarInt, Long, Float, Double, Angle,
+    Type, Boolean, UnsignedByte, Byte, Short, UnsignedShort,
+    Integer, FixedPointInteger, Angle, VarInt, Long, Float, Double,
     ShortPrefixedByteArray, VarIntPrefixedByteArray, UUID,
     String as StringType, Position, TrailingByteArray, UnsignedLong,
 )
@@ -39,8 +36,6 @@ TEST_DATA = {
     UUID: ["12345678-1234-5678-1234-567812345678"],
     StringType: ["hello world"],
     Position: [(758, 0, 691), (-500, -12, -684)],
-    Angle: {0.0:0.0, 1/256:1/256, 255/256:255/256, 360.0:0.0, -90.0:270.0,
-            -1890.0:270.0, 1890.0:90.0},
 }
 
 
@@ -52,30 +47,26 @@ class SerializationTest(unittest.TestCase):
             for data_type in Type.__subclasses__():
                 if data_type in TEST_DATA:
                     test_cases = TEST_DATA[data_type]
-                    test_cases = test_cases.items() \
-                                 if isinstance(test_cases, dict) else \
-                                 map(lambda x: (x, x), test_cases)
 
-                    for write_data, expected_read_data in test_cases:
+                    for test_data in test_cases:
                         packet_buffer = PacketBuffer()
                         data_type.send_with_context(
-                            write_data, packet_buffer, context)
+                            test_data, packet_buffer, context)
                         packet_buffer.reset_cursor()
 
                         deserialized = data_type.read_with_context(
                             packet_buffer, context)
                         if data_type is FixedPointInteger:
                             self.assertAlmostEqual(
-                                expected_read_data, deserialized, delta=1/32)
+                                test_data, deserialized, delta=1.0/32.0)
                         elif data_type is Angle:
-                            self.assertAlmostEqual(expected_read_data % 360,
+                            self.assertAlmostEqual(test_data % 360,
                                                    deserialized,
                                                    delta=360/256)
                         elif data_type is Float or data_type is Double:
-                            self.assertAlmostEqual(
-                                expected_read_data, deserialized, 3)
+                            self.assertAlmostEqual(test_data, deserialized, 3)
                         else:
-                            self.assertEqual(expected_read_data, deserialized)
+                            self.assertEqual(test_data, deserialized)
 
     def test_exceptions(self):
         base_type = Type()
