@@ -3,7 +3,7 @@
 import unittest
 from minecraft.networking.types import (
     Type, Boolean, UnsignedByte, Byte, Short, UnsignedShort,
-    Integer, FixedPointInteger, VarInt, Long, Float, Double,
+    Integer, FixedPointInteger, Angle, VarInt, Long, Float, Double,
     ShortPrefixedByteArray, VarIntPrefixedByteArray, UUID,
     String as StringType, Position, TrailingByteArray, UnsignedLong,
 )
@@ -25,6 +25,7 @@ TEST_DATA = {
     UnsignedLong: [0, 400],
     Integer: [-1000, 1000],
     FixedPointInteger: [float(-13098.3435), float(-0.83), float(1000)],
+    Angle: [0, 360.0, 720, 47.12947238973, -108.7],
     VarInt: [1, 250, 50000, 10000000],
     Long: [50000000],
     Float: [21.000301],
@@ -58,8 +59,12 @@ class SerializationTest(unittest.TestCase):
                         if data_type is FixedPointInteger:
                             self.assertAlmostEqual(
                                 test_data, deserialized, delta=1.0/32.0)
+                        elif data_type is Angle:
+                            self.assertAlmostEqual(test_data % 360,
+                                                   deserialized,
+                                                   delta=360/256)
                         elif data_type is Float or data_type is Double:
-                            self.assertAlmostEquals(test_data, deserialized, 3)
+                            self.assertAlmostEqual(test_data, deserialized, 3)
                         else:
                             self.assertEqual(test_data, deserialized)
 

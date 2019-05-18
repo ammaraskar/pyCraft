@@ -2,7 +2,7 @@ from minecraft.networking.packets import Packet
 from minecraft.networking.types.utility import descriptor
 
 from minecraft.networking.types import (
-    VarInt, UUID, Byte, Double, Integer, UnsignedByte, Short, Enum, Vector,
+    VarInt, UUID, Byte, Double, Integer, Angle, Short, Enum, Vector,
     PositionAndLook, attribute_alias, multi_attribute_alias,
 )
 
@@ -103,7 +103,7 @@ class SpawnObjectPacket(Packet):
         for attr in 'x', 'y', 'z':
             setattr(self, attr, xyz_type.read(file_object))
         for attr in 'pitch', 'yaw':
-            setattr(self, attr, UnsignedByte.read(file_object))
+            setattr(self, attr, Angle.read(file_object))
 
         self.data = Integer.read(file_object)
         if self.context.protocol_version >= 49 or self.data > 0:
@@ -125,7 +125,7 @@ class SpawnObjectPacket(Packet):
         for coord in self.x, self.y, self.z:
             xyz_type.send(coord, packet_buffer)
         for coord in self.pitch, self.yaw:
-            UnsignedByte.send(coord, packet_buffer)
+            Angle.send(coord, packet_buffer)
 
         Integer.send(self.data, packet_buffer)
         if self.context.protocol_version >= 49 or self.data > 0:
