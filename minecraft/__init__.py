@@ -4,7 +4,7 @@ with a MineCraft server.
 """
 
 # The version number of the most recent pyCraft release.
-__version__ = "0.5.0"
+__version__ = "0.6.0"
 
 # A dict mapping the name of each Minecraft version supported by pyCraft to
 # the corresponding protocol version number.
