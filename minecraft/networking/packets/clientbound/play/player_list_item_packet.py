@@ -1,7 +1,7 @@
 from minecraft.networking.packets import Packet
 
 from minecraft.networking.types import (
-    String, Boolean, UUID, VarInt,
+    String, Boolean, UUID, VarInt, MutableRecord,
 )
 
 
@@ -20,21 +20,24 @@ class PlayerListItemPacket(Packet):
 
     packet_name = "player list item"
 
+    fields = 'action_type', 'actions'
+
+    def field_string(self, field):
+        if field == 'action_type':
+            return self.action_type.__name__
+        return super(PlayerListItemPacket, self).field_string(field)
+
     class PlayerList(object):
         __slots__ = 'players_by_uuid'
 
-        def __init__(self):
-            self.players_by_uuid = dict()
+        def __init__(self, *items):
+            self.players_by_uuid = {item.uuid: item for item in items}
 
-    class PlayerListItem(object):
+    class PlayerListItem(MutableRecord):
         __slots__ = (
             'uuid', 'name', 'properties', 'gamemode', 'ping', 'display_name')
 
-        def __init__(self, **kwds):
-            for key, val in kwds.items():
-                setattr(self, key, val)
-
-    class PlayerProperty(object):
+    class PlayerProperty(MutableRecord):
         __slots__ = 'name', 'value', 'signature'
 
         def read(self, file_object):
@@ -46,33 +49,44 @@ class PlayerListItemPacket(Packet):
             else:
                 self.signature = None
 
-    class Action(object):
-        __slots__ = 'uuid'
+        def send(self, packet_buffer):
+            String.send(self.name, packet_buffer)
+            String.send(self.value, packet_buffer)
+            if self.signature is not None:
+                Boolean.send(True, packet_buffer)
+                String.send(self.signature, packet_buffer)
+            else:
+                Boolean.send(False, packet_buffer)
+
+    class Action(MutableRecord):
+        __slots__ = 'uuid',
 
         def read(self, file_object):
             self.uuid = UUID.read(file_object)
             self._read(file_object)
 
+        def send(self, packet_buffer):
+            UUID.send(self.uuid, packet_buffer)
+            self._send(packet_buffer)
+
         def _read(self, file_object):
+            raise NotImplementedError(
+                'This abstract method must be overridden in a subclass.')
+
+        def _send(self, packet_buffer):
             raise NotImplementedError(
                 'This abstract method must be overridden in a subclass.')
 
         @classmethod
         def type_from_id(cls, action_id):
-            subcls = {
-                0: PlayerListItemPacket.AddPlayerAction,
-                1: PlayerListItemPacket.UpdateGameModeAction,
-                2: PlayerListItemPacket.UpdateLatencyAction,
-                3: PlayerListItemPacket.UpdateDisplayNameAction,
-                4: PlayerListItemPacket.RemovePlayerAction
-            }.get(action_id)
-            if subcls is None:
-                raise ValueError("Unknown player list action ID: %s."
-                                 % action_id)
-            return subcls
+            for subcls in cls.__subclasses__():
+                if subcls.action_id == action_id:
+                    return subcls
+            raise ValueError("Unknown player list action ID: %s." % action_id)
 
     class AddPlayerAction(Action):
         __slots__ = 'name', 'properties', 'gamemode', 'ping', 'display_name'
+        action_id = 0
 
         def _read(self, file_object):
             self.name = String.read(file_object)
@@ -90,6 +104,19 @@ class PlayerListItemPacket(Packet):
             else:
                 self.display_name = None
 
+        def _send(self, packet_buffer):
+            String.send(self.name, packet_buffer)
+            VarInt.send(len(self.properties), packet_buffer)
+            for property in self.properties:
+                property.send(packet_buffer)
+            VarInt.send(self.gamemode, packet_buffer)
+            VarInt.send(self.ping, packet_buffer)
+            if self.display_name is not None:
+                Boolean.send(True, packet_buffer)
+                String.send(self.display_name, packet_buffer)
+            else:
+                Boolean.send(False, packet_buffer)
+
         def apply(self, player_list):
             player = PlayerListItemPacket.PlayerListItem(
                 uuid=self.uuid,
@@ -102,9 +129,13 @@ class PlayerListItemPacket(Packet):
 
     class UpdateGameModeAction(Action):
         __slots__ = 'gamemode'
+        action_id = 1
 
         def _read(self, file_object):
             self.gamemode = VarInt.read(file_object)
+
+        def _send(self, packet_buffer):
+            VarInt.send(self.gamemode, packet_buffer)
 
         def apply(self, player_list):
             player = player_list.players_by_uuid.get(self.uuid)
@@ -113,9 +144,13 @@ class PlayerListItemPacket(Packet):
 
     class UpdateLatencyAction(Action):
         __slots__ = 'ping'
+        action_id = 2
 
         def _read(self, file_object):
             self.ping = VarInt.read(file_object)
+
+        def _send(self, packet_buffer):
+            VarInt.send(self.ping, packet_buffer)
 
         def apply(self, player_list):
             player = player_list.players_by_uuid.get(self.uuid)
@@ -124,6 +159,7 @@ class PlayerListItemPacket(Packet):
 
     class UpdateDisplayNameAction(Action):
         __slots__ = 'display_name'
+        action_id = 3
 
         def _read(self, file_object):
             has_display_name = Boolean.read(file_object)
@@ -132,13 +168,25 @@ class PlayerListItemPacket(Packet):
             else:
                 self.display_name = None
 
+        def _send(self, packet_buffer):
+            if self.display_name is not None:
+                Boolean.send(True, packet_buffer)
+                String.send(self.display_name, packet_buffer)
+            else:
+                Boolean.send(False, packet_buffer)
+
         def apply(self, player_list):
             player = player_list.players_by_uuid.get(self.uuid)
             if player:
                 player.display_name = self.display_name
 
     class RemovePlayerAction(Action):
+        action_id = 4
+
         def _read(self, file_object):
+            pass
+
+        def _send(self, packet_buffer):
             pass
 
         def apply(self, player_list):
@@ -155,9 +203,12 @@ class PlayerListItemPacket(Packet):
             action.read(file_object)
             self.actions.append(action)
 
+    def write_fields(self, packet_buffer):
+        VarInt.send(self.action_type.action_id, packet_buffer)
+        VarInt.send(len(self.actions), packet_buffer)
+        for action in self.actions:
+            action.send(packet_buffer)
+
     def apply(self, player_list):
         for action in self.actions:
             action.apply(player_list)
-
-    def write_fields(self, packet_buffer):
-        raise NotImplementedError

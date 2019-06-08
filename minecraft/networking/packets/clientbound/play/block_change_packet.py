@@ -53,6 +53,11 @@ class MultiBlockChangePacket(Packet):
 
     packet_name = 'multi block change'
 
+    fields = 'chunk_x', 'chunk_z', 'records'
+
+    # Access the 'chunk_x' and 'chunk_z' fields as a tuple.
+    chunk_pos = multi_attribute_alias(tuple, 'chunk_x', 'chunk_z')
+
     class Record(MutableRecord):
         __slots__ = 'x', 'y', 'z', 'block_state_id'
 

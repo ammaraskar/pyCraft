@@ -22,6 +22,8 @@ class CombatEventPacket(Packet):
 
     packet_name = 'combat event'
 
+    fields = 'event',
+
     # The abstract type of the 'event' field of this packet.
     class EventType(MutableRecord):
         __slots__ = ()
