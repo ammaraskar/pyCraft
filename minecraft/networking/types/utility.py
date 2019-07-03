@@ -65,7 +65,8 @@ class MutableRecord(object):
 
     def __repr__(self):
         return '%s(%s)' % (type(self).__name__, ', '.join(
-               '%s=%r' % (a, getattr(self, a)) for a in self._all_slots()))
+            '%s=%r' % (a, getattr(self, a)) for a in self._all_slots()
+            if hasattr(self, a)))
 
     def __eq__(self, other):
         return type(self) is type(other) and all(
@@ -83,8 +84,11 @@ class MutableRecord(object):
 
     @classmethod
     def _all_slots(cls):
-        return tuple(f for c in reversed(cls.__mro__)
-                     for f in getattr(c, '__slots__', ()))
+        for supcls in reversed(cls.__mro__):
+            slots = supcls.__dict__.get('__slots__', ())
+            slots = (slots,) if isinstance(slots, str) else slots
+            for slot in slots:
+                yield slot
 
 
 def attribute_alias(name):
