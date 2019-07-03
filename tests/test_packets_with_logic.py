@@ -125,6 +125,8 @@ fake_uuid = "12345678-1234-5678-1234-567812345678"
 
 
 class PlayerListItemTest(unittest.TestCase):
+    maxDiff = None
+
     def test_base_action(self):
         packet_buffer = PacketBuffer()
         UUID.send(fake_uuid, packet_buffer)
@@ -142,10 +144,9 @@ class PlayerListItemTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             PlayerListItemPacket().read(packet_buffer)
 
-    @staticmethod
-    def make_add_player_packet(context, display_name=True):
+    def make_add_player_packet(self, context, display_name=True):
         packet_buffer = PacketBuffer()
-        PlayerListItemPacket(
+        packet = PlayerListItemPacket(
             context=context,
             action_type=PlayerListItemPacket.AddPlayerAction,
             actions=[
@@ -163,7 +164,17 @@ class PlayerListItemTest(unittest.TestCase):
                     display_name='Goodmonson' if display_name else None
                 ),
             ],
-        ).write_fields(packet_buffer)
+        )
+        if display_name:
+            self.assertEqual(
+                str(packet), "0x%02X PlayerListItemPacket("
+                "action_type=AddPlayerAction, actions=[AddPlayerAction("
+                "uuid=%r, name='goodmonson', properties=[PlayerProperty("
+                "name='property1', value='value1', signature=None), "
+                "PlayerProperty(name='property2', value='value2', "
+                "signature='gm')], gamemode=42, ping=69, "
+                "display_name='Goodmonson')])" % (packet.id, fake_uuid))
+        packet.write_fields(packet_buffer)
         packet_buffer.reset_cursor()
         return packet_buffer
 
@@ -173,7 +184,7 @@ class PlayerListItemTest(unittest.TestCase):
             player_list = PlayerListItemPacket.PlayerList()
             packet_buffer = self.make_add_player_packet(context)
 
-            packet = PlayerListItemPacket()
+            packet = PlayerListItemPacket(context)
             packet.read(packet_buffer)
             packet.apply(player_list)
 
@@ -211,40 +222,58 @@ class PlayerListItemTest(unittest.TestCase):
 
             # Change the game mode
             packet_buffer = PacketBuffer()
-            PlayerListItemPacket(
+            packet = PlayerListItemPacket(
                 context=context,
                 action_type=PlayerListItemPacket.UpdateGameModeAction,
                 actions=[
                     PlayerListItemPacket.UpdateGameModeAction(
                         uuid=fake_uuid, gamemode=43),
                 ],
-            ).write_fields(packet_buffer)
+            )
+            self.assertEqual(
+                str(packet), "0x%02X PlayerListItemPacket("
+                "action_type=UpdateGameModeAction, actions=["
+                "UpdateGameModeAction(uuid=%r, gamemode=43)])"
+                % (packet.id, fake_uuid))
+            packet.write_fields(packet_buffer)
             self.read_and_apply(context, packet_buffer, player_list)
             self.assertEqual(by_uuid[fake_uuid].gamemode, 43)
 
             # Change the ping
             packet_buffer = PacketBuffer()
-            PlayerListItemPacket(
+            packet = PlayerListItemPacket(
                 context=context,
                 action_type=PlayerListItemPacket.UpdateLatencyAction,
                 actions=[
                     PlayerListItemPacket.UpdateLatencyAction(
                         uuid=fake_uuid, ping=70),
                 ],
-            ).write_fields(packet_buffer)
+            )
+            self.assertEqual(
+                str(packet), "0x%02X PlayerListItemPacket("
+                "action_type=UpdateLatencyAction, actions=["
+                "UpdateLatencyAction(uuid=%r, ping=70)])"
+                % (packet.id, fake_uuid))
+            packet.write_fields(packet_buffer)
             self.read_and_apply(context, packet_buffer, player_list)
             self.assertEqual(by_uuid[fake_uuid].ping, 70)
 
             # Change the display name
             packet_buffer = PacketBuffer()
-            PlayerListItemPacket(
+            packet = PlayerListItemPacket(
                 context=context,
                 action_type=PlayerListItemPacket.UpdateDisplayNameAction,
                 actions=[
                     PlayerListItemPacket.UpdateDisplayNameAction(
                         uuid=fake_uuid, display_name='Badmonson'),
                 ],
-            ).write_fields(packet_buffer)
+            )
+            self.assertEqual(
+                str(packet), "0x%02X PlayerListItemPacket("
+                "action_type=UpdateDisplayNameAction, actions=["
+                "UpdateDisplayNameAction(uuid=%r, display_name='Badmonson')])"
+                % (packet.id, fake_uuid))
+            packet.write_fields(packet_buffer)
             self.read_and_apply(context, packet_buffer, player_list)
             self.assertEqual(by_uuid[fake_uuid].display_name, 'Badmonson')
 
@@ -263,12 +292,17 @@ class PlayerListItemTest(unittest.TestCase):
 
             # Remove the player
             packet_buffer = PacketBuffer()
-            PlayerListItemPacket(
+            packet = PlayerListItemPacket(
                 context=context,
                 action_type=PlayerListItemPacket.RemovePlayerAction,
                 actions=[
                     PlayerListItemPacket.RemovePlayerAction(uuid=fake_uuid),
                 ],
-            ).write_fields(packet_buffer)
+            )
+            self.assertEqual(
+                str(packet), "0x%02X PlayerListItemPacket("
+                "action_type=RemovePlayerAction, actions=[RemovePlayerAction("
+                "uuid=%r)])" % (packet.id, fake_uuid))
+            packet.write_fields(packet_buffer)
             self.read_and_apply(context, packet_buffer, player_list)
             self.assertNotIn(fake_uuid, player_list.players_by_uuid)
