@@ -6,8 +6,11 @@ with a MineCraft server.
 # The version number of the most recent pyCraft release.
 __version__ = "0.6.0"
 
-# A dict mapping the name of each Minecraft version supported by pyCraft to
-# the corresponding protocol version number.
+# A dict mapping the ID string of each Minecraft version supported by pyCraft
+# to the corresponding protocol version number. The ID string of a version is
+# the key used to identify it in
+# <https://launchermeta.mojang.com/mc/game/version_manifest.json>, or the 'id'
+# key in "version.json" in the corresponding ".jar" file distributed by Mojang.
 SUPPORTED_MINECRAFT_VERSIONS = {
     '1.8':                  47,
     '1.8.1':                47,
@@ -181,15 +184,26 @@ SUPPORTED_MINECRAFT_VERSIONS = {
     '1.14.2 Pre-Release 3': 483,
     '1.14.2 Pre-Release 4': 484,
     '1.14.2':               485,
+    '1.14.3-pre1':          486,
+    '1.14.3-pre2':          487,
+    '1.14.3-pre3':          488,
+    '1.14.3-pre4':          489,
     '1.14.3':               490,
+    '1.14.4-pre1':          491,
+    '1.14.4-pre2':          492,
+    '1.14.4-pre3':          493,
+    '1.14.4-pre4':          494,
+    '1.14.4-pre5':          495,
+    '1.14.4-pre6':          496,
+    '1.14.4-pre7':          497,
     '1.14.4':               498,
 }
 
 # Those Minecraft versions supported by pyCraft which are "release" versions,
 # i.e. not development snapshots or pre-release versions.
 RELEASE_MINECRAFT_VERSIONS = {
-    name: protocol for (name, protocol) in SUPPORTED_MINECRAFT_VERSIONS.items()
-    if __import__('re').match(r'\d+(\.\d+)+$', name)}
+    vid: protocol for (vid, protocol) in SUPPORTED_MINECRAFT_VERSIONS.items()
+    if __import__('re').match(r'\d+(\.\d+)+$', vid)}
 
 # The protocol versions of SUPPORTED_MINECRAFT_VERSIONS, without duplicates,
 # in ascending numerical (and hence chronological) order.
