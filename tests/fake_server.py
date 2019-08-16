@@ -422,10 +422,10 @@ class _FakeServerTest(unittest.TestCase):
     """
 
     server_version = VERSIONS[-1]
-    # The Minecraft version name that the server will support.
+    # The Minecraft version ID that the server will support.
 
     client_versions = None
-    # The set of Minecraft version names or protocol version numbers that the
+    # The set of Minecraft version IDs or protocol version numbers that the
     # client will support. If None, the client supports all possible versions.
 
     server_type = FakeServer
