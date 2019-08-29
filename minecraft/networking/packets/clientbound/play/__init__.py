@@ -349,7 +349,7 @@ class VehicleMovePacket(Packet):
                0x2A if context.protocol_version >= 345 else \
                0x29 if context.protocol_version >= 332 else \
                0x2A if context.protocol_version >= 318 else \
-               0x29
+               0x29 # Note: Packet added in protocol version 94
 
     packet_name = "vehicle move clientbound"
     definition = [
@@ -360,11 +360,14 @@ class VehicleMovePacket(Packet):
         {'pitch': Float},
     ]
 
-    # Note: See clientbound.play.PositionAndLookPacket for notes
-    # regarding accessing / modifying attributes here.
+    # Access the 'x', 'y', 'z' fields as a Vector tuple.
     position = multi_attribute_alias(Vector, 'x', 'y', 'z')
 
+    # Access the 'yaw', 'pitch' fields as a Direction tuple.
     look = multi_attribute_alias(Direction, 'yaw', 'pitch')
 
+    # Access the 'x', 'y', 'z', 'yaw', 'pitch' fields as a PositionAndLook.
+    # NOTE: modifying the object retrieved from this property will not change
+    # the packet; it can only be changed by attribute or property assignment.
     position_and_look = multi_attribute_alias(
         PositionAndLook, 'x', 'y', 'z', 'yaw', 'pitch')
