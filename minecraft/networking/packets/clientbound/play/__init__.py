@@ -41,7 +41,8 @@ def get_packets(context):
         RespawnPacket,
         PluginMessagePacket,
         PlayerListHeaderAndFooterPacket,
-        EntityLookPacket
+        EntityLookPacket,
+        EntityPacket,
     }
     if context.protocol_version <= 47:
         packets |= {
@@ -50,10 +51,11 @@ def get_packets(context):
     if context.protocol_version >= 94:
         packets |= {
             SoundEffectPacket,
+            VehicleMovePacket,
         }
     if context.protocol_version >= 352:
         packets |= {
-            FacePlayerPacket
+            FacePlayerPacket,
         }
     return packets
 
@@ -321,3 +323,48 @@ class EntityLookPacket(Packet):
         {'pitch': Angle},
         {'on_ground': Boolean}
     ]
+
+
+class EntityPacket(Packet):
+    @staticmethod
+    def get_id(context):
+        return 0x2B if context.protocol_version >= 471 else \
+               0x27 if context.protocol_version >= 389 else \
+               0x26 if context.protocol_version >= 345 else \
+               0x25 if context.protocol_version >= 332 else \
+               0x29 if context.protocol_version >= 318 else \
+               0x28 if context.protocol_version >= 94 else \
+               0x29 if context.protocol_version >= 70 else \
+               0x14
+
+    packet_name = "entity"
+    definition = [{"entity_id": VarInt}]
+
+
+class VehicleMovePacket(Packet):
+    @staticmethod
+    def get_id(context):
+        return 0x2C if context.protocol_version >= 471 else \
+               0x2B if context.protocol_version >= 389 else \
+               0x2A if context.protocol_version >= 345 else \
+               0x29 if context.protocol_version >= 332 else \
+               0x2A if context.protocol_version >= 318 else \
+               0x29
+
+    packet_name = "vehicle move clientbound"
+    definition = [
+        {'x': Double},
+        {'y': Double},
+        {'z': Double},
+        {'yaw': Float},
+        {'pitch': Float},
+    ]
+
+    # Note: See clientbound.play.PositionAndLookPacket for notes
+    # regarding accessing / modifying attributes here.
+    position = multi_attribute_alias(Vector, 'x', 'y', 'z')
+
+    look = multi_attribute_alias(Direction, 'yaw', 'pitch')
+
+    position_and_look = multi_attribute_alias(
+        PositionAndLook, 'x', 'y', 'z', 'yaw', 'pitch')
