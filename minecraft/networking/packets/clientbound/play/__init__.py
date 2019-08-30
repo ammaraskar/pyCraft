@@ -18,6 +18,7 @@ from .explosion_packet import ExplosionPacket
 from .sound_effect_packet import SoundEffectPacket
 from .face_player_packet import FacePlayerPacket
 from .destroy_entities_packet import DestroyEntitiesPacket
+from .spawn_mob_packet import SpawnMobPacket
 
 
 # Formerly known as state_playing_clientbound.
@@ -45,6 +46,7 @@ def get_packets(context):
         EntityLookPacket,
         EntityPacket,
         DestroyEntitiesPacket,
+        SpawnMobPacket,
     }
     if context.protocol_version <= 47:
         packets |= {
