@@ -3,7 +3,6 @@ from minecraft.networking.packets import Packet
 from minecraft.networking.types import VarInt
 
 
-
 class DestroyEntitiesPacket(Packet):
     @staticmethod
     def get_id(context):

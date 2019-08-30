@@ -355,7 +355,7 @@ class VehicleMovePacket(Packet):
                0x2A if context.protocol_version >= 345 else \
                0x29 if context.protocol_version >= 332 else \
                0x2A if context.protocol_version >= 318 else \
-               0x29 # Note: Packet added in protocol version 94
+               0x29  # Note: Packet added in protocol version 94
 
     packet_name = "vehicle move clientbound"
     definition = [

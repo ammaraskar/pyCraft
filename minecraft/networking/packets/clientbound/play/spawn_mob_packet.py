@@ -1,5 +1,4 @@
 from minecraft.networking.packets import Packet
-from minecraft.networking.types.utility import descriptor
 
 from minecraft.networking.types import (
     VarInt, UUID, Double, Integer, Angle, Short, UnsignedByte,
@@ -30,18 +29,18 @@ class SpawnMobPacket(Packet):
             return getattr(cls, name)
 
         class EntityType(Enum):
-            BAT                 = 3  if pv >= 393 else \
+            BAT                 =  3 if pv >= 393 else \
                                   65
-            BLAZE               = 4  if pv >= 393 else \
+            BLAZE               =  4 if pv >= 393 else \
                                   61
-            CAVE_SPIDER         = 7  if pv >= 447 else \
-                                  6  if pv >= 393 else \
+            CAVE_SPIDER         =  7 if pv >= 447 else \
+                                   6 if pv >= 393 else \
                                   59
-            CHICKEN             = 8  if pv >= 447 else \
-                                  7  if pv >= 393 else \
+            CHICKEN             =  8 if pv >= 447 else \
+                                   7 if pv >= 393 else \
                                   93
             COW                 = 10 if pv >= 447 else \
-                                  9  if pv >= 393 else \
+                                   9 if pv >= 393 else \
                                   92
             CREEPER             = 11 if pv >= 447 else \
                                   10 if pv >= 393 else \
@@ -66,13 +65,13 @@ class SpawnMobPacket(Packet):
                                   68
             MAGMA_CUBE          = 40 if pv >= 447 else \
                                   38 if pv >= 393 else \
-                                  62 # Lava Slime
+                                  62  # Lava Slime
             MOOSHROOM           = 49 if pv >= 447 else \
                                   47 if pv >= 393 else \
-                                  96 # Mushroom Cow
+                                  96  # Mushroom Cow
             OCELOT              = 50 if pv >= 447 else \
                                   48 if pv >= 393 else \
-                                  98 # Ozelot
+                                  98  # Ozelot
             PIG                 = 54 if pv >= 447 else \
                                   51 if pv >= 393 else \
                                   90
@@ -96,7 +95,7 @@ class SpawnMobPacket(Packet):
                                   55
             SNOW_GOLEM          = 69 if pv >= 447 else \
                                   66 if pv >= 393 else \
-                                  97 # Snow Man
+                                  97  # Snow Man
             SPIDER              = 72 if pv >= 447 else \
                                   69 if pv >= 393 else \
                                   52
@@ -108,13 +107,13 @@ class SpawnMobPacket(Packet):
                                   120
             IRON_GOLEM          = 85 if pv >= 447 else \
                                   80 if pv >= 393 else \
-                                  99 # Villager Golem
+                                  99  # Villager Golem
             WITCH               = 89 if pv >= 447 else \
                                   82 if pv >= 393 else \
                                   66
             WITHER              = 90 if pv >= 447 else \
                                   83 if pv >= 393 else \
-                                  64 # Wither Boss
+                                  64  # Wither Boss
             # Issue with Wither Skeletons in PrismarineJS?
             # Not present in some protocol versions so
             # only 99% certain this enum is 100% accurate.
@@ -130,8 +129,8 @@ class SpawnMobPacket(Packet):
             if pv >= 447:
                 TRADER_LLAMA        = 75
             if pv >= 393:
-                COD                 = 9  if pv >= 447 else \
-                                      8
+                COD                 =  9 if pv >= 447 else \
+                                       8
                 DOLPHIN             = 13 if pv >= 447 else \
                                       12
                 DROWNED             = 15 if pv >= 447 else \
@@ -149,7 +148,7 @@ class SpawnMobPacket(Packet):
             if pv >= 335:
                 ILLUSIONER          = 33 if pv >= 447 else \
                                       31 if pv >= 393 else \
-                                      37 # Illusion Illager
+                                      37  # Illusion Illager
                 PARROT              = 53 if pv >= 447 else \
                                       50 if pv >= 393 else \
                                       105
@@ -189,7 +188,7 @@ class SpawnMobPacket(Packet):
                                       35
                 VINDICATOR          = 86 if pv >= 447 else \
                                       81 if pv >= 393 else \
-                                      36  # Vindication Illager
+                                      36   # Vindication Illager
                 ZOMBIE_HORSE        = 95 if pv >= 447 else \
                                       88 if pv >= 393 else \
                                       29
@@ -306,4 +305,3 @@ class SpawnMobPacket(Packet):
     @type.deleter
     def type(self):
         del self.type_id
-
