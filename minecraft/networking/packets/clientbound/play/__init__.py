@@ -4,8 +4,9 @@ from minecraft.networking.packets import (
 
 from minecraft.networking.types import (
     Integer, FixedPointInteger, Angle, UnsignedByte, Byte, Boolean, UUID,
-    Short, VarInt, Double, Float, String, Enum, Difficulty, Dimension,
-    GameMode, Vector, Direction, PositionAndLook, multi_attribute_alias,
+    Short, VarInt, Double, Float, String, Position, Enum, Difficulty,
+    Dimension, GameMode, Vector, Direction, PositionAndLook,
+    multi_attribute_alias,
 )
 
 from .combat_event_packet import CombatEventPacket
@@ -47,6 +48,7 @@ def get_packets(context):
         EntityPacket,
         DestroyEntitiesPacket,
         SpawnMobPacket,
+        BlockActionPacket,
     }
     if context.protocol_version <= 47:
         packets |= {
@@ -375,3 +377,22 @@ class VehicleMovePacket(Packet):
     # the packet; it can only be changed by attribute or property assignment.
     position_and_look = multi_attribute_alias(
         PositionAndLook, 'x', 'y', 'z', 'yaw', 'pitch')
+
+
+class BlockActionPacket(Packet):
+    @staticmethod
+    def get_id(context):
+        return 0x0A if context.protocol_version >= 332 else \
+               0x0B if context.protocol_version >= 318 else \
+               0x0A if context.protocol_version >= 70 else \
+               0x25 if context.protocol_version >= 69 else \
+               0x24
+
+    packet_name = "block action"
+    get_definition = staticmethod(lambda context: [
+        {'location': Position},
+        {'block_type': VarInt} if context.protocol_version == 347 else {},
+        {'action_id': UnsignedByte},     # TODO Interpret action_id and
+        {'action_param': UnsignedByte},  # action_param fields.
+        {'block_type': VarInt} if context.protocol_version != 347 else {},
+    ])
