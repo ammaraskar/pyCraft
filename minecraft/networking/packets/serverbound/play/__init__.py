@@ -3,9 +3,9 @@ from minecraft.networking.packets import (
 )
 
 from minecraft.networking.types import (
-    Double, Float, Boolean, VarInt, String, Byte, UnsignedByte,
-    Position, Enum, RelativeHand, BlockFace, ClickType, Vector,
-    Direction, PositionAndLook, multi_attribute_alias
+    Double, Float, Boolean, VarInt, String, Byte, Position, Enum,
+    RelativeHand, BlockFace, ClickType, Vector, Direction,
+    PositionAndLook, multi_attribute_alias
 )
 
 from .client_settings_packet import ClientSettingsPacket
@@ -278,7 +278,7 @@ class UseEntityPacket(Packet):
         self.target = VarInt.read(file_object)
         self.type = VarInt.read(file_object)
         if self.type is ClickType.INTERACT_AT:
-            self.target_x  =Float.read(file_object)
+            self.target_x = Float.read(file_object)
             self.target_y = Float.read(file_object)
             self.target_z = Float.read(file_object)
         if self.type in [ClickType.INTERACT_AT, ClickType.INTERACT]:
@@ -309,7 +309,7 @@ class VehicleMovePacket(Packet):
                0x0F if context.protocol_version >= 343 else \
                0x10 if context.protocol_version >= 336 else \
                0x11 if context.protocol_version >= 318 else \
-               0x10 # Note: Packet added in protocol version 94
+               0x10  # Note: Packet added in protocol version 94
 
     packet_name = "vehicle move serverbound"
     definition = [
