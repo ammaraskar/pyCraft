@@ -223,4 +223,4 @@ class PositionLookAndDirection(MutableRecord):
     look = multi_attribute_alias(Direction, 'yaw', 'pitch')
 
     look_and_direction = multi_attribute_alias(LookAndDirection,
-                                 'yaw', 'pitch', 'head_pitch')
+                                               'yaw', 'pitch', 'head_pitch')

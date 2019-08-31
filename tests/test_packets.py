@@ -5,6 +5,7 @@ import logging
 import struct
 from zlib import decompress
 from random import choice
+from collections import OrderedDict
 
 from minecraft import SUPPORTED_PROTOCOL_VERSIONS, RELEASE_PROTOCOL_VERSIONS
 from minecraft.networking.connection import ConnectionContext
@@ -290,14 +291,14 @@ class TestReadWritePackets(unittest.TestCase):
             names = []
             values = []
             for name, name_value in packet.field_enum(
-                'type_id', context).__dict__.items():
+                    'type_id', context).__dict__.items():
                 if name.isupper():
                     names.append(name)
                     values.append(name_value)
 
             # Remove duplicates
-            no_repeats_names = list(dict.fromkeys(names))
-            no_repeats_values = list(dict.fromkeys(values))
+            no_repeats_names = list(OrderedDict.fromkeys(names))
+            no_repeats_values = list(OrderedDict.fromkeys(values))
             self.assertEqual(names, no_repeats_names)
             self.assertEqual(values, no_repeats_values)
 

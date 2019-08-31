@@ -289,7 +289,7 @@ class SpawnMobPacket(Packet):
     # PositionLookAndDirection
     position_look_and_direction = multi_attribute_alias(
         PositionLookAndDirection, x='x', y='y', z='z', yaw='yaw',
-            pitch='pitch', head_pitch='head_pitch')
+        pitch='pitch', head_pitch='head_pitch')
 
     # Access the 'velocity_{x,y,z}' fields as a Vector.
     velocity = multi_attribute_alias(

@@ -82,8 +82,8 @@ class PositionLookAndDirectionTest(unittest.TestCase):
         pos_look_1 = PositionLookAndDirection(position=(1, 2, 3),
                                               look_and_direction=(4, 5, 6))
         pos_look_2 = PositionLookAndDirection(x=1, y=2, z=3,
-                                              yaw=4, pitch=5,head_pitch=6)
-        string_repr = ('PositionLookAndDirection(x=1, y=2, z=3, '\
+                                              yaw=4, pitch=5, head_pitch=6)
+        string_repr = ('PositionLookAndDirection(x=1, y=2, z=3, '
                        'yaw=4, pitch=5, head_pitch=6)')
 
         self.assertEqual(pos_look_1, pos_look_2)
