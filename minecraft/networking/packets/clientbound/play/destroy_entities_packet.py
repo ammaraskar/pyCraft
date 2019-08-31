@@ -18,11 +18,15 @@ class DestroyEntitiesPacket(Packet):
                0x30 if context.protocol_version >= 70 else \
                0x13
 
+    packet_name = 'destroy entities'
+
+    fields = 'entity_ids',
+
     def read(self, file_object):
         self.entity_ids = [VarInt.read(file_object)
                            for i in range(VarInt.read(file_object))]
 
-    def write(self, packet_buffer):
+    def write_fields(self, packet_buffer):
         count = len(self.entity_ids)
         VarInt.send(count, packet_buffer)
         for entity_id in self.entity_ids:

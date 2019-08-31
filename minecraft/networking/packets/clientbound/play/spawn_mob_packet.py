@@ -1,8 +1,8 @@
 from minecraft.networking.packets import Packet
 
 from minecraft.networking.types import (
-    VarInt, UUID, Double, Integer, Angle, Short, UnsignedByte,
-    Enum, Vector, Direction, PositionAndLook, attribute_alias,
+    VarInt, UUID, Double, Integer, Angle, Short, UnsignedByte, Enum, Vector,
+    Direction, PositionAndLook, LookAndDirection, PositionLookAndDirection,
     multi_attribute_alias
 )
 
@@ -226,15 +226,16 @@ class SpawnMobPacket(Packet):
         # TODO: read entity metadata
 
     def write_fields(self, packet_buffer):
-        VarInt.read(self.entity_id, packet_buffer)
+        VarInt.send(self.entity_id, packet_buffer)
         if self.context.protocol_version >= 69:
-            UUID.send(self.entity_id, packet_buffer)
+            UUID.send(self.entity_uuid, packet_buffer)
 
         if self.context.protocol_version >= 301:
             VarInt.send(self.type_id, packet_buffer)
         else:
             UnsignedByte.send(self.type_id, packet_buffer)
 
+        # pylint: disable=no-member
         xyz_type = Double if self.context.protocol_version >= 97 else Integer
         for coord in self.x, self.y, self.z:
             xyz_type.send(coord, packet_buffer)
@@ -261,6 +262,7 @@ class SpawnMobPacket(Packet):
         if self.context is None:
             raise ValueError('This packet must have a non-None "context" '
                              'in order to set the "type" property.')
+        # pylint: disable=no-member
         self.type_id = getattr(self.EntityType, type_name)
 
     @type.deleter
@@ -273,35 +275,22 @@ class SpawnMobPacket(Packet):
     # Access the 'yaw', 'pitch' fields as a Direction.
     look = multi_attribute_alias(Direction, 'yaw', 'pitch')
 
+    # Access the 'yaw', 'pitch' 'head_pitch' fields as a LookAndDirection.
+    look_and_direction = multi_attribute_alias(LookAndDirection,
+                                               'yaw', 'pitch', 'head_pitch')
+
     # Access the 'x', 'y', 'z', 'pitch', 'yaw' fields as a PositionAndLook.
     # NOTE: modifying the object retrieved from this property will not change
     # the packet; it can only be changed by attribute or property assignment.
     position_and_look = multi_attribute_alias(
         PositionAndLook, x='x', y='y', z='z', yaw='yaw', pitch='pitch')
 
+    # Access the 'x', 'y', 'z', 'pitch', 'yaw', 'headpitch' fields as a
+    # PositionLookAndDirection
+    position_look_and_direction = multi_attribute_alias(
+        PositionLookAndDirection, x='x', y='y', z='z', yaw='yaw',
+            pitch='pitch', head_pitch='head_pitch')
+
     # Access the 'velocity_{x,y,z}' fields as a Vector.
     velocity = multi_attribute_alias(
         Vector, 'velocity_x', 'velocity_y', 'velocity_z')
-
-    # This alias is retained for backward compatibility.
-    objectUUID = attribute_alias('object_uuid')
-
-    # Access the entity type as a string, according to the EntityType enum.
-    @property
-    def type(self):
-        if self.context is None:
-            raise ValueError('This packet must have a non-None "context" '
-                             'in order to read the "type" property.')
-        # pylint: disable=no-member
-        return self.EntityType.name_from_value(self.type_id)
-
-    @type.setter
-    def type(self, type_name):
-        if self.context is None:
-            raise ValueError('This packet must have a non-None "context" '
-                             'in order to set the "type" property.')
-        self.type_id = getattr(self.EntityType, type_name)
-
-    @type.deleter
-    def type(self):
-        del self.type_id
