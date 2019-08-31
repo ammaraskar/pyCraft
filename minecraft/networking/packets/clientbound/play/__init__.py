@@ -49,6 +49,7 @@ def get_packets(context):
         DestroyEntitiesPacket,
         SpawnMobPacket,
         BlockActionPacket,
+        EntityHeadLookPacket,
     }
     if context.protocol_version <= 47:
         packets |= {
@@ -396,3 +397,25 @@ class BlockActionPacket(Packet):
         {'action_param': UnsignedByte},  # action_param fields.
         {'block_type': VarInt} if context.protocol_version != 347 else {},
     ])
+
+
+class EntityHeadLookPacket(Packet):
+    @staticmethod
+    def get_id(context):
+        return 0x3B if context.protocol_version >= 471 else \
+               0x39 if context.protocol_version >= 461 else \
+               0x3A if context.protocol_version >= 451 else \
+               0x39 if context.protocol_version >= 389 else \
+               0x38 if context.protocol_version >= 352 else \
+               0x37 if context.protocol_version >= 345 else \
+               0x36 if context.protocol_version >= 336 else \
+               0x35 if context.protocol_version >= 332 else \
+               0x36 if context.protocol_version >= 318 else \
+               0x34 if context.protocol_version >= 70 else \
+               0x19
+
+    packet_name = 'entity look'
+    definition = [
+        {'entity_id': VarInt},
+        {'head_yaw': Angle},
+    ]
