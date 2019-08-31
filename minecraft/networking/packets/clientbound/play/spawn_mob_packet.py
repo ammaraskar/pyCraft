@@ -3,7 +3,7 @@ from minecraft.networking.packets import Packet
 from minecraft.networking.types import (
     VarInt, UUID, Double, Integer, Angle, Short, UnsignedByte, Enum, Vector,
     Direction, PositionAndLook, LookAndDirection, PositionLookAndDirection,
-    multi_attribute_alias
+    multi_attribute_alias, descriptor
 )
 
 
@@ -17,6 +17,24 @@ class SpawnMobPacket(Packet):
 
     fields = ('entity_id', 'entity_uuid', 'type_id', 'x', 'y', 'z', 'pitch',
               'yaw', 'head_pitch', 'velocity_x', 'velocity_y', 'velocity_z')
+
+    @descriptor
+    def EntityType(desc, self, cls):  # pylint: disable=no-self-argument
+        if self is None:
+            # EntityType is being accessed as a class attribute.
+            raise AttributeError(
+                '"SpawnObjectPacket.EntityType" cannot be accessed as a '
+                'class attribute, because it depends on the protocol version. '
+                'There are two ways to access the correct version of the '
+                'class:\n\n'
+                '1. Access the "EntityType" attribute of a '
+                '"SpawnObjectPacket" instance with its "context" property '
+                'set.\n\n'
+                '2. Call "SpawnObjectPacket.field_enum(\'type_id\', '
+                'context)".')
+        else:
+            # EntityType is being accessed as an instance attribute.
+            return self.field_enum('type_id', self.context)
 
     @classmethod
     def field_enum(cls, field, context):

@@ -414,7 +414,10 @@ class EntityHeadLookPacket(Packet):
                0x34 if context.protocol_version >= 70 else \
                0x19
 
-    packet_name = 'entity look'
+    packet_name = 'entity head look'
+
+    fields = 'entity_id', 'head_yaw'
+
     definition = [
         {'entity_id': VarInt},
         {'head_yaw': Angle},

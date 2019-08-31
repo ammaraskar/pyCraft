@@ -11,7 +11,7 @@ from minecraft import SUPPORTED_PROTOCOL_VERSIONS, RELEASE_PROTOCOL_VERSIONS
 from minecraft.networking.connection import ConnectionContext
 from minecraft.networking.types import (
     VarInt, Enum, Vector, PositionAndLook, PositionLookAndDirection,
-    LookAndDirection, OriginPoint,
+    LookAndDirection, OriginPoint, ClickType, RelativeHand
 )
 from minecraft.networking.packets import (
     Packet, PacketBuffer, PacketListener, KeepAlivePacket, serverbound,
@@ -158,6 +158,50 @@ class PacketEnumTest(unittest.TestCase):
 class TestReadWritePackets(unittest.TestCase):
     maxDiff = None
 
+    def test_entity_head_look_packet(self):
+        for protocol_version in TEST_VERSIONS:
+            logging.debug('protocol_version = %r' % protocol_version)
+            context = ConnectionContext(protocol_version=protocol_version)
+            packet = clientbound.play.EntityHeadLookPacket(
+                entity_id=897, head_yaw=93.87)
+            self.assertEqual(
+                str(packet),
+                'EntityHeadLookPacket(entity_id=897, head_yaw=93.87)'
+            )
+            self._test_read_write_packet(packet, context, head_yaw=360/256)
+
+    def test_destroy_entities_packet(self):
+        for protocol_version in TEST_VERSIONS:
+            logging.debug('protocol_version = %r' % protocol_version)
+            context = ConnectionContext(protocol_version=protocol_version)
+            packet = clientbound.play.DestroyEntitiesPacket(
+                entity_ids=[593, 388, 1856])
+            self.assertEqual(
+                str(packet),
+                'DestroyEntitiesPacket(entity_ids=[593, 388, 1856])'
+            )
+            self._test_read_write_packet(packet, context)
+
+    def test_use_entity_packet(self):
+        for protocol_version in TEST_VERSIONS:
+            logging.debug('protocol_version = %r' % protocol_version)
+            context = ConnectionContext(protocol_version=protocol_version)
+            packet = serverbound.play.UseEntityPacket(context)
+            packet.entity_id = 495
+            packet.click_type = ClickType.INTERACT_AT
+            packet.target = 51.0, 2.0, 50.0
+            packet.hand = RelativeHand.MAIN
+
+            self.assertEqual(
+                str(packet),
+                '0x%02X UseEntityPacket(entity_id=495, '
+                'click_type=INTERACT_AT, '
+                'target_x=51.0, target_y=2.0, target_z=50.0, hand=MAIN)' %
+                packet.id
+            )
+
+        self._test_read_write_packet(packet, context)
+
     def test_explosion_packet(self):
         Record = clientbound.play.ExplosionPacket.Record
         packet = clientbound.play.ExplosionPacket(
@@ -264,8 +308,7 @@ class TestReadWritePackets(unittest.TestCase):
                              pos_look_dir.look_and_direction)
             self.assertEqual(packet.look, pos_look_dir.look)
             self.assertEqual(packet.velocity, velocity)
-            self.assertEqual(packet.field_enum(
-                'type_id', context).name_from_value(type_id), type_name)
+            self.assertEqual(packet.type, type_name)
 
             self.assertEqual(
                 str(packet),
