@@ -23,14 +23,14 @@ class SpawnMobPacket(Packet):
         if self is None:
             # EntityType is being accessed as a class attribute.
             raise AttributeError(
-                '"SpawnObjectPacket.EntityType" cannot be accessed as a '
+                '"SpawnMobPacket.EntityType" cannot be accessed as a '
                 'class attribute, because it depends on the protocol version. '
                 'There are two ways to access the correct version of the '
                 'class:\n\n'
                 '1. Access the "EntityType" attribute of a '
-                '"SpawnObjectPacket" instance with its "context" property '
+                '"SpawnMobPacket" instance with its "context" property '
                 'set.\n\n'
-                '2. Call "SpawnObjectPacket.field_enum(\'type_id\', '
+                '2. Call "SpawnMobPacket.field_enum(\'type_id\', '
                 'context)".')
         else:
             # EntityType is being accessed as an instance attribute.
@@ -303,7 +303,7 @@ class SpawnMobPacket(Packet):
     position_and_look = multi_attribute_alias(
         PositionAndLook, x='x', y='y', z='z', yaw='yaw', pitch='pitch')
 
-    # Access the 'x', 'y', 'z', 'pitch', 'yaw', 'headpitch' fields as a
+    # Access the 'x', 'y', 'z', 'pitch', 'yaw', 'head_pitch' fields as a
     # PositionLookAndDirection
     position_look_and_direction = multi_attribute_alias(
         PositionLookAndDirection, x='x', y='y', z='z', yaw='yaw',

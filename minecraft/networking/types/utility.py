@@ -212,8 +212,8 @@ LookAndDirection = namedtuple('LookAndDirection',
 
 class PositionLookAndDirection(MutableRecord):
     """
-    A mutable record containing 3 spation position coordinates,
-    2 rotational components and an additional pitch component for
+    A mutable record containing 3 spatial position coordinates,
+    2 rotational components and an additional rotational component for
     the head of the object.
     """
     __slots__ = 'x', 'y', 'z', 'yaw', 'pitch', 'head_pitch'
