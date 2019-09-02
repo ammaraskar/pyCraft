@@ -12,7 +12,7 @@ from .utility import Vector
 
 __all__ = (
     'Enum', 'BitFieldEnum', 'AbsoluteHand', 'RelativeHand', 'BlockFace',
-    'Difficulty', 'Dimension', 'GameMode', 'OriginPoint'
+    'Difficulty', 'Dimension', 'GameMode', 'OriginPoint', 'ClickType'
 )
 
 
@@ -113,3 +113,11 @@ class GameMode(Enum):
 class OriginPoint(Enum):
     FEET = 0
     EYES = 1
+
+
+# Designation of a player's click action.
+# Used in Use Entity Packet
+class ClickType(Enum):
+    INTERACT = 0
+    ATTACK = 1
+    INTERACT_AT = 2

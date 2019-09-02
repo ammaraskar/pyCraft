@@ -1,7 +1,8 @@
 import unittest
 
 from minecraft.networking.types import (
-    Enum, BitFieldEnum, Vector, Position, PositionAndLook
+    Enum, BitFieldEnum, Vector, Position, PositionAndLook,
+    PositionLookAndDirection
 )
 
 
@@ -68,6 +69,29 @@ class PositionAndLookTest(unittest.TestCase):
         self.assertEqual(pos_look_1.position, pos_look_1.position)
         self.assertEqual(pos_look_1.look, pos_look_2.look)
         self.assertEqual(hash(pos_look_1), hash(pos_look_2))
+        self.assertEqual(str(pos_look_1), string_repr)
+
+        self.assertFalse(pos_look_1 != pos_look_2)
+        pos_look_1.position += Vector(1, 1, 1)
+        self.assertTrue(pos_look_1 != pos_look_2)
+
+
+class PositionLookAndDirectionTest(unittest.TestCase):
+    """ This also tests the MutableRecord base type. """
+    def test_properties(self):
+        pos_look_1 = PositionLookAndDirection(position=(1, 2, 3),
+                                              look_and_direction=(4, 5, 6))
+        pos_look_2 = PositionLookAndDirection(x=1, y=2, z=3,
+                                              yaw=4, pitch=5, head_pitch=6)
+        string_repr = ('PositionLookAndDirection(x=1, y=2, z=3, '
+                       'yaw=4, pitch=5, head_pitch=6)')
+
+        self.assertEqual(pos_look_1, pos_look_2)
+        self.assertEqual(pos_look_1.position, pos_look_1.position)
+        self.assertEqual(pos_look_1.look, pos_look_2.look)
+        self.assertEqual(hash(pos_look_1), hash(pos_look_2))
+        self.assertEqual(pos_look_1.look_and_direction,
+                         pos_look_2.look_and_direction)
         self.assertEqual(str(pos_look_1), string_repr)
 
         self.assertFalse(pos_look_1 != pos_look_2)

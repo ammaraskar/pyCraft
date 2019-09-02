@@ -5,11 +5,13 @@ import logging
 import struct
 from zlib import decompress
 from random import choice
+from collections import OrderedDict
 
 from minecraft import SUPPORTED_PROTOCOL_VERSIONS, RELEASE_PROTOCOL_VERSIONS
 from minecraft.networking.connection import ConnectionContext
 from minecraft.networking.types import (
-    VarInt, Enum, Vector, PositionAndLook, OriginPoint,
+    VarInt, Enum, Vector, PositionAndLook, PositionLookAndDirection,
+    LookAndDirection, OriginPoint, ClickType, RelativeHand
 )
 from minecraft.networking.packets import (
     Packet, PacketBuffer, PacketListener, KeepAlivePacket, serverbound,
@@ -156,6 +158,50 @@ class PacketEnumTest(unittest.TestCase):
 class TestReadWritePackets(unittest.TestCase):
     maxDiff = None
 
+    def test_entity_head_look_packet(self):
+        for protocol_version in TEST_VERSIONS:
+            logging.debug('protocol_version = %r' % protocol_version)
+            context = ConnectionContext(protocol_version=protocol_version)
+            packet = clientbound.play.EntityHeadLookPacket(
+                entity_id=897, head_yaw=93.87)
+            self.assertEqual(
+                str(packet),
+                'EntityHeadLookPacket(entity_id=897, head_yaw=93.87)'
+            )
+            self._test_read_write_packet(packet, context, head_yaw=360/256)
+
+    def test_destroy_entities_packet(self):
+        for protocol_version in TEST_VERSIONS:
+            logging.debug('protocol_version = %r' % protocol_version)
+            context = ConnectionContext(protocol_version=protocol_version)
+            packet = clientbound.play.DestroyEntitiesPacket(
+                entity_ids=[593, 388, 1856])
+            self.assertEqual(
+                str(packet),
+                'DestroyEntitiesPacket(entity_ids=[593, 388, 1856])'
+            )
+            self._test_read_write_packet(packet, context)
+
+    def test_use_entity_packet(self):
+        for protocol_version in TEST_VERSIONS:
+            logging.debug('protocol_version = %r' % protocol_version)
+            context = ConnectionContext(protocol_version=protocol_version)
+            packet = serverbound.play.UseEntityPacket(context)
+            packet.entity_id = 495
+            packet.click_type = ClickType.INTERACT_AT
+            packet.target = 51.0, 2.0, 50.0
+            packet.hand = RelativeHand.MAIN
+
+            self.assertEqual(
+                str(packet),
+                '0x%02X UseEntityPacket(entity_id=495, '
+                'click_type=INTERACT_AT, '
+                'target_x=51.0, target_y=2.0, target_z=50.0, hand=MAIN)' %
+                packet.id
+            )
+
+        self._test_read_write_packet(packet, context)
+
     def test_explosion_packet(self):
         Record = clientbound.play.ExplosionPacket.Record
         packet = clientbound.play.ExplosionPacket(
@@ -225,6 +271,98 @@ class TestReadWritePackets(unittest.TestCase):
         )
 
         self._test_read_write_packet(packet)
+
+    def test_spawn_mob_packet(self):
+        for protocol_version in TEST_VERSIONS:
+            logging.debug('protocol_version = %r' % protocol_version)
+            context = ConnectionContext(protocol_version=protocol_version)
+
+            EntityType = clientbound.play.SpawnMobPacket.field_enum(
+                            'type_id', context)
+
+            pos_look_dir = PositionLookAndDirection(
+                position=(Vector(48.35, 82.0, 11.28) if protocol_version >= 97
+                          else Vector(48, 82, 11)),
+                look_and_direction=(LookAndDirection(
+                    yaw=87.9, pitch=90, head_pitch=19.07)))
+
+            velocity = Vector(100, 98, 2)
+            entity_id, type_name, type_id = 573, 'CREEPER', EntityType.CREEPER
+
+            packet = clientbound.play.SpawnMobPacket(
+                context=context,
+                x=pos_look_dir.x, y=pos_look_dir.y, z=pos_look_dir.z,
+                yaw=pos_look_dir.yaw, pitch=pos_look_dir.pitch,
+                head_pitch=pos_look_dir.head_pitch,
+                velocity_x=velocity.x, velocity_y=velocity.y,
+                velocity_z=velocity.z,
+                entity_id=entity_id, type_id=type_id)
+
+            if protocol_version >= 69:
+                entity_uuid = 'd9568851-85bc-4a10-8d6a-261d130626fa'
+                packet.entity_uuid = entity_uuid
+                self.assertEqual(packet.entity_uuid, entity_uuid)
+            self.assertEqual(packet.position_look_and_direction, pos_look_dir)
+            self.assertEqual(packet.position, pos_look_dir.position)
+            self.assertEqual(packet.look_and_direction,
+                             pos_look_dir.look_and_direction)
+            self.assertEqual(packet.look, pos_look_dir.look)
+            self.assertEqual(packet.velocity, velocity)
+            self.assertEqual(packet.type, type_name)
+
+            self.assertEqual(
+                str(packet),
+                "0x%02X SpawnMobPacket(entity_id=573, "
+                "entity_uuid='d9568851-85bc-4a10-8d6a-261d130626fa', "
+                "type_id=CREEPER, x=48.35, y=82.0, z=11.28, "
+                "pitch=90, yaw=87.9, head_pitch=19.07, "
+                "velocity_x=100, velocity_y=98, velocity_z=2)"
+                % packet.id if protocol_version >= 97 else
+                "0x%02X SpawnMobPacket(entity_id=573, "
+                "entity_uuid='d9568851-85bc-4a10-8d6a-261d130626fa', "
+                "type_id=CREEPER, x=48, y=82, z=11, "
+                "pitch=90, yaw=87.9, head_pitch=19.07, "
+                "velocity_x=100, velocity_y=98, velocity_z=2)"
+                % packet.id if protocol_version >= 69 else
+                "0x%02X SpawnMobPacket(entity_id=573, "
+                "type_id=CREEPER, x=48, y=82, z=11, "
+                "pitch=90, yaw=87.9, head_pitch=19.07, "
+                "velocity_x=100, velocity_y=98, velocity_z=2)" % packet.id)
+
+            # Assert no repeating values / names for each protocol_version
+            # in EntityType Enum
+            names = []
+            values = []
+            for name, name_value in packet.field_enum(
+                    'type_id', context).__dict__.items():
+                if name.isupper():
+                    names.append(name)
+                    values.append(name_value)
+
+            # Remove duplicates
+            no_repeats_names = list(OrderedDict.fromkeys(names))
+            no_repeats_values = list(OrderedDict.fromkeys(values))
+            self.assertEqual(names, no_repeats_names)
+            self.assertEqual(values, no_repeats_values)
+
+            packet2 = clientbound.play.SpawnMobPacket(
+                context=context,
+                position_look_and_direction=pos_look_dir,
+                velocity=velocity,
+                entity_id=entity_id, type_id=type_id)
+
+            if protocol_version >= 69:
+                packet2.entity_uuid = entity_uuid
+            self.assertEqual(packet.__dict__, packet2.__dict__)
+            packet2.position = pos_look_dir.position
+            self.assertEqual(packet2.position, pos_look_dir.position)
+
+            self._test_read_write_packet(packet, context,
+                                         yaw=360/256, pitch=360/256,
+                                         head_pitch=360/256)
+            self._test_read_write_packet(packet2, context,
+                                         yaw=360/256, pitch=360/256,
+                                         head_pitch=360/256)
 
     def test_spawn_object_packet(self):
         for protocol_version in TEST_VERSIONS:
