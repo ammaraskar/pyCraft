@@ -94,7 +94,7 @@ class JoinGamePacket(Packet):
         {'level_type': String},
         {'render_distance': VarInt} if context.protocol_version >= 468 else {},
         {'reduced_debug_info': Boolean},
-        {'enable_respawn_screen': Boolean} if context.protocol_version >= 573 else {},
+        {'respawn_screen': Boolean} if context.protocol_version >= 573 else {},
     ])
 
     # These aliases declare the Enum type corresponding to each field:

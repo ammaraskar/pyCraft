@@ -5,7 +5,7 @@ from minecraft.networking.types import (
 )
 
 
-# Player Info 
+# Player Info
 class PlayerListItemPacket(Packet):
     @staticmethod
     def get_id(context):
