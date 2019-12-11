@@ -4,7 +4,8 @@ from minecraft.networking.packets import (
 
 from minecraft.networking.types import (
     Double, Float, Boolean, VarInt, String, Byte, Position, Enum,
-    RelativeHand, BlockFace
+    RelativeHand, BlockFace, Vector, Direction, PositionAndLook,
+    multi_attribute_alias
 )
 
 from .client_settings_packet import ClientSettingsPacket
@@ -97,6 +98,19 @@ class PositionAndLookPacket(Packet):
         {'yaw': Float},
         {'pitch': Float},
         {'on_ground': Boolean}]
+
+    # Access the 'x', 'feet_y', 'z' fields as a Vector tuple.
+    position = multi_attribute_alias(Vector, 'x', 'feet_y', 'z')
+
+    # Access the 'yaw', 'pitch' fields as a Direction tuple.
+    look = multi_attribute_alias(Direction, 'yaw', 'pitch')
+
+    # Access the 'x', 'feet_y', 'z', 'yaw', 'pitch' fields as a
+    # PositionAndLook.
+    # NOTE: modifying the object retrieved from this property will not change
+    # the packet; it can only be changed by attribute or property assignment.
+    position_and_look = multi_attribute_alias(
+        PositionAndLook, 'x', 'feet_y', 'z', 'yaw', 'pitch')
 
 
 class TeleportConfirmPacket(Packet):

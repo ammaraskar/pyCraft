@@ -1,7 +1,8 @@
 from minecraft.networking.packets import Packet
 
 from minecraft.networking.types import (
-    Double, Float, Byte, VarInt, BitFieldEnum, PositionAndLook
+    Double, Float, Byte, VarInt, BitFieldEnum, Vector, Direction,
+    PositionAndLook, multi_attribute_alias,
 )
 
 
@@ -30,6 +31,18 @@ class PlayerPositionAndLookPacket(Packet, BitFieldEnum):
         {'flags': Byte},
         {'teleport_id': VarInt} if context.protocol_version >= 107 else {},
     ])
+
+    # Access the 'x', 'y', 'z' fields as a Vector tuple.
+    position = multi_attribute_alias(Vector, 'x', 'y', 'z')
+
+    # Access the 'yaw', 'pitch' fields as a Direction tuple.
+    look = multi_attribute_alias(Direction, 'yaw', 'pitch')
+
+    # Access the 'x', 'y', 'z', 'yaw', 'pitch' fields as a PositionAndLook.
+    # NOTE: modifying the object retrieved from this property will not change
+    # the packet; it can only be changed by attribute or property assignment.
+    position_and_look = multi_attribute_alias(
+        PositionAndLook, 'x', 'y', 'z', 'yaw', 'pitch')
 
     field_enum = classmethod(
         lambda cls, field, context: cls if field == 'flags' else None)

@@ -19,13 +19,18 @@ class ExplosionPacket(Packet):
 
     packet_name = 'explosion'
 
-    class Record(Vector):
-        __slots__ = ()
+    fields = 'x', 'y', 'z', 'radius', 'records', \
+             'player_motion_x', 'player_motion_y', 'player_motion_z'
 
+    # Access the 'x', 'y', 'z' fields as a Vector tuple.
     position = multi_attribute_alias(Vector, 'x', 'y', 'z')
 
+    # Access the 'player_motion_{x,y,z}' fields as a Vector tuple.
     player_motion = multi_attribute_alias(
         Vector, 'player_motion_x', 'player_motion_y', 'player_motion_z')
+
+    class Record(Vector):
+        __slots__ = ()
 
     def read(self, file_object):
         self.x = Float.read(file_object)

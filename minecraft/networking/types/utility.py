@@ -8,7 +8,7 @@ from itertools import chain
 
 
 __all__ = (
-    'Vector', 'MutableRecord', 'PositionAndLook', 'descriptor',
+    'Vector', 'MutableRecord', 'Direction', 'PositionAndLook', 'descriptor',
     'attribute_alias', 'multi_attribute_alias',
 )
 
@@ -53,8 +53,9 @@ class Vector(namedtuple('BaseVector', ('x', 'y', 'z'))):
 
 
 class MutableRecord(object):
-    """An abstract base class providing namedtuple-like repr(), ==, and hash()
-       implementations for types containing mutable fields given by __slots__.
+    """An abstract base class providing namedtuple-like repr(), ==, hash(), and
+       iter(), implementations for types containing mutable fields given by
+       __slots__.
     """
     __slots__ = ()
 
@@ -64,18 +65,30 @@ class MutableRecord(object):
 
     def __repr__(self):
         return '%s(%s)' % (type(self).__name__, ', '.join(
-               '%s=%r' % (a, getattr(self, a)) for a in self.__slots__))
+            '%s=%r' % (a, getattr(self, a)) for a in self._all_slots()
+            if hasattr(self, a)))
 
     def __eq__(self, other):
-        return type(self) is type(other) and \
-            all(getattr(self, a) == getattr(other, a) for a in self.__slots__)
+        return type(self) is type(other) and all(
+            getattr(self, a) == getattr(other, a) for a in self._all_slots())
 
     def __ne__(self, other):
         return not (self == other)
 
     def __hash__(self):
-        values = tuple(getattr(self, a, None) for a in self.__slots__)
+        values = tuple(getattr(self, a, None) for a in self._all_slots())
         return hash((type(self), values))
+
+    def __iter__(self):
+        return iter(getattr(self, a) for a in self._all_slots())
+
+    @classmethod
+    def _all_slots(cls):
+        for supcls in reversed(cls.__mro__):
+            slots = supcls.__dict__.get('__slots__', ())
+            slots = (slots,) if isinstance(slots, str) else slots
+            for slot in slots:
+                yield slot
 
 
 def attribute_alias(name):
@@ -97,10 +110,18 @@ def multi_attribute_alias(container, *arg_names, **kwd_names):
        argument to its constructor, and accessible as its 'n'th iterable
        element.
 
+       As a special case, 'tuple' may be given as the 'container' when there
+       are positional arguments, and (even though the tuple constructor does
+       not take positional arguments), the arguments will be aliased to the
+       corresponding positions in a tuple.
+
        The name in 'kwd_names' mapped to by the key 'k' is the parent attribute
        that will be aliased to the field of 'container' settable by the keyword
        argument 'k' to its constructor, and accessible as its 'k' attribute.
     """
+    if container is tuple:
+        container = lambda *args: args  # noqa: E731
+
     @property
     def alias(self):
         return container(

@@ -18,6 +18,20 @@ class MapPacket(Packet):
 
     packet_name = 'map'
 
+    @property
+    def fields(self):
+        fields = 'id', 'scale', 'icons', 'width', 'height', 'pixels'
+        if self.context.protocol_version >= 107:
+            fields += 'is_tracking_position',
+        if self.context.protocol_version >= 452:
+            fields += 'is_locked',
+        return fields
+
+    def field_string(self, field):
+        if field == 'pixels' and isinstance(self.pixels, bytearray):
+            return 'bytearray(...)'
+        return super(MapPacket, self).field_string(field)
+
     class MapIcon(MutableRecord):
         __slots__ = 'type', 'direction', 'location', 'display_name'
 
@@ -44,11 +58,11 @@ class MapPacket(Packet):
     class MapSet(object):
         __slots__ = 'maps_by_id'
 
-        def __init__(self):
-            self.maps_by_id = dict()
+        def __init__(self, *maps):
+            self.maps_by_id = {map.id: map for map in maps}
 
         def __repr__(self):
-            maps = (str(map) for map in self.maps_by_id.values())
+            maps = (repr(map) for map in self.maps_by_id.values())
             return 'MapSet(%s)' % ', '.join(maps)
 
     def read(self, file_object):
@@ -144,9 +158,3 @@ class MapPacket(Packet):
             UnsignedByte.send(self.offset[0], packet_buffer)  # x
             UnsignedByte.send(self.offset[1], packet_buffer)  # z
             VarIntPrefixedByteArray.send(self.pixels, packet_buffer)
-
-    def __repr__(self):
-        return '%sMapPacket(%s)' % (
-            ('0x%02X ' % self.id) if self.id is not None else '',
-            ', '.join('%s=%r' % (k, v) for (k, v) in self.__dict__.items()
-                      if k not in ('pixels', '_context', 'id', 'definition')))

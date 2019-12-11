@@ -5,7 +5,8 @@ from minecraft.networking.packets import (
 from minecraft.networking.types import (
     Integer, FixedPointInteger, Angle, UnsignedByte, Byte, Boolean, UUID,
     Short, VarInt, Double, Float, String, Enum, Difficulty, Dimension,
-    GameMode, Long
+    GameMode, Long, Vector, Direction, PositionAndLook,
+    multi_attribute_alias,
 )
 
 from .combat_event_packet import CombatEventPacket
@@ -96,13 +97,9 @@ class JoinGamePacket(Packet):
         {'enable_respawn_screen': Boolean} if context.protocol_version >= 573 else {},
     ])
 
-    # JoinGamePacket.Difficulty is an alias for Difficulty
+    # These aliases declare the Enum type corresponding to each field:
     Difficulty = Difficulty
-
-    # JoinGamePacket.Gamemode is an alias for Gamemode
     GameMode = GameMode
-
-    # JoinGamePacket.Dimension is an alias for Dimension
     Dimension = Dimension
 
 
@@ -121,7 +118,7 @@ class ServerDifficultyPacket(Packet):
         {'is_locked': Boolean} if context.protocol_version >= 464 else {},
     ])
 
-    # ServerDifficultyPacket.Difficulty is an alias for Difficulty
+    # These aliases declare the Enum type corresponding to each field:
     Difficulty = Difficulty
 
 
@@ -189,9 +186,21 @@ class SpawnPlayerPacket(Packet):
         else {'z': FixedPointInteger},
         {'yaw': Angle},
         {'pitch': Angle},
+        {'current_item': Short} if context.protocol_version <= 49 else {},
         # TODO: read entity metadata
-        {'current_item': Short} if context.protocol_version <= 49 else {}
     ])
+
+    # Access the 'x', 'y', 'z' fields as a Vector tuple.
+    position = multi_attribute_alias(Vector, 'x', 'y', 'z')
+
+    # Access the 'yaw', 'pitch' fields as a Direction tuple.
+    look = multi_attribute_alias(Direction, 'yaw', 'pitch')
+
+    # Access the 'x', 'y', 'z', 'yaw', 'pitch' fields as a PositionAndLook.
+    # NOTE: modifying the object retrieved from this property will not change
+    # the packet; it can only be changed by attribute or property assignment.
+    position_and_look = multi_attribute_alias(
+        PositionAndLook, 'x', 'y', 'z', 'yaw', 'pitch')
 
 
 class EntityVelocityPacket(Packet):
@@ -269,13 +278,9 @@ class RespawnPacket(Packet):
         {'level_type': String},
     ])
 
-    # RespawnPacket.Difficulty is an alias for Difficulty.
+    # These aliases declare the Enum type corresponding to each field:
     Difficulty = Difficulty
-
-    # RespawnPacket.Dimension is an alias for Dimension.
     Dimension = Dimension
-
-    # RespawnPacket.Gamemode is an alias for Gamemode.
     GameMode = GameMode
 
 

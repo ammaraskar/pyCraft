@@ -73,13 +73,13 @@ class Connection(object):
                            object. If None, no authentication is attempted and
                            the server is assumed to be running in offline mode.
         :param username: Username string; only applicable in offline mode.
-        :param initial_version: A Minecraft version string or protocol version
-                                number to use if the server's protocol version
-                                cannot be determined. (Although it is now
-                                somewhat inaccurate, this name is retained for
-                                backward compatibility.)
+        :param initial_version: A Minecraft version ID string or protocol
+                                version number to use if the server's protocol
+                                version cannot be determined. (Although it is
+                                now somewhat inaccurate, this name is retained
+                                for backward compatibility.)
         :param allowed_versions: A set of versions, each being a Minecraft
-                                 version string or protocol version number,
+                                 version ID string or protocol version number,
                                  restricting the versions that the client may
                                  use in connecting to the server.
         :param handle_exception: The final exception handler. This is triggered

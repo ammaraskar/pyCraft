@@ -3,7 +3,7 @@ from minecraft.networking.types.utility import descriptor
 
 from minecraft.networking.types import (
     VarInt, UUID, Byte, Double, Integer, Angle, Short, Enum, Vector,
-    PositionAndLook, attribute_alias, multi_attribute_alias,
+    Direction, PositionAndLook, attribute_alias, multi_attribute_alias,
 )
 
 
@@ -15,8 +15,8 @@ class SpawnObjectPacket(Packet):
 
     packet_name = 'spawn object'
 
-    fields = ('entity_id', 'object_uuid', 'type_id',
-              'x', 'y', 'z', 'pitch', 'yaw')
+    fields = ('entity_id', 'object_uuid', 'type_id', 'x', 'y', 'z', 'pitch',
+              'yaw', 'data', 'velocity_x', 'velocity_y', 'velocity_z')
 
     @descriptor
     def EntityType(desc, self, cls):  # pylint: disable=no-self-argument
@@ -152,13 +152,19 @@ class SpawnObjectPacket(Packet):
     def type(self):
         del self.type_id
 
+    # Access the 'x', 'y', 'z' fields as a Vector.
     position = multi_attribute_alias(Vector, 'x', 'y', 'z')
 
+    # Access the 'yaw', 'pitch' fields as a Direction.
+    look = multi_attribute_alias(Direction, 'yaw', 'pitch')
+
+    # Access the 'x', 'y', 'z', 'pitch', 'yaw' fields as a PositionAndLook.
     # NOTE: modifying the object retrieved from this property will not change
     # the packet; it can only be changed by attribute or property assignment.
     position_and_look = multi_attribute_alias(
         PositionAndLook, x='x', y='y', z='z', yaw='yaw', pitch='pitch')
 
+    # Access the 'velocity_{x,y,z}' fields as a Vector.
     velocity = multi_attribute_alias(
         Vector, 'velocity_x', 'velocity_y', 'velocity_z')
 

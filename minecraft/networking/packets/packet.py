@@ -112,8 +112,9 @@ class Packet(object):
             str = '0x%02X %s' % (self.id, str)
         fields = self.fields
         if fields is not None:
-            str = '%s(%s)' % (str, ', '.join('%s=%s' %
-                              (a, self.field_string(a)) for a in fields))
+            inner_str = ', '.join('%s=%s' % (a, self.field_string(a))
+                                  for a in fields if hasattr(self, a))
+            str = '%s(%s)' % (str, inner_str)
         return str
 
     @property
