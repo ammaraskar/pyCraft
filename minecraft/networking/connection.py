@@ -642,6 +642,7 @@ class PacketReactor(object):
             # If we know the structure of the packet, attempt to parse it
             # otherwise just skip it
             if packet_id in self.clientbound_packets:
+                # print("XXX packet_id 0x{:02X}".format(packet_id))
                 packet = self.clientbound_packets[packet_id]()
                 packet.context = self.connection.context
                 packet.read(packet_data)
