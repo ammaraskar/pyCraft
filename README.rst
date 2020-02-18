@@ -63,7 +63,7 @@ Requirements
 - `requests <http://docs.python-requests.org/en/latest/>`_
 - `future <http://python-future.org/>`_
 
-The requirements are also stored in ``requirements.txt``
+The requirements are also stored in ``setup.py``
 
 See the installation instructions for the cryptography library here: `<https://cryptography.io/en/latest/installation/>`_
 but essentially ``pip install -r requirements.txt`` should cover everything.
