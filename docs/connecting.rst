@@ -39,8 +39,25 @@ multiple protocol versions.
 Listening for Certain Packets
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Let's look at how to listen for certain packets, the relevant method being
+Let's look at how to listen for certain packets, the relevant decorator being
 
+A decorator can be used to register a packet listener:
+.. automethod:: Connection.listener
+
+Example usage::
+    
+    connection = Connection(options.address, options.port, auth_token=auth_token)
+    connection.connect()
+    
+    from minecraft.networking.packets.clientbound.play import ChatMessagePacket
+    
+    @connection.listener(ChatMessagePacket)
+    def print_chat(chat_packet):
+        print "Position: " + str(chat_packet.position)
+        print "Data: " + chat_packet.json_data
+
+
+Altenatively, packet listeners can also be registered seperate from the function definition.
 .. automethod:: Connection.register_packet_listener
 
 An example of this can be found in the ``start.py`` headless client, it is recreated here::
@@ -56,6 +73,7 @@ An example of this can be found in the ``start.py`` headless client, it is recre
     connection.register_packet_listener(print_chat, ChatMessagePacket)
 
 The field names ``position`` and ``json_data`` are inferred by again looking at the definition attribute as before
+
 
 .. autoclass:: minecraft.networking.packets.clientbound.play.ChatMessagePacket
 	:undoc-members: 
