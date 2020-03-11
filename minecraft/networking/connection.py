@@ -105,7 +105,7 @@ class Connection(object):
         """  # NOQA
 
         # This lock is re-entrant because it may be acquired in a re-entrant
-        # manner from within an outgoing packet 
+        # manner from within an outgoing packet
         self._write_lock = RLock()
 
         self.networking_thread = None
