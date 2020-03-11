@@ -42,7 +42,8 @@ Listening for Certain Packets
 Let's look at how to listen for certain packets, the relevant decorator being
 
 A decorator can be used to register a packet listener:
-.. automethod:: Connection.listener
+
+.. autodecorator:: Connection.listener
 
 Example usage::
     
@@ -58,6 +59,7 @@ Example usage::
 
 
 Altenatively, packet listeners can also be registered seperate from the function definition.
+
 .. automethod:: Connection.register_packet_listener
 
 An example of this can be found in the ``start.py`` headless client, it is recreated here::
