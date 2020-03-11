@@ -195,7 +195,7 @@ class Connection(object):
     def listener(self, *packet_types, **kwds):
         """
         Shorthand decorator to register a function as a packet listener.
-        
+
         Wraps :meth:`minecraft.networking.connection.register_packet_listener`
         :param packet_types: Packet types to listen for.
         :param kwds: Keyword arguments for `register_packet_listener`
