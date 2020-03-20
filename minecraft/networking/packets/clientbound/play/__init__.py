@@ -206,7 +206,8 @@ class SpawnPlayerPacket(Packet):
 class EntityVelocityPacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x46 if context.protocol_version >= 550 else \
+        return 0x47 if context.protocol_version >= 707 else \
+               0x46 if context.protocol_version >= 550 else \
                0x45 if context.protocol_version >= 471 else \
                0x41 if context.protocol_version >= 461 else \
                0x42 if context.protocol_version >= 451 else \
@@ -232,7 +233,8 @@ class EntityVelocityPacket(Packet):
 class UpdateHealthPacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x49 if context.protocol_version >= 550 else \
+        return 0x4A if context.protocol_version >= 707 else \
+               0x49 if context.protocol_version >= 550 else \
                0x48 if context.protocol_version >= 471 else \
                0x44 if context.protocol_version >= 461 else \
                0x45 if context.protocol_version >= 451 else \

@@ -14,7 +14,7 @@ __all__ = (
     'Integer', 'FixedPointInteger', 'Angle', 'VarInt', 'Long',
     'UnsignedLong', 'Float', 'Double', 'ShortPrefixedByteArray',
     'VarIntPrefixedByteArray', 'TrailingByteArray', 'String', 'UUID',
-    'Position',
+    'Position', 'UUIDIntegerArray'
 )
 
 
@@ -251,6 +251,28 @@ class VarIntPrefixedByteArray(Type):
     def send(value, socket):
         VarInt.send(len(value), socket)
         socket.send(struct.pack(str(len(value)) + "s", value))
+
+
+class UUIDIntegerArray(Type):
+    """ Minecraft sends an array of 4 integers to represent the most
+        significant and least significant bits (as longs) of a UUID
+        because that is how UUIDs are constructed in Java. We need to
+        unpack this array and repack it with the right endianness to be
+        used as a python UUID. """
+    @staticmethod
+    def read(file_object):
+        ints = struct.unpack("4i", file_object.read(4 * 4))
+        packed = struct.pack("<qq", ints[1] << 32 | ints[0] & 0xffffffff,
+            ints[3] << 32 | ints[2] & 0xffffffff)
+        packed_uuid = uuid.UUID(bytes=packed)
+        return str(packed_uuid)
+
+    @staticmethod
+    def send(value, socket):
+        player_uuid = uuid.UUID(value)
+        msb, lsb = struct.unpack(">qq", player_uuid.bytes)
+        socket.send(struct.pack("4i", msb & 0xffffffff, msb >> 32,
+            lsb & 0xffffffff, lsb >> 32))
 
 
 class TrailingByteArray(Type):

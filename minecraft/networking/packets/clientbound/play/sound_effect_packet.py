@@ -13,7 +13,6 @@ class SoundEffectPacket(Packet):
                0x51 if context.protocol_version >= 471 else \
                0x4D if context.protocol_version >= 461 else \
                0x4E if context.protocol_version >= 451 else \
-               0x4E if context.protocol_version >= 451 else \
                0x4D if context.protocol_version >= 389 else \
                0x4C if context.protocol_version >= 352 else \
                0x4B if context.protocol_version >= 345 else \

@@ -1,7 +1,8 @@
 from minecraft.networking.packets import Packet
 
 from minecraft.networking.types import (
-    VarInt, String, VarIntPrefixedByteArray, TrailingByteArray
+    VarInt, String, VarIntPrefixedByteArray, TrailingByteArray,
+    UUIDIntegerArray
 )
 
 
@@ -54,9 +55,11 @@ class LoginSuccessPacket(Packet):
                0x02
 
     packet_name = "login success"
-    definition = [
-        {'UUID': String},
-        {'Username': String}]
+    get_definition = staticmethod(lambda context: [
+        {'UUID': UUIDIntegerArray} if context.protocol_version >= 707
+        else {'UUID': String},
+        {'Username': String}
+    ])
 
 
 class SetCompressionPacket(Packet):
