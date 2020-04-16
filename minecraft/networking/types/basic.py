@@ -271,8 +271,8 @@ class UUIDIntegerArray(Type):
     def send(value, socket):
         player_uuid = uuid.UUID(value)
         msb, lsb = struct.unpack(">qq", player_uuid.bytes)
-        socket.send(struct.pack("4i", msb & 0xffffffff, msb >> 32,
-            lsb & 0xffffffff, lsb >> 32))
+        socket.send(struct.pack("4i", msb, msb >> 32,
+            lsb, lsb >> 32))
 
 
 class TrailingByteArray(Type):
