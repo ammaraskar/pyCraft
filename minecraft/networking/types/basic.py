@@ -253,6 +253,14 @@ class VarIntPrefixedByteArray(Type):
         socket.send(struct.pack(str(len(value)) + "s", value))
 
 
+# https://stackoverflow.com/questions/1604464/twos-complement-in-python
+def twos_comp(val, bits):
+    """compute the 2's complement of int value val"""
+    if (val & (1 << (bits - 1))) != 0: # if sign bit is set e.g., 8bit: 128-255
+        val = val - (1 << bits)        # compute negative value
+    return val                         # return positive value as is
+
+
 class UUIDIntegerArray(Type):
     """ Minecraft sends an array of 4 integers to represent the most
         significant and least significant bits (as longs) of a UUID
@@ -273,14 +281,6 @@ class UUIDIntegerArray(Type):
         msb, lsb = struct.unpack(">qq", player_uuid.bytes)
         socket.send(struct.pack(">4i", msb >> 32, twos_comp(msb & 0xffffffff, 32),
             lsb >> 32, twos_comp(lsb & 0xffffffff, 32)))
-
-    # https://stackoverflow.com/questions/1604464/twos-complement-in-python
-    @staticmethod
-    def twos_comp(val, bits):
-        """compute the 2's complement of int value val"""
-        if (val & (1 << (bits - 1))) != 0: # if sign bit is set e.g., 8bit: 128-255
-            val = val - (1 << bits)        # compute negative value
-        return val                         # return positive value as is
 
 
 class TrailingByteArray(Type):
