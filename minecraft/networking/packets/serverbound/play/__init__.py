@@ -37,7 +37,8 @@ def get_packets(context):
 class KeepAlivePacket(AbstractKeepAlivePacket):
     @staticmethod
     def get_id(context):
-        return 0x0F if context.protocol_version >= 471 else \
+        return 0x10 if context.protocol_version >= 712 else \
+               0x0F if context.protocol_version >= 471 else \
                0x10 if context.protocol_version >= 464 else \
                0x0E if context.protocol_version >= 389 else \
                0x0C if context.protocol_version >= 386 else \
@@ -78,7 +79,8 @@ class ChatPacket(Packet):
 class PositionAndLookPacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x12 if context.protocol_version >= 471 else \
+        return 0x13 if context.protocol_version >= 712 else \
+               0x12 if context.protocol_version >= 471 else \
                0x13 if context.protocol_version >= 464 else \
                0x11 if context.protocol_version >= 389 else \
                0x0F if context.protocol_version >= 386 else \
@@ -197,7 +199,8 @@ class PlayerBlockPlacementPacket(Packet):
 
     @staticmethod
     def get_id(context):
-        return 0x2C if context.protocol_version >= 468 else \
+        return 0x2D if context.protocol_version >= 712 else \
+               0x2C if context.protocol_version >= 468 else \
                0x2B if context.protocol_version >= 464 else \
                0x29 if context.protocol_version >= 389 else \
                0x27 if context.protocol_version >= 386 else \
