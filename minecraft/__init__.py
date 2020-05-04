@@ -238,6 +238,7 @@ SUPPORTED_MINECRAFT_VERSIONS = {
     '20w15a':               711,
     '20w16a':               712,
     '20w17a':               713,
+    '20w18a':               714,
 }
 
 # Those Minecraft versions supported by pyCraft which are "release" versions,

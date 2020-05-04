@@ -279,6 +279,7 @@ class RespawnPacket(Packet):
         {'hashed_seed': Long} if context.protocol_version >= 552 else {},
         {'game_mode': UnsignedByte},
         {'level_type': String},
+        {'copy_metadata': Boolean},
     ])
 
     # These aliases declare the Enum type corresponding to each field:
