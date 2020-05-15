@@ -91,10 +91,12 @@ class JoinGamePacket(Packet):
         {'hashed_seed': Long} if context.protocol_version >= 552 else {},
         {'difficulty': UnsignedByte} if context.protocol_version < 464 else {},
         {'max_players': UnsignedByte},
-        {'level_type': String},
+        {'level_type': String} if context.protocol_version < 716 else {},
         {'render_distance': VarInt} if context.protocol_version >= 468 else {},
         {'reduced_debug_info': Boolean},
         {'respawn_screen': Boolean} if context.protocol_version >= 571 else {},
+        {'is_debug': String} if context.protocol_version >= 716 else {},
+        {'is_flat': String} if context.protocol_version >= 716 else {},
     ])
 
     # These aliases declare the Enum type corresponding to each field:
@@ -278,7 +280,9 @@ class RespawnPacket(Packet):
         {'difficulty': UnsignedByte} if context.protocol_version < 464 else {},
         {'hashed_seed': Long} if context.protocol_version >= 552 else {},
         {'game_mode': UnsignedByte},
-        {'level_type': String},
+        {'level_type': String} if context.protocol_version < 716 else {},
+        {'is_debug': String} if context.protocol_version >= 716 else {},
+        {'is_flat': String} if context.protocol_version >= 716 else {},
         {'copy_metadata': Boolean},
     ])
 
