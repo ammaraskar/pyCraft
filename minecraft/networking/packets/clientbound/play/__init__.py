@@ -95,8 +95,8 @@ class JoinGamePacket(Packet):
         {'render_distance': VarInt} if context.protocol_version >= 468 else {},
         {'reduced_debug_info': Boolean},
         {'respawn_screen': Boolean} if context.protocol_version >= 571 else {},
-        {'is_debug': String} if context.protocol_version >= 716 else {},
-        {'is_flat': String} if context.protocol_version >= 716 else {},
+        {'is_debug': Boolean} if context.protocol_version >= 716 else {},
+        {'is_flat': Boolean} if context.protocol_version >= 716 else {},
     ])
 
     # These aliases declare the Enum type corresponding to each field:
@@ -281,8 +281,8 @@ class RespawnPacket(Packet):
         {'hashed_seed': Long} if context.protocol_version >= 552 else {},
         {'game_mode': UnsignedByte},
         {'level_type': String} if context.protocol_version < 716 else {},
-        {'is_debug': String} if context.protocol_version >= 716 else {},
-        {'is_flat': String} if context.protocol_version >= 716 else {},
+        {'is_debug': Boolean} if context.protocol_version >= 716 else {},
+        {'is_flat': Boolean} if context.protocol_version >= 716 else {},
         {'copy_metadata': Boolean},
     ])
 
