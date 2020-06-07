@@ -8,7 +8,8 @@ from minecraft.networking.packets import Packet
 class FacePlayerPacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x35 if context.protocol_version >= 550 else \
+        return 0x34 if context.protocol_version >= 722 else \
+               0x35 if context.protocol_version >= 550 else \
                0x34 if context.protocol_version >= 471 else \
                0x32 if context.protocol_version >= 451 else \
                0x31 if context.protocol_version >= 389 else \

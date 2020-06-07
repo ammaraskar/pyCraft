@@ -35,6 +35,10 @@ def get_options():
                       action="store_true",
                       help="print sent and received packets to standard error")
 
+    parser.add_option("-v", "--dump-unknown-packets", dest="dump_unknown",
+                      action="store_true",
+                      help="include unknown packets in --dump-packets output")
+
     (options, args) = parser.parse_args()
 
     if not options.username:
@@ -82,6 +86,8 @@ def main():
             if type(packet) is Packet:
                 # This is a direct instance of the base Packet type, meaning
                 # that it is a packet of unknown type, so we do not print it.
+                if options.dump_unknown:
+                    print('--> ??? %s' % packet, file=sys.stderr)
                 return
             print('--> %s' % packet, file=sys.stderr)
 
