@@ -506,7 +506,10 @@ class Connection(object):
         ss = 'supported, but not allowed for this connection' \
              if server_protocol in SUPPORTED_PROTOCOL_VERSIONS \
              else 'not supported'
-        raise VersionMismatch("Server's %s is %s." % (vs, ss))
+        err = VersionMismatch("Server's %s is %s." % (vs, ss))
+        err.server_protocol = server_protocol
+        err.server_version = server_version
+        raise err
 
     def _handle_exit(self):
         if not self.connected and self.handle_exit is not None:
@@ -647,7 +650,7 @@ class PacketReactor(object):
                 packet.read(packet_data)
                 return packet
             else:
-                return packets.Packet(context=self.connection.context)
+                return packets.Packet(context=self.connection.context, packet_id=packet_id)
         else:
             return None
 

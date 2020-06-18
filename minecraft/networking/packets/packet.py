@@ -110,6 +110,8 @@ class Packet(object):
         str = type(self).__name__
         if self.id is not None:
             str = '0x%02X %s' % (self.id, str)
+        elif hasattr(self, "packet_id"):
+            str = 'pkt: 0x%02X %s' % (self.packet_id, str)
         fields = self.fields
         if fields is not None:
             inner_str = ', '.join('%s=%s' % (a, self.field_string(a))

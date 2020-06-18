@@ -242,20 +242,47 @@ SUPPORTED_MINECRAFT_VERSIONS = {
     '20w19a':               715,
     '20w20a':               716,
     '20w20b':               717,
+    '1.16 Pre-release 2':   722,
+    '1.16 Pre-release 3':   725,
+    '1.16 Pre-release 4':   727,
+    '1.16 Pre-release 5':   729,
+    '1.16 Release Candidate 1':734,
 }
 
 # Those Minecraft versions supported by pyCraft which are "release" versions,
 # i.e. not development snapshots or pre-release versions.
-RELEASE_MINECRAFT_VERSIONS = {
-    vid: protocol for (vid, protocol) in SUPPORTED_MINECRAFT_VERSIONS.items()
-    if __import__('re').match(r'\d+(\.\d+)+$', vid)}
+RELEASE_MINECRAFT_VERSIONS = {}
 
 # The protocol versions of SUPPORTED_MINECRAFT_VERSIONS, without duplicates,
 # in ascending numerical (and hence chronological) order.
-SUPPORTED_PROTOCOL_VERSIONS = \
-    sorted(set(SUPPORTED_MINECRAFT_VERSIONS.values()))
+SUPPORTED_PROTOCOL_VERSIONS = []
 
 # The protocol versions of RELEASE_MINECRAFT_VERSIONS, without duplicates,
 # in ascending numerical (and hence chronological) order.
-RELEASE_PROTOCOL_VERSIONS = \
-    sorted(set(RELEASE_MINECRAFT_VERSIONS.values()))
+RELEASE_PROTOCOL_VERSIONS = []
+
+
+def initglobals():
+    '''Init the globals from the SUPPORTED_MINECRAFT_VERSIONS dict
+
+    This allows the SUPPORTED_MINECRAFT_VERSIONS dict to be updated, then the
+    other globals can be updated as well, to allow for dynamic version support.
+    All updates are done by reference to allow this to work else where in the code.
+    '''
+    global RELEASE_MINECRAFT_VERSIONS, SUPPORTED_PROTOCOL_VERSIONS, RELEASE_PROTOCOL_VERSIONS
+
+    import re
+
+    for (vid, protocol) in SUPPORTED_MINECRAFT_VERSIONS.items():
+        if re.match(r"\d+(\.\d+)+$", vid):
+            RELEASE_MINECRAFT_VERSIONS[vid] = protocol
+            if protocol not in RELEASE_PROTOCOL_VERSIONS:
+                RELEASE_PROTOCOL_VERSIONS.append(protocol)
+        if protocol not in SUPPORTED_PROTOCOL_VERSIONS:
+            SUPPORTED_PROTOCOL_VERSIONS.append(protocol)
+
+    SUPPORTED_PROTOCOL_VERSIONS.sort()
+    RELEASE_PROTOCOL_VERSIONS.sort()
+
+
+initglobals()
