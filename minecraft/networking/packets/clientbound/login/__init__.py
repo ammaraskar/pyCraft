@@ -1,8 +1,7 @@
 from minecraft.networking.packets import Packet
 
 from minecraft.networking.types import (
-    VarInt, String, VarIntPrefixedByteArray, TrailingByteArray,
-    UUIDIntegerArray
+    VarInt, String, VarIntPrefixedByteArray, TrailingByteArray, UUID,
 )
 
 
@@ -56,8 +55,7 @@ class LoginSuccessPacket(Packet):
 
     packet_name = "login success"
     get_definition = staticmethod(lambda context: [
-        {'UUID': UUIDIntegerArray} if context.protocol_version >= 707
-        else {'UUID': String},
+        {'UUID': UUID if context.protocol_version >= 707 else String},
         {'Username': String}
     ])
 
