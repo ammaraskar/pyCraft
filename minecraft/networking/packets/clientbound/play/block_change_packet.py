@@ -47,7 +47,8 @@ class BlockChangePacket(Packet):
 class MultiBlockChangePacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x0F if context.protocol_version >= 722 else \
+        return 0x3B if context.protocol_version >= 751 else \
+               0x0F if context.protocol_version >= 722 else \
                0x10 if context.protocol_version >= 550 else \
                0x0F if context.protocol_version >= 343 else \
                0x10 if context.protocol_version >= 332 else \

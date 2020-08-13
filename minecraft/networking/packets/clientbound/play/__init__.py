@@ -64,7 +64,8 @@ def get_packets(context):
 class KeepAlivePacket(AbstractKeepAlivePacket):
     @staticmethod
     def get_id(context):
-        return 0x20 if context.protocol_version >= 722 else \
+        return 0x1F if context.protocol_version >= 751 else \
+               0x20 if context.protocol_version >= 722 else \
                0x21 if context.protocol_version >= 550 else \
                0x20 if context.protocol_version >= 471 else \
                0x21 if context.protocol_version >= 389 else \
@@ -78,7 +79,8 @@ class KeepAlivePacket(AbstractKeepAlivePacket):
 class JoinGamePacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x25 if context.protocol_version >= 722 else \
+        return 0x24 if context.protocol_version >= 751 else \
+               0x25 if context.protocol_version >= 722 else \
                0x26 if context.protocol_version >= 550 else \
                0x25 if context.protocol_version >= 389 else \
                0x24 if context.protocol_version >= 345 else \
@@ -90,7 +92,9 @@ class JoinGamePacket(Packet):
     packet_name = "join game"
     get_definition = staticmethod(lambda context: [
         {'entity_id': Integer},
+        {'is_hardcore': Boolean} if context.protocol_version >= 751 else {},
         {'game_mode': UnsignedByte},
+        {'previous_game_mode': UnsignedByte} if context.protocol_version >= 722 else {},
         {'dimension': Integer if context.protocol_version >= 108 else Byte},
         {'hashed_seed': Long} if context.protocol_version >= 552 else {},
         {'difficulty': UnsignedByte} if context.protocol_version < 464 else {},
@@ -154,7 +158,8 @@ class ChatMessagePacket(Packet):
 class DisconnectPacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x1A if context.protocol_version >= 722 else \
+        return 0x19 if context.protocol_version >= 751 else \
+               0x1A if context.protocol_version >= 722 else \
                0x1B if context.protocol_version >= 550 else \
                0x1A if context.protocol_version >= 471 else \
                0x1B if context.protocol_version >= 345 else \
@@ -244,7 +249,8 @@ class EntityVelocityPacket(Packet):
 class EntityPositionDeltaPacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x28 if context.protocol_version >= 722 else \
+        return 0x27 if context.protocol_version >= 751 else \
+               0x28 if context.protocol_version >= 722 else \
                0x29 if context.protocol_version >= 578 else \
                0xFF
 
@@ -302,7 +308,8 @@ class UpdateHealthPacket(Packet):
 class RespawnPacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x3A if context.protocol_version >= 722 else \
+        return 0x39 if context.protocol_version >= 751 else \
+               0x3A if context.protocol_version >= 722 else \
                0x3B if context.protocol_version >= 550 else \
                0x3A if context.protocol_version >= 471 else \
                0x38 if context.protocol_version >= 461 else \
@@ -337,7 +344,8 @@ class RespawnPacket(Packet):
 class PluginMessagePacket(AbstractPluginMessagePacket):
     @staticmethod
     def get_id(context):
-        return 0x18 if context.protocol_version >= 722 else \
+        return 0x17 if context.protocol_version >= 751 else \
+               0x18 if context.protocol_version >= 722 else \
                0x19 if context.protocol_version >= 550 else \
                0x18 if context.protocol_version >= 471 else \
                0x19 if context.protocol_version >= 345 else \
@@ -372,7 +380,8 @@ class PlayerListHeaderAndFooterPacket(Packet):
 class EntityLookPacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x2A if context.protocol_version >= 722 else \
+        return 0x29 if context.protocol_version >= 751 else \
+               0x2A if context.protocol_version >= 722 else \
                0x2B if context.protocol_version >= 550 else \
                0x2A if context.protocol_version >= 389 else \
                0x29 if context.protocol_version >= 345 else \
