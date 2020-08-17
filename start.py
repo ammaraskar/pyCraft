@@ -85,11 +85,12 @@ def main():
         def print_incoming(packet):
             if type(packet) is Packet:
                 # This is a direct instance of the base Packet type, meaning
-                # that it is a packet of unknown type, so we do not print it.
+                # that it is a packet of unknown type, so we do not print it
+                # unless explicitly requested by the user.
                 if options.dump_unknown:
-                    print('--> ??? %s' % packet, file=sys.stderr)
-                return
-            print('--> %s' % packet, file=sys.stderr)
+                    print('--> [unknown packet] %s' % packet, file=sys.stderr)
+            else:
+                print('--> %s' % packet, file=sys.stderr)
 
         def print_outgoing(packet):
             print('<-- %s' % packet, file=sys.stderr)

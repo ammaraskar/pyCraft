@@ -643,14 +643,16 @@ class PacketReactor(object):
             packet_id = VarInt.read(packet_data)
 
             # If we know the structure of the packet, attempt to parse it
-            # otherwise just skip it
+            # otherwise, just return an instance of the base Packet class.
             if packet_id in self.clientbound_packets:
                 packet = self.clientbound_packets[packet_id]()
                 packet.context = self.connection.context
                 packet.read(packet_data)
-                return packet
             else:
-                return packets.Packet(context=self.connection.context, packet_id=packet_id)
+                packet = packets.Packet()
+                packet.context = self.connection.context
+                packet.id = packet_id
+            return packet
         else:
             return None
 

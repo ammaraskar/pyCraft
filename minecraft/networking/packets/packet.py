@@ -1,23 +1,28 @@
-from .packet_buffer import PacketBuffer
 from zlib import compress
+
+from .packet_buffer import PacketBuffer
 from minecraft.networking.types import (
-    VarInt, Enum
+    VarInt, Enum, overridable_property,
 )
 
 
 class Packet(object):
     packet_name = "base"
-    id = None
-    definition = None
 
     # To define the packet ID, either:
     #  1. Define the attribute `id', of type int, in a subclass; or
     #  2. Override `get_id' in a subclass and return the correct packet ID
     #     for the given ConnectionContext. This is necessary if the packet ID
-    #     has changed across protocol versions, for example.
+    #     has changed across protocol versions, for example; or
+    #  3. Define the attribute `id' in an instance of a class without either
+    #     of the above.
     @classmethod
-    def get_id(cls, context):
-        return cls.id
+    def get_id(cls, _context):
+        return getattr(cls, 'id')
+
+    @overridable_property
+    def id(self):
+        return None if self.context is None else self.get_id(self.context)
 
     # To define the network data layout of a packet, either:
     #  1. Define the attribute `definition', a list of fields, each of which
@@ -29,29 +34,29 @@ class Packet(object):
     #     This may be necessary if the packet layout cannot be described as a
     #     simple list of fields.
     @classmethod
-    def get_definition(cls, context):
-        return cls.definition
+    def get_definition(cls, _context):
+        return getattr(cls, 'definition')
 
+    @overridable_property
+    def definition(self):
+        return None if self.context is None else \
+               self.get_definition(self.context)
+
+    # In general, a packet instance must have its 'context' attribute set to an
+    # instance of 'ConnectionContext', for example to decide on version-
+    # dependent behaviour. This can either be given as an argument to this
+    # constructor (e.g. 'p = P(context=c)') or set later
+    # (e.g. 'p.context = c').
+    #
+    # While a packet has no 'context' set, all attributes should *writable*
+    # without errors, but some attributes may not be *readable*.
+    #
+    # When sending or receiving packets via 'Connection', it is generally not
+    # necessary to set the 'context', as this will be done automatically by
+    # 'Connection'.
     def __init__(self, context=None, **kwargs):
         self.context = context
         self.set_values(**kwargs)
-
-    @property
-    def context(self):
-        return self._context
-
-    @context.setter
-    def context(self, _context):
-        self._context = _context
-        self._context_changed()
-
-    def _context_changed(self):
-        if self._context is not None:
-            self.id = self.get_id(self._context)
-            self.definition = self.get_definition(self._context)
-        else:
-            self.id = None
-            self.definition = None
 
     def set_values(self, **kwargs):
         for key, value in kwargs.items():
@@ -59,7 +64,7 @@ class Packet(object):
         return self
 
     def read(self, file_object):
-        for field in self.definition:
+        for field in self.definition:  # pylint: disable=not-an-iterable
             for var_name, data_type in field.items():
                 value = data_type.read_with_context(file_object, self.context)
                 setattr(self, var_name, value)
@@ -101,7 +106,7 @@ class Packet(object):
     def write_fields(self, packet_buffer):
         # Write the fields comprising the body of the packet (excluding the
         # length, packet ID, compression and encryption) into a PacketBuffer.
-        for field in self.definition:
+        for field in self.definition:  # pylint: disable=not-an-iterable
             for var_name, data_type in field.items():
                 data = getattr(self, var_name)
                 data_type.send_with_context(data, packet_buffer, self.context)
@@ -110,8 +115,6 @@ class Packet(object):
         str = type(self).__name__
         if self.id is not None:
             str = '0x%02X %s' % (self.id, str)
-        elif hasattr(self, "packet_id"):
-            str = 'pkt: 0x%02X %s' % (self.packet_id, str)
         fields = self.fields
         if fields is not None:
             inner_str = ', '.join('%s=%s' % (a, self.field_string(a))
@@ -124,6 +127,7 @@ class Packet(object):
         """ An iterable of the names of the packet's fields, or None. """
         if self.definition is None:
             return None
+        # pylint: disable=not-an-iterable
         return (field for defn in self.definition for field in defn)
 
     def field_string(self, field):
