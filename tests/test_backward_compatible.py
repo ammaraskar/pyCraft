@@ -101,3 +101,56 @@ class ClassMemberAliasesTest(unittest.TestCase):
         packet = clientbound.play.BlockChangePacket(blockId=bi, blockMeta=bm)
         self.assertEqual((packet.blockId, packet.blockMeta), (bi, bm))
         self.assertEqual(packet.blockStateId, packet.block_state_id)
+
+    def test_join_game_packet(self):
+        GameMode = types.GameMode
+        context = ConnectionContext()
+        for pure_game_mode in (GameMode.SURVIVAL, GameMode.CREATIVE,
+                               GameMode.ADVENTURE, GameMode.SPECTATOR):
+            for is_hardcore in (False, True):
+                context.protocol_version = 70
+                game_mode = \
+                    pure_game_mode | GameMode.HARDCORE \
+                    if is_hardcore else pure_game_mode
+
+                packet = clientbound.play.JoinGamePacket()
+                packet.game_mode = game_mode
+                packet.context = context
+                self.assertEqual(packet.pure_game_mode, pure_game_mode)
+                self.assertEqual(packet.is_hardcore, is_hardcore)
+
+                del packet.context
+                del packet.is_hardcore
+                packet.context = context
+                self.assertEqual(packet.game_mode, packet.pure_game_mode)
+
+                del packet.context
+                del packet.game_mode
+                packet.context = context
+                self.assertFalse(hasattr(packet, 'is_hardcore'))
+
+                packet = clientbound.play.JoinGamePacket()
+                packet.pure_game_mode = game_mode
+                packet.is_hardcore = is_hardcore
+                packet.context = context
+                self.assertEqual(packet.game_mode, game_mode)
+
+                context.protocol_version = 738
+                game_mode = pure_game_mode | GameMode.HARDCORE
+
+                packet = clientbound.play.JoinGamePacket()
+                packet.game_mode = game_mode
+                packet.is_hardcore = is_hardcore
+                packet.context = context
+                self.assertEqual(packet.game_mode, game_mode)
+                self.assertEqual(packet.pure_game_mode, game_mode)
+                self.assertEqual(packet.is_hardcore, is_hardcore)
+
+                del packet.context
+                packet.is_hardcore = is_hardcore
+                packet.context = context
+                self.assertEqual(packet.game_mode, game_mode)
+                self.assertEqual(packet.pure_game_mode, game_mode)
+
+                with self.assertRaises(AttributeError):
+                    del packet.pure_game_mode

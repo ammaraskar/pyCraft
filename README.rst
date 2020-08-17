@@ -60,6 +60,7 @@ Requirements
 ------------
 - `cryptography <https://github.com/pyca/cryptography#cryptography>`_
 - `requests <http://docs.python-requests.org/en/latest/>`_
+- `pynbt <https://github.com/TkTech/PyNBT>`_
 
 The requirements are also stored in ``requirements.txt``
 

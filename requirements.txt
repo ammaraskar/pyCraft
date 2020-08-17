@@ -1,2 +1,3 @@
 cryptography>=1.5
 requests
+pynbt

@@ -242,13 +242,28 @@ SUPPORTED_MINECRAFT_VERSIONS = {
     '20w19a':               715,
     '20w20a':               716,
     '20w20b':               717,
-    '1.16 Pre-release 2':   722,
-    '1.16 Pre-release 3':   725,
-    '1.16 Pre-release 4':   727,
-    '1.16 Pre-release 5':   729,
-    '1.16 Release Candidate 1':734,
+    '20w21a':               718,
+    '20w22a':               719,
+    '1.16-pre1':            721,
+    '1.16-pre2':            722,
+    '1.16-pre3':            725,
+    '1.16-pre4':            727,
+    '1.16-pre5':            729,
+    '1.16-pre6':            730,
+    '1.16-pre7':            732,
+    '1.16-pre8':            733,
+    '1.16-rc1':             734,
     '1.16':                 735,
     '1.16.1':               736,
+    '20w27a':               738,
+    '20w28a':               740,
+    '20w29a':               741,
+    '20w30a':               743,
+    '1.16.2-pre1':          744,
+    '1.16.2-pre2':          746,
+    '1.16.2-pre3':          748,
+    '1.16.2-rc1':           749,
+    '1.16.2-rc2':           750,
     '1.16.2':               751,
 }
 
@@ -270,9 +285,11 @@ def initglobals():
 
     This allows the SUPPORTED_MINECRAFT_VERSIONS dict to be updated, then the
     other globals can be updated as well, to allow for dynamic version support.
-    All updates are done by reference to allow this to work else where in the code.
+    All updates are done by reference to allow this to work else where in the
+    code.
     '''
-    global RELEASE_MINECRAFT_VERSIONS, SUPPORTED_PROTOCOL_VERSIONS, RELEASE_PROTOCOL_VERSIONS
+    global RELEASE_MINECRAFT_VERSIONS, SUPPORTED_PROTOCOL_VERSIONS
+    global RELEASE_PROTOCOL_VERSIONS
 
     import re
 

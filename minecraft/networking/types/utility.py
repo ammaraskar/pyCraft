@@ -1,13 +1,16 @@
 """Minecraft data types that are used by packets, but don't have a specific
    network representation.
 """
+import types
+
 from collections import namedtuple
 from itertools import chain
 
 
 __all__ = (
     'Vector', 'MutableRecord', 'Direction', 'PositionAndLook', 'descriptor',
-    'attribute_alias', 'multi_attribute_alias',
+    'overridable_descriptor', 'overridable_property', 'attribute_alias',
+    'multi_attribute_alias',
 )
 
 
@@ -142,22 +145,57 @@ def multi_attribute_alias(container, *arg_names, **kwd_names):
     return alias
 
 
-class descriptor(object):
-    """Behaves identically to the builtin 'property' function of Python,
-       except that the getter, setter and deleter functions given by the
-       user are used as the raw __get__, __set__ and __delete__ functions
-       as defined in Python's descriptor protocol.
+class overridable_descriptor:
+    """As 'descriptor' (defined below), except that only a getter can be
+       defined, and the resulting descriptor has no '__set__' or '__delete__'
+       methods defined; hence, attributes defined via this class can be
+       overridden by attributes of instances of the class in which it occurs.
     """
-    __slots__ = '_fget', '_fset', '_fdel'
+    __slots__ = '_fget',
 
-    def __init__(self, fget=None, fset=None, fdel=None):
+    def __init__(self, fget=None):
         self._fget = fget if fget is not None else self._default_get
-        self._fset = fset if fset is not None else self._default_set
-        self._fdel = fdel if fdel is not None else self._default_del
 
     def getter(self, fget):
         self._fget = fget
         return self
+
+    @staticmethod
+    def _default_get(instance, owner):
+        raise AttributeError('unreadable attribute')
+
+    def __get__(self, instance, owner):
+        return self._fget(self, instance, owner)
+
+
+class overridable_property(overridable_descriptor):
+    """As the builtin 'property' decorator of Python, except that only
+       a getter is defined and the resulting descriptor is a non-data
+       descriptor, overridable by attributes of instances of the class
+       in which the property occurs. See also 'overridable_descriptor' above.
+    """
+    def __get__(self, instance, _owner):
+        return self._fget(instance)
+
+
+class descriptor(overridable_descriptor):
+    """Behaves identically to the builtin 'property' decorator of Python,
+       except that the getter, setter and deleter functions given by the
+       user are used as the raw __get__, __set__ and __delete__ functions
+       as defined in Python's descriptor protocol.
+
+       Since an instance of this class always havs '__set__' and '__delete__'
+       defined, it is a "data descriptor", so its binding behaviour cannot be
+       overridden in instances of the class in which it occurs. See
+       https://docs.python.org/3/reference/datamodel.html#descriptor-invocation
+       for more information. See also 'overridable_descriptor' above.
+    """
+    __slots__ = '_fset', '_fdel'
+
+    def __init__(self, fget=None, fset=None, fdel=None):
+        super(descriptor, self).__init__(fget=fget)
+        self._fset = fset if fset is not None else self._default_set
+        self._fdel = fdel if fdel is not None else self._default_del
 
     def setter(self, fset):
         self._fset = fset
@@ -168,10 +206,6 @@ class descriptor(object):
         return self
 
     @staticmethod
-    def _default_get(instance, owner):
-        raise AttributeError('unreadable attribute')
-
-    @staticmethod
     def _default_set(instance, value):
         raise AttributeError("can't set attribute")
 
@@ -179,14 +213,31 @@ class descriptor(object):
     def _default_del(instance):
         raise AttributeError("can't delete attribute")
 
-    def __get__(self, instance, owner):
-        return self._fget(self, instance, owner)
-
     def __set__(self, instance, value):
         return self._fset(self, instance, value)
 
     def __delete__(self, instance):
         return self._fdel(self, instance)
+
+
+class class_and_instancemethod:
+    """ A decorator for functions defined in a class namespace which are to be
+        accessed as both class and instance methods: retrieving the method from
+        a class will return a bound class method (like the built-in
+        'classmethod' decorator), but retrieving the method from an instance
+        will return a bound instance method (as if the function were not
+        decorated). Therefore, the first argument of the decorated function may
+        be either a class or an instance, depending on how it was called.
+    """
+
+    __slots__ = '_func',
+
+    def __init__(self, func):
+        self._func = func
+
+    def __get__(self, inst, owner=None):
+        bind_to = owner if inst is None else inst
+        return types.MethodType(self._func, bind_to)
 
 
 Direction = namedtuple('Direction', ('yaw', 'pitch'))

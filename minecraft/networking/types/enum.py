@@ -99,13 +99,22 @@ class Dimension(Enum):
     OVERWORLD = 0
     END = 1
 
+    from_identifier_dict = {
+        'minecraft:the_nether': NETHER,
+        'minecraft:overworld': OVERWORLD,
+        'minecraft:the_end': END,
+    }
+
+    to_identifier_dict = {e: i for (i, e) in from_identifier_dict.items()}
+
 
 # Designation of a player's gamemode.
-class GameMode(Enum):
+class GameMode(BitFieldEnum):
     SURVIVAL = 0
     CREATIVE = 1
     ADVENTURE = 2
     SPECTATOR = 3
+    HARDCORE = 8  # Only used prior to protocol 738.
 
 
 # Currently designates an entity's feet or eyes.
