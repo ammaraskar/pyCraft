@@ -105,7 +105,7 @@ class Connection(object):
         """  # NOQA
 
         # This lock is re-entrant because it may be acquired in a re-entrant
-        # manner from within an outgoing packet listener
+        # manner from within an outgoing packet
         self._write_lock = RLock()
 
         self.networking_thread = None
@@ -195,6 +195,10 @@ class Connection(object):
     def listener(self, *packet_types, **kwds):
         """
         Shorthand decorator to register a function as a packet listener.
+
+        Wraps :meth:`minecraft.networking.connection.register_packet_listener`
+        :param packet_types: Packet types to listen for.
+        :param kwds: Keyword arguments for `register_packet_listener`
         """
         def listener_decorator(handler_func):
             self.register_packet_listener(handler_func, *packet_types, **kwds)
