@@ -15,7 +15,7 @@ MAIN_AUTHORS = ["Ammar Askar <ammar@ammaraskar.com>",
 
 URL = "https://github.com/ammaraskar/pyCraft"
 
-setup(name="minecraft",
+setup(name="pyCraft",
       version=__version__,
       description="Python MineCraft library",
       long_description=read("README.rst"),
