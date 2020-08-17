@@ -81,5 +81,8 @@ target/
 # sftp configuration file
 sftp-config.json
 
+### Visual Studio
+.vscode
+
 ### pyCraft ###
 credentials
