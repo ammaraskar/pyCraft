@@ -163,7 +163,7 @@ class JoinGamePacket(AbstractDimensionPacket):
     def field_string(self, field):
         if field == 'dimension_codec':
             # pylint: disable=no-member
-            return nbt_to_snbt(self.dimension_codec) 
+            return nbt_to_snbt(self.dimension_codec)
         return super(JoinGamePacket, self).field_string(field)
 
 
