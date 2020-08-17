@@ -1,8 +1,6 @@
 """Minecraft data types that are used by packets, but don't have a specific
    network representation.
 """
-from __future__ import division
-
 from collections import namedtuple
 from itertools import chain
 

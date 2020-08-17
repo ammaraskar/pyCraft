@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 from collections import deque
 from threading import RLock
 import zlib
@@ -10,8 +8,6 @@ import select
 import sys
 import json
 import re
-
-from future.utils import raise_
 
 from .types import VarInt
 from .packets import clientbound, serverbound
@@ -491,7 +487,8 @@ class Connection(object):
 
         # If allowed by the final exception handler, re-raise the exception.
         if self.handle_exception is None and not caught:
-            raise_(*exc_info)
+            exc_value, exc_tb = exc_info[1:]
+            raise exc_value.with_traceback(exc_tb)
 
     def _version_mismatch(self, server_protocol=None, server_version=None):
         if server_protocol is None:
@@ -592,7 +589,8 @@ class NetworkingThread(threading.Thread):
                     exc_info = None
 
             if exc_info is not None:
-                raise_(*exc_info)
+                exc_value, exc_tb = exc_info[1:]
+                raise exc_value.with_traceback(exc_tb)
 
 
 class PacketReactor(object):

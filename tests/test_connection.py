@@ -5,7 +5,6 @@ from minecraft.networking.connection import Connection
 from minecraft.exceptions import (
     VersionMismatch, LoginDisconnect, InvalidState, IgnorePacket
 )
-from minecraft.compat import unicode
 
 from . import fake_server
 
@@ -92,7 +91,7 @@ class DefaultStatusTest(ConnectTest):
     def setUp(self):
         class FakeStdOut(io.BytesIO):
             def write(self, data):
-                if isinstance(data, unicode):
+                if isinstance(data, str):
                     data = data.encode('utf8')
                 super(FakeStdOut, self).write(data)
         sys.stdout, self.old_stdout = FakeStdOut(), sys.stdout

@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 from minecraft import SUPPORTED_MINECRAFT_VERSIONS
 from minecraft.networking import connection
 from minecraft.networking import types
@@ -11,7 +9,6 @@ from minecraft.networking.encryption import (
 )
 
 from cryptography.hazmat.primitives.asymmetric.padding import PKCS1v15
-from future.utils import raise_
 
 from numbers import Integral
 import unittest
@@ -576,7 +573,8 @@ class _FakeServerTest(unittest.TestCase):
                 logging.error(**error)
             self.fail('Multiple errors: see logging output.')
         elif errors and 'exc_info' in errors[0]:
-            raise_(*errors[0]['exc_info'])
+            exc_value, exc_tb = errors[0]['exc_info'][1:]
+            raise exc_value.with_traceback(exc_tb)
         elif errors:
             self.fail(errors[0]['msg'])
 

@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
-
 import getpass
 import sys
 import re
@@ -11,7 +9,6 @@ from minecraft import authentication
 from minecraft.exceptions import YggdrasilError
 from minecraft.networking.connection import Connection
 from minecraft.networking.packets import Packet, clientbound, serverbound
-from minecraft.compat import input
 
 
 def get_options():
