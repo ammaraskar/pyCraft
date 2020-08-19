@@ -1,4 +1,4 @@
-from __future__ import print_function
+import pynbt
 
 from minecraft import SUPPORTED_MINECRAFT_VERSIONS
 from minecraft.networking import connection
@@ -11,7 +11,6 @@ from minecraft.networking.encryption import (
 )
 
 from cryptography.hazmat.primitives.asymmetric.padding import PKCS1v15
-from future.utils import raise_
 
 from numbers import Integral
 import unittest
@@ -101,10 +100,46 @@ class FakeClientHandler(object):
 
     def handle_play_start(self):
         # Called upon entering the play state.
-        self.write_packet(clientbound.play.JoinGamePacket(
-            entity_id=0, game_mode=0, dimension=0, hashed_seed=12345,
-            difficulty=2, max_players=1, level_type='default',
-            reduced_debug_info=False, render_distance=9, respawn_screen=False))
+        packet = clientbound.play.JoinGamePacket(
+            entity_id=0, is_hardcore=False, game_mode=0, previous_game_mode=0,
+            world_names=['minecraft:overworld'],
+            world_name='minecraft:overworld',
+            hashed_seed=12345, difficulty=2, max_players=1,
+            level_type='default', reduced_debug_info=False, render_distance=9,
+            respawn_screen=False, is_debug=False, is_flat=False)
+
+        if self.server.context.protocol_version >= 748:
+            packet.dimension = pynbt.TAG_Compound({
+                'natural': pynbt.TAG_Byte(1),
+                'effects': pynbt.TAG_String('minecraft:overworld'),
+            }, '')
+            packet.dimension_codec = pynbt.TAG_Compound({
+                'minecraft:dimension_type': pynbt.TAG_Compound({
+                    'type': pynbt.TAG_String('minecraft:dimension_type'),
+                    'value': pynbt.TAG_List(pynbt.TAG_Compound, [
+                        pynbt.TAG_Compound(packet.dimension),
+                    ]),
+                }),
+                'minecraft:worldgen/biome': pynbt.TAG_Compound({
+                    'type': pynbt.TAG_String('minecraft:worldgen/biome'),
+                    'value': pynbt.TAG_List(pynbt.TAG_Compound, [
+                        pynbt.TAG_Compound({
+                            'id': pynbt.TAG_Int(1),
+                            'name': pynbt.TAG_String('minecraft:plains'),
+                        }),
+                        pynbt.TAG_Compound({
+                            'id': pynbt.TAG_Int(2),
+                            'name': pynbt.TAG_String('minecraft:desert'),
+                        }),
+                    ]),
+                }),
+            }, '')
+        elif self.server.context.protocol_version >= 718:
+            packet.dimension = 'minecraft:overworld'
+        else:
+            packet.dimension = types.Dimension.OVERWORLD
+
+        self.write_packet(packet)
 
     def handle_play_packet(self, packet):
         # Called upon each packet received after handle_play_start() returns.
@@ -181,7 +216,8 @@ class FakeClientHandler(object):
         try:
             self.handle_connection()
             packet = self.read_packet()
-            assert isinstance(packet, serverbound.handshake.HandShakePacket)
+            assert isinstance(packet, serverbound.handshake.HandShakePacket), \
+                   type(packet)
             self.handle_handshake(packet)
             if packet.next_state == 1:
                 self._run_status()
@@ -576,7 +612,8 @@ class _FakeServerTest(unittest.TestCase):
                 logging.error(**error)
             self.fail('Multiple errors: see logging output.')
         elif errors and 'exc_info' in errors[0]:
-            raise_(*errors[0]['exc_info'])
+            exc_value, exc_tb = errors[0]['exc_info'][1:]
+            raise exc_value.with_traceback(exc_tb)
         elif errors:
             self.fail(errors[0]['msg'])
 

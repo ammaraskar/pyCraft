@@ -49,6 +49,7 @@ class SpawnObjectPacket(Packet):
             return getattr(cls, name)
 
         class EntityType(Enum):
+            # XXX This has not been updated for >= v1.15
             ACTIVATED_TNT     = 50 if pv < 458 else 55  # PrimedTnt
             AREA_EFFECT_CLOUD =  3 if pv < 458 else  0
             ARMORSTAND        = 78 if pv < 458 else  1

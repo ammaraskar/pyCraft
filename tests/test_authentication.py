@@ -4,11 +4,11 @@ from minecraft.authentication import _make_request
 from minecraft.authentication import _raise_from_response
 from minecraft.exceptions import YggdrasilError
 
+from unittest import mock
+import unittest
 import requests
 import json
-import unittest
 import os
-from .compat import mock
 
 FAKE_DATA = {
     "id_": "85e2c12b9eab4a7dabf61babc11354c2",

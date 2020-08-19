@@ -2,32 +2,35 @@
 Each type has a method which is used to read and write it.
 These definitions and methods are used by the packet definitions
 """
-from __future__ import division
 import struct
 import uuid
+import io
 
-from .utility import Vector
+import pynbt
+
+from .utility import Vector, class_and_instancemethod
 
 
 __all__ = (
     'Type', 'Boolean', 'UnsignedByte', 'Byte', 'Short', 'UnsignedShort',
-    'Integer', 'FixedPointInteger', 'Angle', 'VarInt', 'Long',
+    'Integer', 'FixedPointInteger', 'Angle', 'VarInt', 'VarLong', 'Long',
     'UnsignedLong', 'Float', 'Double', 'ShortPrefixedByteArray',
     'VarIntPrefixedByteArray', 'TrailingByteArray', 'String', 'UUID',
-    'Position',
+    'Position', 'NBT', 'PrefixedArray',
 )
 
 
 class Type(object):
+    # pylint: disable=no-self-argument
     __slots__ = ()
 
-    @classmethod
-    def read_with_context(cls, file_object, _context):
-        return cls.read(file_object)
+    @class_and_instancemethod
+    def read_with_context(cls_or_self, file_object, _context):
+        return cls_or_self.read(file_object)
 
-    @classmethod
-    def send_with_context(cls, value, socket, _context):
-        return cls.send(value, socket)
+    @class_and_instancemethod
+    def send_with_context(cls_or_self, value, socket, _context):
+        return cls_or_self.send(value, socket)
 
     @classmethod
     def read(cls, file_object):
@@ -131,12 +134,13 @@ class Angle(Type):
 
 
 class VarInt(Type):
-    @staticmethod
-    def read(file_object):
+    max_bytes = 5
+
+    @classmethod
+    def read(cls, file_object):
         number = 0
-        # Limit of 5 bytes, otherwise its possible to cause
-        # a DOS attack by sending VarInts that just keep
-        # going
+        # Limit of 'cls.max_bytes' bytes, otherwise its possible to cause
+        # a DOS attack by sending VarInts that just keep going
         bytes_encountered = 0
         while True:
             byte = file_object.read(1)
@@ -149,7 +153,7 @@ class VarInt(Type):
                 break
 
             bytes_encountered += 1
-            if bytes_encountered > 5:
+            if bytes_encountered > cls.max_bytes:
                 raise ValueError("Tried to read too long of a VarInt")
         return number
 
@@ -170,6 +174,10 @@ class VarInt(Type):
             if value < max_value:
                 return size
         raise ValueError("Integer too large")
+
+
+class VarLong(VarInt):
+    max_bytes = 10
 
 
 # Maps (maximum integer value -> size of VarInt in bytes)
@@ -324,3 +332,48 @@ class Position(Type, Vector):
                  if context.protocol_version >= 443 else
                  (x & 0x3FFFFFF) << 38 | (y & 0xFFF) << 26 | (z & 0x3FFFFFF))
         UnsignedLong.send(value, socket)
+
+
+class NBT(Type):
+    @staticmethod
+    def read(file_object):
+        return pynbt.NBTFile(io=file_object)
+
+    @staticmethod
+    def send(value, socket):
+        buffer = io.BytesIO()
+        pynbt.NBTFile(value=value).save(buffer)
+        socket.send(buffer.getvalue())
+
+
+class PrefixedArray(Type):
+    __slots__ = 'length_type', 'element_type'
+
+    def __init__(self, length_type, element_type):
+        self.length_type = length_type
+        self.element_type = element_type
+
+    def read(self, file_object):
+        return self.__read(file_object, self.element_type.read)
+
+    def send(self, value, socket):
+        return self.__send(value, socket, self.element_type.send)
+
+    def read_with_context(self, file_object, context):
+        def element_read(file_object):
+            return self.element_type.read_with_context(file_object, context)
+        return self.__read(file_object, element_read)
+
+    def send_with_context(self, value, socket, context):
+        def element_send(value, socket):
+            return self.element_type.send_with_context(value, socket, context)
+        return self.__send(value, socket, element_send)
+
+    def __read(self, file_object, element_read):
+        length = self.length_type.read(file_object)
+        return [element_read(file_object) for i in range(length)]
+
+    def __send(self, value, socket, element_send):
+        self.length_type.send(len(value), socket)
+        for element in value:
+            element_send(element, socket)

@@ -5,7 +5,7 @@ from minecraft.networking.packets import (
 from minecraft.networking.types import (
     Double, Float, Boolean, VarInt, String, Byte, Position, Enum,
     RelativeHand, BlockFace, Vector, Direction, PositionAndLook,
-    multi_attribute_alias
+    multi_attribute_alias,
 )
 
 from .client_settings_packet import ClientSettingsPacket
@@ -37,7 +37,8 @@ def get_packets(context):
 class KeepAlivePacket(AbstractKeepAlivePacket):
     @staticmethod
     def get_id(context):
-        return 0x0F if context.protocol_version >= 471 else \
+        return 0x10 if context.protocol_version >= 712 else \
+               0x0F if context.protocol_version >= 471 else \
                0x10 if context.protocol_version >= 464 else \
                0x0E if context.protocol_version >= 389 else \
                0x0C if context.protocol_version >= 386 else \
@@ -78,7 +79,8 @@ class ChatPacket(Packet):
 class PositionAndLookPacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x12 if context.protocol_version >= 471 else \
+        return 0x13 if context.protocol_version >= 712 else \
+               0x12 if context.protocol_version >= 471 else \
                0x13 if context.protocol_version >= 464 else \
                0x11 if context.protocol_version >= 389 else \
                0x0F if context.protocol_version >= 386 else \
@@ -124,7 +126,9 @@ class TeleportConfirmPacket(Packet):
 class AnimationPacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x2A if context.protocol_version >= 468 else \
+        return 0x2C if context.protocol_version >= 738 else \
+               0x2B if context.protocol_version >= 712 else \
+               0x2A if context.protocol_version >= 468 else \
                0x29 if context.protocol_version >= 464 else \
                0x27 if context.protocol_version >= 389 else \
                0x25 if context.protocol_version >= 386 else \
@@ -197,7 +201,9 @@ class PlayerBlockPlacementPacket(Packet):
 
     @staticmethod
     def get_id(context):
-        return 0x2C if context.protocol_version >= 468 else \
+        return 0x2E if context.protocol_version >= 738 else \
+               0x2D if context.protocol_version >= 712 else \
+               0x2C if context.protocol_version >= 468 else \
                0x2B if context.protocol_version >= 464 else \
                0x29 if context.protocol_version >= 389 else \
                0x27 if context.protocol_version >= 386 else \
@@ -234,7 +240,9 @@ class PlayerBlockPlacementPacket(Packet):
 class UseItemPacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x2D if context.protocol_version >= 468 else \
+        return 0x2F if context.protocol_version >= 738 else \
+               0x2E if context.protocol_version >= 712 else \
+               0x2D if context.protocol_version >= 468 else \
                0x2C if context.protocol_version >= 464 else \
                0x2A if context.protocol_version >= 389 else \
                0x28 if context.protocol_version >= 386 else \

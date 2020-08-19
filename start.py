@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
-
 import getpass
 import sys
 import re
@@ -11,7 +9,6 @@ from minecraft import authentication
 from minecraft.exceptions import YggdrasilError
 from minecraft.networking.connection import Connection
 from minecraft.networking.packets import Packet, clientbound, serverbound
-from minecraft.compat import input
 
 
 def get_options():
@@ -34,6 +31,10 @@ def get_options():
     parser.add_option("-d", "--dump-packets", dest="dump_packets",
                       action="store_true",
                       help="print sent and received packets to standard error")
+
+    parser.add_option("-v", "--dump-unknown-packets", dest="dump_unknown",
+                      action="store_true",
+                      help="include unknown packets in --dump-packets output")
 
     (options, args) = parser.parse_args()
 
@@ -81,9 +82,12 @@ def main():
         def print_incoming(packet):
             if type(packet) is Packet:
                 # This is a direct instance of the base Packet type, meaning
-                # that it is a packet of unknown type, so we do not print it.
-                return
-            print('--> %s' % packet, file=sys.stderr)
+                # that it is a packet of unknown type, so we do not print it
+                # unless explicitly requested by the user.
+                if options.dump_unknown:
+                    print('--> [unknown packet] %s' % packet, file=sys.stderr)
+            else:
+                print('--> %s' % packet, file=sys.stderr)
 
         def print_outgoing(packet):
             print('<-- %s' % packet, file=sys.stderr)
