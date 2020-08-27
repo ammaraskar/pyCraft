@@ -178,6 +178,10 @@ class Player:
         """
         Actually connect to the server for this player and maintain said connection
 
+        Notes
+        -----
+        This is a blocking function and will not return until `Disconnect()` is called on said instance.
+
         """
         self.connection.connect()
 
