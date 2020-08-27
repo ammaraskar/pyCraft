@@ -15,6 +15,21 @@ DefaultParser - Tested on mc-central, should work decent globally
 
 
 def DefaultParser(data):
+    """The default Player chat packet parser, designed to make chat human readable.
+
+    Parameters
+    ----------
+    data : Chat Packet
+        The chat packet to be parsed.
+
+    Returns
+    -------
+    message : str
+        The chat message in human readable form
+    False : bool
+        If the parser encounters an error during parsing
+
+    """
     try:
         # Convert to valid python dict
         data = json.loads(data)

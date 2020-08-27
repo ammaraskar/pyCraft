@@ -22,7 +22,8 @@ class Player:
     --------
     This class explicitly expects a username & password, then expects to
     be able to connect to a server in online mode.
-    If you wish to add different functionality please
+    If you wish to add different functionality please view the example
+    headless client `start.py` for how to implement it.
     """
 
     def __init__(self, username, password, *, admins=None):
