@@ -187,13 +187,9 @@ class Player:
 
         print(f"Connected to server with: {self.auth_token.username}")
 
-        count = 0
         while True:
             time.sleep(1)
-            count += 1
             if self.kickout:
-                break
-            elif count == 50:
                 break
 
     def Disconnect(self):
