@@ -24,3 +24,4 @@ Contents:
 
    authentication
    connecting
+   example

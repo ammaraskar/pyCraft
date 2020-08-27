@@ -8,7 +8,7 @@ from minecraft.exceptions import YggdrasilError
 from minecraft.networking.connection import Connection
 from minecraft.networking.packets import serverbound, clientbound
 
-from Parsers import DefaultParser
+from .Parsers import DefaultParser
 
 
 class Player:
@@ -23,12 +23,15 @@ class Player:
     This class explicitly expects a username & password, then expects to
     be able to connect to a server in online mode.
     If you wish to add different functionality please view the example
-    headless client `start.py` for how to implement it.
+    headless client, `start.py`, for how to implement it.
     """
 
     def __init__(self, username, password, *, admins=None):
         """
-        Initialize things such as kickout, admins and auth
+        Init handles the following:
+         - Client Authentication
+         - Setting the current connection state
+         - Setting the recognized 'admins' for this instance
 
         Parameters
         ----------
@@ -41,7 +44,7 @@ class Player:
 
         Raises
         ------
-        YggdrasilError : minecraft.exceptions
+        YggdrasilError
             Username or Password was incorrect
 
         """
