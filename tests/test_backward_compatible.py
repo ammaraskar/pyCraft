@@ -160,3 +160,15 @@ class ClassMemberAliasesTest(unittest.TestCase):
 
                 with self.assertRaises(AttributeError):
                     del packet.pure_game_mode
+
+    def test_entity_position_delta_packet(self):
+        packet = clientbound.play.EntityPositionDeltaPacket()
+        packet.delta_x = -128
+        packet.delta_y = 33
+        packet.delta_z = 127
+        self.assertEqual(packet.delta_x_float, -4.0)
+        self.assertEqual(packet.delta_y_float, 1.03125)
+        self.assertEqual(packet.delta_z_float, 3.96875)
+        self.assertEqual(packet.delta_x, -128)
+        self.assertEqual(packet.delta_y, 33)
+        self.assertEqual(packet.delta_z, 127)

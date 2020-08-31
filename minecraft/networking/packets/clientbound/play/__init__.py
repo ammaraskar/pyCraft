@@ -5,7 +5,7 @@ from minecraft.networking.packets import (
 from minecraft.networking.types import (
     FixedPoint, Integer, Angle, UnsignedByte, Byte, Boolean, UUID, Short,
     VarInt, Double, Float, String, Enum, Difficulty, Long, Vector, Direction,
-    PositionAndLook, multi_attribute_alias,
+    PositionAndLook, multi_attribute_alias, attribute_transform,
 )
 
 from .combat_event_packet import CombatEventPacket
@@ -225,13 +225,29 @@ class EntityPositionDeltaPacket(Packet):
                0x15
 
     packet_name = "entity position delta"
-    get_definition = staticmethod(lambda context: [
-        {'entity_id': VarInt},
-        {'delta_x': Short},
-        {'delta_y': Short},
-        {'delta_z': Short},
-        {'on_ground': Boolean}
-    ])
+
+    @staticmethod
+    def get_definition(context):
+        delta_type = FixedPoint(Short, 12) \
+                     if context.protocol_version >= 106 else \
+                     FixedPoint(Byte)
+        return [
+            {'entity_id': VarInt},
+            {'delta_x_float': delta_type},
+            {'delta_y_float': delta_type},
+            {'delta_z_float': delta_type},
+            {'on_ground': Boolean},
+        ]
+
+    # The following transforms are retained for backward compatibility;
+    # they represent the delta values as fixed-point integers with 5 bits
+    # of fractional part, regardless of the protocol version.
+    delta_x = attribute_transform('delta_x_float', lambda x: int(x * 32),
+                                                   lambda x: x / 32)
+    delta_y = attribute_transform('delta_y_float', lambda y: int(y * 32),
+                                                   lambda y: y / 32)
+    delta_z = attribute_transform('delta_z_float', lambda z: int(z * 32),
+                                                   lambda z: z / 32)
 
 
 class TimeUpdatePacket(Packet):

@@ -10,7 +10,7 @@ from itertools import chain
 __all__ = (
     'Vector', 'MutableRecord', 'Direction', 'PositionAndLook', 'descriptor',
     'overridable_descriptor', 'overridable_property', 'attribute_alias',
-    'multi_attribute_alias',
+    'multi_attribute_alias', 'attribute_transform',
 )
 
 
@@ -92,13 +92,20 @@ class MutableRecord(object):
                 yield slot
 
 
+def attribute_transform(name, from_orig, to_orig):
+    """An attribute descriptor that provides a view of a different attribute
+       with a given name via a given transformation and its given inverse."""
+    return property(
+        fget=(lambda self: from_orig(getattr(self, name))),
+        fset=(lambda self, value: setattr(self, name, to_orig(value))),
+        fdel=(lambda self: delattr(self, name)))
+
+
 def attribute_alias(name):
     """An attribute descriptor that redirects access to a different attribute
        with a given name.
     """
-    return property(fget=(lambda self: getattr(self, name)),
-                    fset=(lambda self, value: setattr(self, name, value)),
-                    fdel=(lambda self: delattr(self, name)))
+    return attribute_transform(name, lambda x: x, lambda x: x)
 
 
 def multi_attribute_alias(container, *arg_names, **kwd_names):
