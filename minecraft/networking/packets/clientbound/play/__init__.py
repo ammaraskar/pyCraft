@@ -3,8 +3,8 @@ from minecraft.networking.packets import (
 )
 
 from minecraft.networking.types import (
-    FixedPointInteger, Angle, UnsignedByte, Byte, Boolean, UUID, Short, VarInt,
-    Double, Float, String, Enum, Difficulty, Long, Vector, Direction,
+    FixedPoint, Integer, Angle, UnsignedByte, Byte, Boolean, UUID, Short,
+    VarInt, Double, Float, String, Enum, Difficulty, Long, Vector, Direction,
     PositionAndLook, multi_attribute_alias,
 )
 
@@ -159,11 +159,11 @@ class SpawnPlayerPacket(Packet):
         {'entity_id': VarInt},
         {'player_UUID': UUID},
         {'x': Double} if context.protocol_version >= 100
-        else {'x': FixedPointInteger},
+        else {'x': FixedPoint(Integer)},
         {'y': Double} if context.protocol_version >= 100
-        else {'y': FixedPointInteger},
+        else {'y': FixedPoint(Integer)},
         {'z': Double} if context.protocol_version >= 100
-        else {'z': FixedPointInteger},
+        else {'z': FixedPoint(Integer)},
         {'yaw': Angle},
         {'pitch': Angle},
         {'current_item': Short} if context.protocol_version <= 49 else {},

@@ -82,6 +82,12 @@ class LegacyPacketNamesTest(unittest.TestCase):
                          serverbound.play.get_packets)
 
 
+class LegacyTypesTest(unittest.TestCase):
+    def test_legacy_types(self):
+        self.assertIsInstance(types.FixedPointInteger, types.FixedPoint)
+        self.assertEqual(types.FixedPointInteger.denominator, 32)
+
+
 class ClassMemberAliasesTest(unittest.TestCase):
     def test_alias_values(self):
         self.assertEqual(serverbound.play.AnimationPacket.HAND_MAIN,
