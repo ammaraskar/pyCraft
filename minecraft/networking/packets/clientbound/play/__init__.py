@@ -240,14 +240,14 @@ class EntityPositionDeltaPacket(Packet):
         ]
 
     # The following transforms are retained for backward compatibility;
-    # they represent the delta values as fixed-point integers with 5 bits
+    # they represent the delta values as fixed-point integers with 12 bits
     # of fractional part, regardless of the protocol version.
-    delta_x = attribute_transform('delta_x_float', lambda x: int(x * 32),
-                                                   lambda x: x / 32)
-    delta_y = attribute_transform('delta_y_float', lambda y: int(y * 32),
-                                                   lambda y: y / 32)
-    delta_z = attribute_transform('delta_z_float', lambda z: int(z * 32),
-                                                   lambda z: z / 32)
+    delta_x = attribute_transform(
+                'delta_x_float', lambda x: int(x * 4096), lambda x: x / 4096)
+    delta_y = attribute_transform(
+                'delta_y_float', lambda y: int(y * 4096), lambda y: y / 4096)
+    delta_z = attribute_transform(
+                'delta_z_float', lambda z: int(z * 4096), lambda z: z / 4096)
 
 
 class TimeUpdatePacket(Packet):
