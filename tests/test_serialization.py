@@ -7,6 +7,9 @@ from minecraft.networking.types import (
     ShortPrefixedByteArray, VarIntPrefixedByteArray, UUID,
     String as StringType, Position, TrailingByteArray, UnsignedLong,
 )
+from minecraft.networking.packets.clientbound.play import (
+    MultiBlockChangePacket
+)
 from minecraft.networking.packets import PacketBuffer
 from minecraft.networking.connection import ConnectionContext
 from minecraft import SUPPORTED_PROTOCOL_VERSIONS, RELEASE_PROTOCOL_VERSIONS
@@ -36,6 +39,12 @@ TEST_DATA = {
     UUID: ["12345678-1234-5678-1234-567812345678"],
     StringType: ["hello world"],
     Position: [(758, 0, 691), (-500, -12, -684)],
+    MultiBlockChangePacket.ChunkSectionPos: [
+        (x, y, z)
+        for x in [-0x200000, -123, -1, 0, 123, 0x1FFFFF]
+        for z in [-0x200000, -456, -1, 0, 456, 0x1FFFFF]
+        for y in [-0x80000, -789, -1, 0, 789, 0x7FFFF]
+    ]
 }
 
 

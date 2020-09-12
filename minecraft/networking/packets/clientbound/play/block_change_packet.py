@@ -1,7 +1,7 @@
 from minecraft.networking.packets import Packet
 from minecraft.networking.types import (
-    Type, VarInt, VarLong, Long, Integer, UnsignedByte, Position, Vector,
-    MutableRecord, PrefixedArray, Boolean, attribute_alias,
+    Type, VarInt, VarLong, UnsignedLong, Integer, UnsignedByte, Position,
+    Vector, MutableRecord, PrefixedArray, Boolean, attribute_alias,
     multi_attribute_alias,
 )
 
@@ -63,17 +63,19 @@ class MultiBlockChangePacket(Packet):
     class ChunkSectionPos(Vector, Type):
         @classmethod
         def read(cls, file_object):
-            value = Long.read(file_object)
-            x = value >> 42
-            z = (value >> 20) & 0x3FFFFF
-            y = value & 0xFFFFF
+            value = UnsignedLong.read(file_object)
+            y = value | ~0xFFFFF if value & 0x80000 else value & 0xFFFFF
+            value >>= 20
+            z = value | ~0x3FFFFF if value & 0x200000 else value & 0x3FFFFF
+            value >>= 22
+            x = value | ~0x3FFFFF if value & 0x200000 else value
             return cls(x, y, z)
 
         @classmethod
         def send(cls, pos, socket):
             x, y, z = pos
             value = (x & 0x3FFFFF) << 42 | (z & 0x3FFFFF) << 20 | y & 0xFFFFF
-            Long.send(value, socket)
+            UnsignedLong.send(value, socket)
 
     class Record(MutableRecord, Type):
         __slots__ = 'x', 'y', 'z', 'block_state_id'
