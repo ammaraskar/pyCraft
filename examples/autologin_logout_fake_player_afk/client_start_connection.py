@@ -59,16 +59,16 @@ def start(options):
 
     def handle_error_conect(error,error_type):
         #If detect error on too many coenctions, try again after X rand secs
-        if str(error) == 'The server rejected our login attempt with: "{"translate":"Connection throttled! Please wait before reconnecting."}".':
-             timeNext = random.randint(3, 15)
-             print("Too many conections, reconecting in: " + str(timeNext)) + " secs."
-             time.sleep(timeNext)
-             minecraft_worker.main()
+        if str(error) == str('The server rejected our login attempt with: "{"translate":"Connection throttled! Please wait before reconnecting."}".'):
+            timeNext = random.randint(3, 15)
+            print("Too many conections, reconecting in: " + str(timeNext) + " secs.")
+            time.sleep(timeNext)
+            minecraft_worker.main()
         else:
             #if other error -> stops
-             print("Error found: ")
-             print(error)
-             print(error_type)
+            print("Error found: ")
+            print(error)
+            print(error_type)
 
     connection.register_exception_handler(handle_error_conect)
     connection.register_packet_listener(handle_join_game, clientbound.play.JoinGamePacket)
