@@ -442,6 +442,8 @@ class Connection(object):
                 finally:
                     self.socket.close()
                     self.socket = None
+                    if immediate:
+                        self._outgoing_packet_queue.clear()
 
     def _handshake(self, next_state=STATE_PLAYING):
         handshake = serverbound.handshake.HandShakePacket()
