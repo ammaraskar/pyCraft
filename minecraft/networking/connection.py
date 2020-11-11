@@ -55,6 +55,7 @@ class Connection(object):
         initial_version=None,
         allowed_versions=None,
         handle_exception=None,
+        disconnect_on_exception=True,
         handle_exit=None,
     ):
         """Sets up an instance of this object to be able to connect to a
@@ -93,6 +94,12 @@ class Connection(object):
                                  re-raised from the networking thread after
                                  closing the connection; or the value 'False',
                                  meaning that the exception is never re-raised.
+        :param disconnect_on_exception(bool): A boolean that specifies whether
+                                              or not to forcibly disconnect from
+                                              a server after firing an exception
+                                              handler. This can be set to False if
+                                              you intend to reconnect to the server
+                                              within the exception handler.
         :param handle_exit: A function to be called when a connection to a
                             server terminates, not caused by an exception,
                             and not with the intention to automatically
@@ -145,6 +152,7 @@ class Connection(object):
         self.connected = False
 
         self.handle_exception = handle_exception
+        self.disconnect_on_exception = disconnect_on_exception
         self.exception, self.exc_info = None, None
         self.handle_exit = handle_exit
 
@@ -490,7 +498,8 @@ class Connection(object):
 
         # Record the exception and cleanly terminate the connection.
         self.exception, self.exc_info = exc, exc_info
-        self.disconnect(immediate=True)
+        if self.disconnect_on_exception:
+            self.disconnect(immediate=True)
 
         # If allowed by the final exception handler, re-raise the exception.
         if self.handle_exception is None and not caught:
