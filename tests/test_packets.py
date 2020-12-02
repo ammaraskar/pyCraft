@@ -209,7 +209,7 @@ class TestReadWritePackets(unittest.TestCase):
             context.protocol_version = protocol_version
             packet = clientbound.play.MultiBlockChangePacket(context)
 
-            if protocol_version >= 741:
+            if context.protocol_later_eq(741):
                 packet.chunk_section_pos = Vector(167, 17, 33)
                 packet.invert_trust_edges = False
             else:
@@ -239,8 +239,9 @@ class TestReadWritePackets(unittest.TestCase):
                             'type_id', context)
 
             pos_look = PositionAndLook(
-                position=(Vector(68.0, 38.0, 76.0) if protocol_version >= 100
-                          else Vector(68, 38, 76)),
+                position=(Vector(68.0, 38.0, 76.0)
+                          if context.protocol_later_eq(100) else
+                          Vector(68, 38, 76)),
                 yaw=263.494, pitch=180)
             velocity = Vector(21, 55, 41)
             entity_id, type_name, type_id = 49846, 'EGG', EntityType.EGG
@@ -252,7 +253,7 @@ class TestReadWritePackets(unittest.TestCase):
                         velocity_x=velocity.x, velocity_y=velocity.y,
                         velocity_z=velocity.z,
                         entity_id=entity_id, type_id=type_id, data=1)
-            if protocol_version >= 49:
+            if context.protocol_later_eq(49):
                 object_uuid = 'd9568851-85bc-4a10-8d6a-261d130626fa'
                 packet.object_uuid = object_uuid
                 self.assertEqual(packet.objectUUID, object_uuid)
@@ -267,12 +268,12 @@ class TestReadWritePackets(unittest.TestCase):
                 "object_uuid='d9568851-85bc-4a10-8d6a-261d130626fa', "
                 "type_id=EGG, x=68.0, y=38.0, z=76.0, pitch=180, yaw=263.494, "
                 "data=1, velocity_x=21, velocity_y=55, velocity_z=41)"
-                % packet.id if protocol_version >= 100 else
+                % packet.id if context.protocol_later_eq(100) else
                 "0x%02X SpawnObjectPacket(entity_id=49846, "
                 "object_uuid='d9568851-85bc-4a10-8d6a-261d130626fa', "
                 "type_id=EGG, x=68, y=38, z=76, pitch=180, yaw=263.494, "
                 "data=1, velocity_x=21, velocity_y=55, velocity_z=41)"
-                % packet.id if protocol_version >= 49 else
+                % packet.id if context.protocol_later_eq(49) else
                 "0x%02X SpawnObjectPacket(entity_id=49846, type_id=EGG, "
                 "x=68, y=38, z=76, pitch=180, yaw=263.494, data=1, "
                 "velocity_x=21, velocity_y=55, velocity_z=41)" % packet.id
@@ -282,7 +283,7 @@ class TestReadWritePackets(unittest.TestCase):
                         context=context, position_and_look=pos_look,
                         velocity=velocity, type=type_name,
                         entity_id=entity_id, data=1)
-            if protocol_version >= 49:
+            if context.protocol_later_eq(49):
                 packet2.object_uuid = object_uuid
             self.assertEqual(packet.__dict__, packet2.__dict__)
 
@@ -290,7 +291,7 @@ class TestReadWritePackets(unittest.TestCase):
             self.assertEqual(packet.position, packet2.position)
 
             packet2.data = 0
-            if protocol_version < 49:
+            if context.protocol_earlier(49):
                 del packet2.velocity
             self._test_read_write_packet(packet, context,
                                          yaw=360/256, pitch=360/256)
@@ -304,11 +305,11 @@ class TestReadWritePackets(unittest.TestCase):
             packet = clientbound.play.SoundEffectPacket(
                 sound_id=545, effect_position=Vector(0.125, 300.0, 50.5),
                 volume=0.75)
-            if protocol_version >= 201:
+            if context.protocol_later_eq(201):
                 packet.pitch = struct.unpack('f', struct.pack('f', 1.5))[0]
             else:
                 packet.pitch = int(1.5 / 63.5) * 63.5
-            if context.protocol_version >= 95:
+            if context.protocol_later_eq(95):
                 packet.sound_category = \
                     clientbound.play.SoundEffectPacket.SoundCategory.NEUTRAL
 
@@ -321,19 +322,20 @@ class TestReadWritePackets(unittest.TestCase):
             packet = clientbound.play.FacePlayerPacket(context)
             packet.target = 1.0, -2.0, 3.5
             packet.entity_id = None
-            if protocol_version >= 353:
+            if context.protocol_later_eq(353):
                 packet.origin = OriginPoint.EYES
             self.assertEqual(
                 str(packet),
                 "0x%02X FacePlayerPacket(origin=EYES, x=1.0, y=-2.0, z=3.5, "
-                "entity_id=None)" % packet.id if protocol_version >= 353 else
+                "entity_id=None)" % packet.id
+                if context.protocol_later_eq(353) else
                 "0x%02X FacePlayerPacket(entity_id=None, x=1.0, y=-2.0, z=3.5)"
                 % packet.id
             )
             self._test_read_write_packet(packet, context)
 
             packet.entity_id = 123
-            if protocol_version >= 353:
+            if context.protocol_later_eq(353):
                 packet.entity_origin = OriginPoint.FEET
             else:
                 del packet.target
@@ -341,7 +343,7 @@ class TestReadWritePackets(unittest.TestCase):
                 str(packet),
                 "0x%02X FacePlayerPacket(origin=EYES, x=1.0, y=-2.0, z=3.5, "
                 "entity_id=123, entity_origin=FEET)" % packet.id
-                if protocol_version >= 353 else
+                if context.protocol_later_eq(353) else
                 "0x%02X FacePlayerPacket(entity_id=123)" % packet.id
             )
             self._test_read_write_packet(packet, context)

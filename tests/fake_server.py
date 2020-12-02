@@ -24,9 +24,6 @@ import hashlib
 import uuid
 
 
-VERSIONS = sorted(SUPPORTED_MINECRAFT_VERSIONS.items(), key=lambda i: i[1])
-VERSIONS = [v for (v, p) in VERSIONS]
-
 THREAD_TIMEOUT_S = 2
 
 
@@ -108,7 +105,7 @@ class FakeClientHandler(object):
             level_type='default', reduced_debug_info=False, render_distance=9,
             respawn_screen=False, is_debug=False, is_flat=False)
 
-        if self.server.context.protocol_version >= 748:
+        if self.server.context.protocol_later_eq(748):
             packet.dimension = pynbt.TAG_Compound({
                 'natural': pynbt.TAG_Byte(1),
                 'effects': pynbt.TAG_String('minecraft:overworld'),
@@ -134,7 +131,7 @@ class FakeClientHandler(object):
                     ]),
                 }),
             }, '')
-        elif self.server.context.protocol_version >= 718:
+        elif self.server.context.protocol_later_eq(718):
             packet.dimension = 'minecraft:overworld'
         else:
             packet.dimension = types.Dimension.OVERWORLD
@@ -232,13 +229,13 @@ class FakeClientHandler(object):
         # Prepare to transition from handshaking to play state (via login),
         # using the given serverbound HandShakePacket to perform play-specific
         # processing.
-        if packet.protocol_version == self.server.context.protocol_version:
+        if self.server.context.protocol_version == packet.protocol_version:
             return self._run_login()
-        if packet.protocol_version < self.server.context.protocol_version:
-            msg = 'Outdated client! Please use %s' \
+        elif self.server.context.protocol_earlier(packet.protocol_version):
+            msg = "Outdated server! I'm still on %s" \
                   % self.server.minecraft_version
         else:
-            msg = "Outdated server! I'm still on %s" \
+            msg = 'Outdated client! Please use %s' \
                   % self.server.minecraft_version
         self.handle_login_server_disconnect(msg)
 
@@ -372,7 +369,7 @@ class FakeServer(object):
                  client_handler_type=FakeClientHandler, private_key=None,
                  public_key_bytes=None, test_case=None):
         if minecraft_version is None:
-            minecraft_version = VERSIONS[-1][0]
+            minecraft_version = list(SUPPORTED_MINECRAFT_VERSIONS.keys())[-1]
 
         if isinstance(minecraft_version, Integral):
             proto = minecraft_version
@@ -458,8 +455,9 @@ class _FakeServerTest(unittest.TestCase):
         must raise a 'FakeServerTestSuccess' exception.
     """
 
-    server_version = VERSIONS[-1]
+    server_version = None
     # The Minecraft version ID that the server will support.
+    # If None, the latest supported version will be used.
 
     client_versions = None
     # The set of Minecraft version IDs or protocol version numbers that the

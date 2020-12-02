@@ -314,7 +314,7 @@ class Position(Type, Vector):
         location = UnsignedLong.read(file_object)
         x = int(location >> 38)                # 26 most significant bits
 
-        if context.protocol_version >= 443:
+        if context.protocol_later_eq(443):
             z = int((location >> 12) & 0x3FFFFFF)  # 26 intermediate bits
             y = int(location & 0xFFF)              # 12 least signficant bits
         else:
@@ -337,7 +337,7 @@ class Position(Type, Vector):
         # 'position' can be either a tuple or Position object.
         x, y, z = position
         value = ((x & 0x3FFFFFF) << 38 | (z & 0x3FFFFFF) << 12 | (y & 0xFFF)
-                 if context.protocol_version >= 443 else
+                 if context.protocol_later_eq(443) else
                  (x & 0x3FFFFFF) << 38 | (y & 0xFFF) << 26 | (z & 0x3FFFFFF))
         UnsignedLong.send(value, socket)
 

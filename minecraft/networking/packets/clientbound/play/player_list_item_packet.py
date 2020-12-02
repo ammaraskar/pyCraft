@@ -9,17 +9,17 @@ from minecraft.networking.types import (
 class PlayerListItemPacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x32 if context.protocol_version >= 741 else \
-               0x33 if context.protocol_version >= 721 else \
-               0x34 if context.protocol_version >= 550 else \
-               0x33 if context.protocol_version >= 471 else \
-               0x31 if context.protocol_version >= 451 else \
-               0x30 if context.protocol_version >= 389 else \
-               0x2F if context.protocol_version >= 345 else \
-               0x2E if context.protocol_version >= 336 else \
-               0x2D if context.protocol_version >= 332 else \
-               0x2E if context.protocol_version >= 318 else \
-               0x2D if context.protocol_version >= 107 else \
+        return 0x32 if context.protocol_later_eq(741) else \
+               0x33 if context.protocol_later_eq(721) else \
+               0x34 if context.protocol_later_eq(550) else \
+               0x33 if context.protocol_later_eq(471) else \
+               0x31 if context.protocol_later_eq(451) else \
+               0x30 if context.protocol_later_eq(389) else \
+               0x2F if context.protocol_later_eq(345) else \
+               0x2E if context.protocol_later_eq(336) else \
+               0x2D if context.protocol_later_eq(332) else \
+               0x2E if context.protocol_later_eq(318) else \
+               0x2D if context.protocol_later_eq(107) else \
                0x38
 
     packet_name = "player list item"

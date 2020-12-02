@@ -13,7 +13,7 @@ def get_packets(context):
         LoginSuccessPacket,
         SetCompressionPacket,
     }
-    if context.protocol_version >= 385:
+    if context.protocol_later_eq(385):
         packets |= {
             PluginRequestPacket,
         }
@@ -23,8 +23,8 @@ def get_packets(context):
 class DisconnectPacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x00 if context.protocol_version >= 391 else \
-               0x01 if context.protocol_version >= 385 else \
+        return 0x00 if context.protocol_later_eq(391) else \
+               0x01 if context.protocol_later_eq(385) else \
                0x00
 
     packet_name = "disconnect"
@@ -35,8 +35,8 @@ class DisconnectPacket(Packet):
 class EncryptionRequestPacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x01 if context.protocol_version >= 391 else \
-               0x02 if context.protocol_version >= 385 else \
+        return 0x01 if context.protocol_later_eq(391) else \
+               0x02 if context.protocol_later_eq(385) else \
                0x01
 
     packet_name = "encryption request"
@@ -49,13 +49,13 @@ class EncryptionRequestPacket(Packet):
 class LoginSuccessPacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x02 if context.protocol_version >= 391 else \
-               0x03 if context.protocol_version >= 385 else \
+        return 0x02 if context.protocol_later_eq(391) else \
+               0x03 if context.protocol_later_eq(385) else \
                0x02
 
     packet_name = "login success"
     get_definition = staticmethod(lambda context: [
-        {'UUID': UUID if context.protocol_version >= 707 else String},
+        {'UUID': UUID if context.protocol_later_eq(707) else String},
         {'Username': String}
     ])
 
@@ -63,8 +63,8 @@ class LoginSuccessPacket(Packet):
 class SetCompressionPacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x03 if context.protocol_version >= 391 else \
-               0x04 if context.protocol_version >= 385 else \
+        return 0x03 if context.protocol_later_eq(391) else \
+               0x04 if context.protocol_later_eq(385) else \
                0x03
 
     packet_name = "set compression"
@@ -89,7 +89,7 @@ class PluginRequestPacket(Packet):
 
     @staticmethod
     def get_id(context):
-        return 0x04 if context.protocol_version >= 391 else \
+        return 0x04 if context.protocol_later_eq(391) else \
                0x00
 
     packet_name = 'login plugin request'

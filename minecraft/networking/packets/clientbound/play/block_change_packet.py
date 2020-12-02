@@ -9,12 +9,12 @@ from minecraft.networking.types import (
 class BlockChangePacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x0B if context.protocol_version >= 721 else \
-               0x0C if context.protocol_version >= 550 else \
-               0x0B if context.protocol_version >= 332 else \
-               0x0C if context.protocol_version >= 318 else \
-               0x0B if context.protocol_version >= 67 else \
-               0x24 if context.protocol_version >= 62 else \
+        return 0x0B if context.protocol_later_eq(721) else \
+               0x0C if context.protocol_later_eq(550) else \
+               0x0B if context.protocol_later_eq(332) else \
+               0x0C if context.protocol_later_eq(318) else \
+               0x0B if context.protocol_later_eq(67) else \
+               0x24 if context.protocol_later_eq(62) else \
                0x23
 
     packet_name = 'block change'
@@ -23,7 +23,7 @@ class BlockChangePacket(Packet):
         {'block_state_id': VarInt}]
     block_state_id = 0
 
-    # For protocols < 347: an accessor for (block_state_id >> 4).
+    # For protocols before 347: an accessor for (block_state_id >> 4).
     @property
     def blockId(self):
         return self.block_state_id >> 4
@@ -32,7 +32,7 @@ class BlockChangePacket(Packet):
     def blockId(self, block_id):
         self.block_state_id = (self.block_state_id & 0xF) | (block_id << 4)
 
-    # For protocols < 347: an accessor for (block_state_id & 0xF).
+    # For protocols before 347: an accessor for (block_state_id & 0xF).
     @property
     def blockMeta(self):
         return self.block_state_id & 0xF
@@ -48,13 +48,13 @@ class BlockChangePacket(Packet):
 class MultiBlockChangePacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x3B if context.protocol_version >= 741 else \
-               0x0F if context.protocol_version >= 721 else \
-               0x10 if context.protocol_version >= 550 else \
-               0x0F if context.protocol_version >= 343 else \
-               0x10 if context.protocol_version >= 332 else \
-               0x11 if context.protocol_version >= 318 else \
-               0x10 if context.protocol_version >= 67 else \
+        return 0x3B if context.protocol_later_eq(741) else \
+               0x0F if context.protocol_later_eq(721) else \
+               0x10 if context.protocol_later_eq(550) else \
+               0x0F if context.protocol_later_eq(343) else \
+               0x10 if context.protocol_later_eq(332) else \
+               0x11 if context.protocol_later_eq(318) else \
+               0x10 if context.protocol_later_eq(67) else \
                0x22
 
     packet_name = 'multi block change'
@@ -87,7 +87,7 @@ class MultiBlockChangePacket(Packet):
         # Access the 'x', 'y', 'z' fields as a Vector of ints.
         position = multi_attribute_alias(Vector, 'x', 'y', 'z')
 
-        # For protocols < 347: an accessor for (block_state_id >> 4).
+        # For protocols before 347: an accessor for (block_state_id >> 4).
         @property
         def blockId(self):
             return self.block_state_id >> 4
@@ -96,7 +96,7 @@ class MultiBlockChangePacket(Packet):
         def blockId(self, block_id):
             self.block_state_id = self.block_state_id & 0xF | block_id << 4
 
-        # For protocols < 347: an accessor for (block_state_id & 0xF).
+        # For protocols before 347: an accessor for (block_state_id & 0xF).
         @property
         def blockMeta(self):
             return self.block_state_id & 0xF
@@ -111,7 +111,7 @@ class MultiBlockChangePacket(Packet):
         @classmethod
         def read_with_context(cls, file_object, context):
             record = cls()
-            if context.protocol_version >= 741:
+            if context.protocol_later_eq(741):
                 value = VarLong.read(file_object)
                 record.block_state_id = value >> 12
                 record.x = (value >> 8) & 0xF
@@ -127,7 +127,7 @@ class MultiBlockChangePacket(Packet):
 
         @classmethod
         def send_with_context(self, record, socket, context):
-            if context.protocol_version >= 741:
+            if context.protocol_later_eq(741):
                 value = record.block_state_id << 12 | \
                         (record.x & 0xF) << 8 | \
                         (record.z & 0xF) << 4 | \
@@ -141,9 +141,9 @@ class MultiBlockChangePacket(Packet):
     get_definition = staticmethod(lambda context: [
         {'chunk_section_pos': MultiBlockChangePacket.ChunkSectionPos},
         {'invert_trust_edges': Boolean}
-        if context.protocol_version >= 748 else {},  # Provisional field name.
+        if context.protocol_later_eq(748) else {},  # Provisional field name.
         {'records': PrefixedArray(VarInt, MultiBlockChangePacket.Record)},
-    ] if context.protocol_version >= 741 else [
+    ] if context.protocol_later_eq(741) else [
         {'chunk_x': Integer},
         {'chunk_z': Integer},
         {'records': PrefixedArray(VarInt, MultiBlockChangePacket.Record)},

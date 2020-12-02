@@ -1,6 +1,7 @@
 import unittest
 
 from minecraft import SUPPORTED_PROTOCOL_VERSIONS
+from minecraft import utility
 from minecraft.networking.connection import ConnectionContext
 from minecraft.networking import packets
 from minecraft.networking import types
@@ -86,6 +87,12 @@ class LegacyTypesTest(unittest.TestCase):
     def test_legacy_types(self):
         self.assertIsInstance(types.FixedPointInteger, types.FixedPoint)
         self.assertEqual(types.FixedPointInteger.denominator, 32)
+
+        for attr in ('descriptor', 'overridable_descriptor',
+                     'overridable_property', 'attribute_alias',
+                     'multi_attribute_alias', 'attribute_transform',
+                     'class_and_instancemethod'):
+            self.assertEqual(getattr(types, attr), getattr(utility, attr))
 
 
 class ClassMemberAliasesTest(unittest.TestCase):

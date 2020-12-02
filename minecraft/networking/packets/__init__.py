@@ -1,8 +1,8 @@
 '''
-NOTE: The packet classes in __all_legacy_packets__ exported by this
-module are included only for backward compatibility, and should not
-be used in new code, as (1) they do not include all packets present
-in pyCraft, and (2) some are named oddly, for historical reasons.
+NOTE: The packet classes exported by this module are included only for backward
+compatibility, and should not be used in new code, as (1) they do not include
+all packets present in pyCraft, and (2) some are named oddly, for historical
+reasons.
 
 Use the packet classes under packets.clientbound.* and
 packets.serverbound.* instead.
@@ -60,26 +60,3 @@ from .serverbound.play import PositionAndLookPacket
 from .serverbound.play import TeleportConfirmPacket
 from .serverbound.play import AnimationPacket as AnimationPacketServerbound
 from .serverbound.play import get_packets as state_playing_serverbound
-
-__all_legacy_packets__ = (
-    state_handshake_clientbound, HandShakePacket,
-    state_handshake_serverbound, ResponsePacket,
-    PingPacketResponse, state_status_clientbound,
-    RequestPacket, PingPacket, state_status_serverbound,
-    DisconnectPacket, EncryptionRequestPacket, LoginSuccessPacket,
-    SetCompressionPacket, state_login_clientbound,
-    LoginStartPacket, EncryptionResponsePacket,
-    state_login_serverbound, KeepAlivePacketClientbound,
-    KeepAlivePacketServerbound, JoinGamePacket, ChatMessagePacket,
-    PlayerPositionAndLookPacket, DisconnectPacketPlayState,
-    SetCompressionPacketPlayState, PlayerListItemPacket,
-    MapPacket, state_playing_clientbound, ChatPacket,
-    PositionAndLookPacket, TeleportConfirmPacket,
-    AnimationPacketServerbound, state_playing_serverbound,
-    KeepAlivePacket,
-)
-
-__all_other__ = (
-    Packet, PacketBuffer, PacketListener,
-    AbstractKeepAlivePacket, AbstractPluginMessagePacket,
-)

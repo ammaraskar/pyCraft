@@ -1,5 +1,7 @@
-from minecraft import SUPPORTED_MINECRAFT_VERSIONS
-from minecraft import SUPPORTED_PROTOCOL_VERSIONS
+from minecraft import (
+    SUPPORTED_MINECRAFT_VERSIONS, SUPPORTED_PROTOCOL_VERSIONS,
+    PROTOCOL_VERSION_INDICES,
+)
 from minecraft.networking.packets import clientbound, serverbound
 from minecraft.networking.connection import Connection
 from minecraft.exceptions import (
@@ -119,26 +121,22 @@ class ConnectCompressionHighTest(ConnectTest):
 
 
 class AllowedVersionsTest(fake_server._FakeServerTest):
-    versions = sorted(SUPPORTED_MINECRAFT_VERSIONS.items(), key=lambda p: p[1])
-    versions = dict((versions[0], versions[len(versions)//2], versions[-1]))
+    versions = list(SUPPORTED_MINECRAFT_VERSIONS.items())
+    test_indices = (0, len(versions) // 2, len(versions) - 1)
 
     client_handler_type = ConnectTest.client_handler_type
 
     def test_with_version_names(self):
-        for version, proto in AllowedVersionsTest.versions.items():
-            client_versions = {
-                v for (v, p) in SUPPORTED_MINECRAFT_VERSIONS.items()
-                if p <= proto}
+        for index in self.test_indices:
             self._test_connect(
-                server_version=version, client_versions=client_versions)
+                server_version=self.versions[index][0],
+                client_versions={v[0] for v in self.versions[:index+1]})
 
     def test_with_protocol_numbers(self):
-        for version, proto in AllowedVersionsTest.versions.items():
-            client_versions = {
-                p for (v, p) in SUPPORTED_MINECRAFT_VERSIONS.items()
-                if p <= proto}
+        for index in self.test_indices:
             self._test_connect(
-                server_version=version, client_versions=client_versions)
+                server_version=self.versions[index][0],
+                client_versions={v[1] for v in self.versions[:index+1]})
 
 
 class LoginDisconnectTest(fake_server._FakeServerTest):
@@ -363,12 +361,22 @@ class HandleExceptionTest(ConnectTest):
 
 
 class VersionNegotiationEdgeCases(fake_server._FakeServerTest):
-    lowest_version = min(SUPPORTED_PROTOCOL_VERSIONS)
-    highest_version = max(SUPPORTED_PROTOCOL_VERSIONS)
-    impossible_version = highest_version + 1
+    earliest_version = SUPPORTED_PROTOCOL_VERSIONS[0]
+    latest_version = SUPPORTED_PROTOCOL_VERSIONS[-1]
+
+    fake_version = max(PROTOCOL_VERSION_INDICES.keys()) + 1
+    fake_version_index = max(PROTOCOL_VERSION_INDICES.values()) + 1
+
+    def setUp(self):
+        PROTOCOL_VERSION_INDICES[self.fake_version] = self.fake_version_index
+        super(VersionNegotiationEdgeCases, self).setUp()
+
+    def tearDown(self):
+        super(VersionNegotiationEdgeCases, self).tearDown()
+        del PROTOCOL_VERSION_INDICES[self.fake_version]
 
     def test_client_protocol_unsupported(self):
-        self._test_client_protocol(version=self.impossible_version)
+        self._test_client_protocol(version=self.fake_version)
 
     def test_client_protocol_unknown(self):
         self._test_client_protocol(version='surprise me!')
@@ -383,21 +391,21 @@ class VersionNegotiationEdgeCases(fake_server._FakeServerTest):
     def test_server_protocol_unsupported(self, client_versions=None):
         with self.assertRaisesRegexp(VersionMismatch, 'not supported'):
             self._test_connect(client_versions=client_versions,
-                               server_version=self.impossible_version)
+                               server_version=self.fake_version)
 
     def test_server_protocol_unsupported_direct(self):
-        self.test_server_protocol_unsupported({self.highest_version})
+        self.test_server_protocol_unsupported({self.latest_version})
 
     def test_server_protocol_disallowed(self, client_versions=None):
         if client_versions is None:
             client_versions = set(SUPPORTED_PROTOCOL_VERSIONS) \
-                              - {self.highest_version}
+                              - {self.latest_version}
         with self.assertRaisesRegexp(VersionMismatch, 'not allowed'):
-            self._test_connect(client_versions={self.lowest_version},
-                               server_version=self.highest_version)
+            self._test_connect(client_versions={self.earliest_version},
+                               server_version=self.latest_version)
 
     def test_server_protocol_disallowed_direct(self):
-        self.test_server_protocol_disallowed({self.lowest_version})
+        self.test_server_protocol_disallowed({self.earliest_version})
 
     def test_default_protocol_version(self, status_response=None):
         if status_response is None:
@@ -414,10 +422,10 @@ class VersionNegotiationEdgeCases(fake_server._FakeServerTest):
                 raise fake_server.FakeServerDisconnect('Test complete.')
 
         def make_connection(*args, **kwds):
-            kwds['initial_version'] = self.lowest_version
+            kwds['initial_version'] = self.earliest_version
             return Connection(*args, **kwds)
 
-        self._test_connect(server_version=self.lowest_version,
+        self._test_connect(server_version=self.earliest_version,
                            client_handler_type=ClientHandler,
                            connection_type=make_connection)
 
@@ -436,9 +444,9 @@ class VersionNegotiationEdgeCases(fake_server._FakeServerTest):
                 raise fake_server.FakeServerDisconnect('Test complete.')
 
         def make_connection(*args, **kwds):
-            kwds['initial_version'] = self.lowest_version
+            kwds['initial_version'] = self.earliest_version
             return Connection(*args, **kwds)
 
-        self._test_connect(server_version=self.lowest_version,
+        self._test_connect(server_version=self.earliest_version,
                            client_handler_type=ClientHandler,
                            connection_type=make_connection)

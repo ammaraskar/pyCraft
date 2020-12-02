@@ -8,12 +8,12 @@ from minecraft.networking.types import (
 class ClientSettingsPacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x05 if context.protocol_version >= 464 else \
-               0x04 if context.protocol_version >= 389 else \
-               0x03 if context.protocol_version >= 343 else \
-               0x04 if context.protocol_version >= 336 else \
-               0x05 if context.protocol_version >= 318 else \
-               0x04 if context.protocol_version >= 94 else \
+        return 0x05 if context.protocol_later_eq(464) else \
+               0x04 if context.protocol_later_eq(389) else \
+               0x03 if context.protocol_later_eq(343) else \
+               0x04 if context.protocol_later_eq(336) else \
+               0x05 if context.protocol_later_eq(318) else \
+               0x04 if context.protocol_later_eq(94) else \
                0x15
 
     packet_name = 'client settings'
@@ -21,10 +21,10 @@ class ClientSettingsPacket(Packet):
     get_definition = staticmethod(lambda context: [
         {'locale': String},
         {'view_distance': Byte},
-        {'chat_mode': VarInt if context.protocol_version > 47 else Byte},
+        {'chat_mode': VarInt if context.protocol_later(47) else Byte},
         {'chat_colors': Boolean},
         {'displayed_skin_parts': UnsignedByte},
-        {'main_hand': VarInt} if context.protocol_version > 49 else {}])
+        {'main_hand': VarInt} if context.protocol_later(49) else {}])
 
     field_enum = classmethod(
         lambda cls, field, context: {

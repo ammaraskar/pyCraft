@@ -55,7 +55,7 @@ class MapPacketTest(unittest.TestCase):
         packet.is_tracking_position = True
         packet.is_locked = False
         packet.icons = []
-        d_name = u'Marshmallow' if context.protocol_version >= 364 else None
+        d_name = u'Marshmallow' if context.protocol_later_eq(364) else None
         packet.icons.append(MapPacket.MapIcon(
             type=2, direction=2, location=(1, 1), display_name=d_name
         ))

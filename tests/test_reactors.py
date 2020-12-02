@@ -11,7 +11,7 @@ from minecraft.networking.connection import (
 from minecraft.networking.packets import clientbound
 
 
-max_proto_ver = max(SUPPORTED_PROTOCOL_VERSIONS)
+latest_proto = SUPPORTED_PROTOCOL_VERSIONS[-1]
 
 
 class LoginReactorTest(unittest.TestCase):
@@ -19,7 +19,7 @@ class LoginReactorTest(unittest.TestCase):
     @mock.patch('minecraft.networking.connection.encryption')
     def test_encryption_online_server(self, encrypt):
         connection = mock.MagicMock()
-        connection.context = ConnectionContext(protocol_version=max_proto_ver)
+        connection.context = ConnectionContext(protocol_version=latest_proto)
         reactor = LoginReactor(connection)
 
         packet = clientbound.login.EncryptionRequestPacket()
@@ -43,7 +43,7 @@ class LoginReactorTest(unittest.TestCase):
     @mock.patch('minecraft.networking.connection.encryption')
     def test_encryption_offline_server(self, encrypt):
         connection = mock.MagicMock()
-        connection.context = ConnectionContext(protocol_version=max_proto_ver)
+        connection.context = ConnectionContext(protocol_version=latest_proto)
         reactor = LoginReactor(connection)
 
         packet = clientbound.login.EncryptionRequestPacket()

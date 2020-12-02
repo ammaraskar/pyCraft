@@ -11,7 +11,7 @@ def get_packets(context):
         LoginStartPacket,
         EncryptionResponsePacket
     }
-    if context.protocol_version >= 385:
+    if context.protocol_later_eq(385):
         packets |= {
             PluginResponsePacket
         }
@@ -21,8 +21,8 @@ def get_packets(context):
 class LoginStartPacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x00 if context.protocol_version >= 391 else \
-               0x01 if context.protocol_version >= 385 else \
+        return 0x00 if context.protocol_later_eq(391) else \
+               0x01 if context.protocol_later_eq(385) else \
                0x00
 
     packet_name = "login start"
@@ -33,8 +33,8 @@ class LoginStartPacket(Packet):
 class EncryptionResponsePacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x01 if context.protocol_version >= 391 else \
-               0x02 if context.protocol_version >= 385 else \
+        return 0x01 if context.protocol_later_eq(391) else \
+               0x02 if context.protocol_later_eq(385) else \
                0x01
 
     packet_name = "encryption response"
@@ -50,7 +50,7 @@ class PluginResponsePacket(Packet):
 
     @staticmethod
     def get_id(context):
-        return 0x02 if context.protocol_version >= 391 else \
+        return 0x02 if context.protocol_later_eq(391) else \
                0x00
 
     packet_name = 'login plugin response'
