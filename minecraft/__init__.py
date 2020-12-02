@@ -457,9 +457,9 @@ KNOWN_MINECRAFT_VERSION_RECORDS = [
     Version('1.16.4-pre2',           PRE | 2,  True),
     Version('1.16.4-rc1',            PRE | 3,  True),
     Version('1.16.4',                754,      True),
-    Version('20w45a',                PRE | 5,  False),
-    Version('20w46a',                PRE | 6,  False),
-    Version('20w48a',                PRE | 7,  False),
+    Version('20w45a',                PRE | 5,  True),
+    Version('20w46a',                PRE | 6,  True),
+    Version('20w48a',                PRE | 7,  True),
 ]
 
 # An OrderedDict mapping the id string of each known Minecraft version to its
