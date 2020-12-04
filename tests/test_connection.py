@@ -352,7 +352,7 @@ class HandleExceptionTest(ConnectTest):
         def handle_login_success(_packet):
             raise Exception(message)
 
-        @client.exception_handler()
+        @client.exception_handler(early=True)
         def handle_exception(exc, _exc_info):
             assert isinstance(exc, Exception) and exc.args == (message,)
             raise fake_server.FakeServerTestSuccess

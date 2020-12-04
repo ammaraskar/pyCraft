@@ -541,21 +541,23 @@ class _FakeServerTest(unittest.TestCase):
         client_lock = threading.Lock()
         client_exc_info = [None]
 
+        client = connection_type(
+            addr, port, username='TestUser', allowed_versions=client_versions)
+
+        @client.exception_handler()
         def handle_client_exception(exc, exc_info):
             with client_lock:
                 client_exc_info[0] = exc_info
             with cond:
                 cond.notify_all()
 
-        client = connection_type(
-            addr, port, username='TestUser', allowed_versions=client_versions,
-            handle_exception=handle_client_exception)
-        client.register_packet_listener(
-            lambda packet: logging.debug('[ ->C] %s' % packet),
-            packets.Packet, early=True)
-        client.register_packet_listener(
-            lambda packet: logging.debug('[C-> ] %s' % packet),
-            packets.Packet, early=True, outgoing=True)
+        @client.listener(packets.Packet, early=True)
+        def handle_incoming_packet(packet):
+            logging.debug('[ ->C] %s' % packet)
+
+        @client.listener(packets.Packet, early=True, outgoing=True)
+        def handle_outgoing_packet(packet):
+            logging.debug('[C-> ] %s' % packet)
 
         server_thread = threading.Thread(
             name='FakeServer',
