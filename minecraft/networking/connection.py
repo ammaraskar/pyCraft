@@ -479,6 +479,8 @@ class Connection(object):
         self.write_packet(handshake)
 
     def _handle_exception(self, exc, exc_info):
+        final_handler = self.handle_exception
+
         # Call the current PacketReactor's exception handler.
         try:
             if self.reactor.handle_exception(exc, exc_info):
@@ -499,9 +501,9 @@ class Connection(object):
             caught = False
 
         # Call the user-specified final exception handler.
-        if self.handle_exception not in (None, False):
+        if final_handler not in (None, False):
             try:
-                self.handle_exception(exc, exc_info)
+                final_handler(exc, exc_info)
             except Exception as new_exc:
                 exc, exc_info = new_exc, sys.exc_info()
 
@@ -516,7 +518,7 @@ class Connection(object):
         self.disconnect(immediate=True)
 
         # If allowed by the final exception handler, re-raise the exception.
-        if self.handle_exception is None and not caught:
+        if final_handler is None and not caught:
             exc_value, exc_tb = exc_info[1:]
             raise exc_value.with_traceback(exc_tb)
 

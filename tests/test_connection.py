@@ -360,6 +360,34 @@ class HandleExceptionTest(ConnectTest):
         client.connect()
 
 
+class ExceptionReconnectTest(ConnectTest):
+    class CustomException(Exception):
+        pass
+
+    def setUp(self):
+        self.phase = 0
+
+    def _start_client(self, client):
+        @client.listener(clientbound.play.JoinGamePacket)
+        def handle_join_game(packet):
+            if self.phase == 0:
+                self.phase += 1
+                raise self.CustomException
+            else:
+                raise fake_server.FakeServerTestSuccess
+
+        @client.exception_handler(self.CustomException, early=True)
+        def handle_custom_exception(exc, exc_info):
+            client.disconnect(immediate=True)
+            client.connect()
+
+        client.connect()
+
+    class client_handler_type(ConnectTest.client_handler_type):
+        def handle_abnormal_disconnect(self, exc):
+            return True
+
+
 class VersionNegotiationEdgeCases(fake_server._FakeServerTest):
     earliest_version = SUPPORTED_PROTOCOL_VERSIONS[0]
     latest_version = SUPPORTED_PROTOCOL_VERSIONS[-1]

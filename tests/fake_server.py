@@ -70,10 +70,22 @@ class FakeClientHandler(object):
         # Communicate with the client until disconnected.
         try:
             self._run_handshake()
-            self.socket.shutdown(socket.SHUT_RDWR)
+            try:
+                self.socket.shutdown(socket.SHUT_RDWR)
+            except IOError:
+                pass
+        except (FakeClientDisconnect, BrokenPipeError) as exc:
+            if not self.handle_abnormal_disconnect(exc):
+                raise
         finally:
             self.socket.close()
             self.socket_file.close()
+
+    def handle_abnormal_disconnect(self, exc):
+        # Called when the client disconnects in an abnormal fashion. If this
+        # handler returns True, the error is ignored and is treated as a normal
+        # disconnection.
+        return False
 
     def handle_connection(self):
         # Called in the handshake state, just after the client connects,
@@ -363,7 +375,7 @@ class FakeServer(object):
                 'minecraft_version', 'client_handler_type', 'server_type', \
                 'packets_handshake', 'packets_login', 'packets_playing', \
                 'packets_status', 'lock', 'stopping', 'private_key', \
-                'public_key_bytes', 'test_case',
+                'public_key_bytes', 'test_case'
 
     def __init__(self, minecraft_version=None, compression_threshold=None,
                  client_handler_type=FakeClientHandler, private_key=None,
@@ -407,7 +419,7 @@ class FakeServer(object):
         self.listen_socket = socket.socket()
         self.listen_socket.settimeout(0.1)
         self.listen_socket.bind(('localhost', 0))
-        self.listen_socket.listen(0)
+        self.listen_socket.listen(1)
 
         self.lock = threading.Lock()
         self.stopping = False
@@ -581,8 +593,6 @@ class _FakeServerTest(unittest.TestCase):
                     if thread is not None and thread.is_alive():
                         errors.append({
                             'msg': 'Thread "%s" timed out.' % thread.name})
-                if client_exc_info[0] is None:
-                    client_exc_info[0] = client.exc_info
         except Exception:
             errors.insert(0, {
                 'msg': 'Exception in main thread',
