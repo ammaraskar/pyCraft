@@ -468,6 +468,7 @@ class Connection(object):
                 except socket.error:
                     pass
                 finally:
+                    self.file_object.close()
                     self.socket.close()
                     self.socket = None
 
