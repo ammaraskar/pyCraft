@@ -457,7 +457,9 @@ class Connection(object):
                 while self._pop_packet():
                     pass
 
-            if self.networking_thread is not None:
+            if self.new_networking_thread is not None:
+                self.new_networking_thread.interrupt = True
+            elif self.networking_thread is not None:
                 self.networking_thread.interrupt = True
 
             if self.socket is not None:
@@ -513,9 +515,15 @@ class Connection(object):
         except (TypeError, AttributeError):
             pass
 
-        # Record the exception and cleanly terminate the connection.
+        # Record the exception.
         self.exception, self.exc_info = exc, exc_info
-        self.disconnect(immediate=True)
+
+        # The following condition being false indicates that an exception
+        # handler has initiated a new connection, meaning that we should not
+        # interfere with the connection state. Otherwise, make sure that any
+        # current connection is completely terminated.
+        if (self.new_networking_thread or self.networking_thread).interrupt:
+            self.disconnect(immediate=True)
 
         # If allowed by the final exception handler, re-raise the exception.
         if final_handler is None and not caught:
