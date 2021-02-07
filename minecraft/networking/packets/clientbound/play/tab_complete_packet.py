@@ -1,5 +1,5 @@
 from minecraft.networking.packets import Packet
-from minecraft.networking.types import VarInt, Boolean, String
+from minecraft.networking.types import VarInt, Boolean, String, MutableRecord
 
 class TabCompletePacket(Packet):
     @staticmethod
