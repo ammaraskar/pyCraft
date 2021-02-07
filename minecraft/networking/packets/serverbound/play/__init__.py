@@ -31,6 +31,12 @@ def get_packets(context):
         packets |= {
             TeleportConfirmPacket,
         }
+    # For some reason this packet did not exist on protocols 343 & 344.
+    if context.protocol_later_eq(345) or \
+        context.protocol_earlier_eq(342):
+        packets |= {
+            TabCompletePacket,
+        }
     return packets
 
 
@@ -259,3 +265,21 @@ class UseItemPacket(Packet):
         {'hand': VarInt}])
 
     Hand = RelativeHand
+
+class TabCompletePacket(Packet):
+    @staticmethod
+    def get_id(context):
+        return 0x06 if context.protocol_later_eq(464) else \
+               0x05 if context.protocol_later_eq(389) else \
+               0x04 if context.protocol_later_eq(345) else \
+               0x01 if context.protocol_later_eq(336) else \
+               0x02 if context.protocol_later_eq(318) else \
+               0x01 if context.protocol_later_eq(94) else \
+               0x00 if context.protocol_later_eq(70) else \
+               0x15 if context.protocol_later_eq(69) else \
+               0x14
+    packet_name = "tab complete"
+    get_definition = staticmethod(lambda context: [
+        {'transaction_id': VarInt},
+        {'text': String}
+    ])

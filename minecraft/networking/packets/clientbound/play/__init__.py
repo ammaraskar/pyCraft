@@ -18,6 +18,7 @@ from .explosion_packet import ExplosionPacket
 from .sound_effect_packet import SoundEffectPacket
 from .face_player_packet import FacePlayerPacket
 from .join_game_and_respawn_packets import JoinGamePacket, RespawnPacket
+from .tab_complete_packet import TabCompletePacket
 
 
 # Formerly known as state_playing_clientbound.
@@ -57,6 +58,11 @@ def get_packets(context):
     if context.protocol_later_eq(352):
         packets |= {
             FacePlayerPacket
+        }
+    if context.protocol_later_eq(345) or \
+        context.protocol_earlier_eq(342):
+        packets |= {
+            TabCompletePacket,
         }
     return packets
 
