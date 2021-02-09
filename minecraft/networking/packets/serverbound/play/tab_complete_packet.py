@@ -1,6 +1,7 @@
 from minecraft.networking.types import VarInt, Boolean, Position, String
 from minecraft.networking.packets import Packet
 
+
 class TabCompletePacket(Packet):
     @staticmethod
     def get_id(context):
@@ -14,6 +15,7 @@ class TabCompletePacket(Packet):
                0x15 if context.protocol_later_eq(69) else \
                0x14
     packet_name = 'tab complete'
+
     @property
     def fields(self):
         fields = 'text',
@@ -21,7 +23,9 @@ class TabCompletePacket(Packet):
             fields += 'transaction_id'
         else:
             fields += 'has_position', 'looked_at_block',
-            fields += 'assume_command' if self.context.protocol_later_eq(95) else {}
+            if self.context.protocol_later_eq(95):
+                fields += 'assume_command'
+
     def read(self, file_object):
         self.transaction_id = VarInt.read(file_object) \
             if self.context.protocol_later_eq(351) else None
@@ -32,6 +36,7 @@ class TabCompletePacket(Packet):
             has_position = Boolean.read(file_object)
             if has_position:
                 self.looked_at_block = Position.read(file_object)
+
     def write_fields(self, packet_buffer):
         if self.context.protocol_later_eq(351):
             VarInt.send(self.transaction_id, packet_buffer)

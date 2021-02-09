@@ -1,6 +1,7 @@
 from minecraft.networking.packets import Packet
 from minecraft.networking.types import VarInt, Boolean, String, MutableRecord
 
+
 class TabCompletePacket(Packet):
     @staticmethod
     def get_id(context):
@@ -14,6 +15,7 @@ class TabCompletePacket(Packet):
                0x3A
 
     packet_name = 'tab complete'
+
     @property
     def fields(self):
         fields = 'matches',
@@ -43,6 +45,7 @@ class TabCompletePacket(Packet):
             tooltip = String.read(file_object) if has_tooltip else None
             tabmatch = TabCompletePacket.TabMatch(match, tooltip)
             self.matches.append(tabmatch)
+
     def write_fields(self, packet_buffer):
         if self.context.protocol_later_eq(346):
             VarInt.send(self.transaction_id, packet_buffer)
