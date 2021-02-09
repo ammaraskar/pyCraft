@@ -9,6 +9,7 @@ from minecraft.networking.types import (
 )
 
 from .client_settings_packet import ClientSettingsPacket
+from .tab_complete_packet import TabCompletePacket
 
 
 # Formerly known as state_playing_serverbound.

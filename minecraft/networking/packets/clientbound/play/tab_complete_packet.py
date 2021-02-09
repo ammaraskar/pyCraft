@@ -15,7 +15,7 @@ class TabCompletePacket(Packet):
 
     packet_name = 'tab complete'
     @property
-    def fields():
+    def fields(self):
         fields = 'matches',
         if self.context.protocol_later_eq(346):
             fields += 'transaction_id', 'start', 'length',
@@ -23,11 +23,11 @@ class TabCompletePacket(Packet):
 
     class TabMatch(MutableRecord):
         __slots__ = ('match', 'tooltip')
-        
+
         def __init__(self, match, tooltip=None):
             self.match = match
             self.tooltip = tooltip
-    
+
     def read(self, file_object):
         if self.context.protocol_later_eq(346):
             self.transaction_id = VarInt.read(file_object)
