@@ -266,27 +266,3 @@ class UseItemPacket(Packet):
 
     Hand = RelativeHand
 
-class TabCompletePacket(Packet):
-    @staticmethod
-    def get_id(context):
-        return 0x06 if context.protocol_later_eq(464) else \
-               0x05 if context.protocol_later_eq(389) else \
-               0x04 if context.protocol_later_eq(345) else \
-               0x01 if context.protocol_later_eq(336) else \
-               0x02 if context.protocol_later_eq(318) else \
-               0x01 if context.protocol_later_eq(94) else \
-               0x00 if context.protocol_later_eq(70) else \
-               0x15 if context.protocol_later_eq(69) else \
-               0x14
-    packet_name = "tab complete"
-    @staticmethod
-    def get_definition(context):
-        return [
-            {'transaction_id': VarInt},
-            {'text': String},
-        ] if context.protocol_later_eq(351) else [
-            {'text': String},
-            {'assume_command': Boolean} if context.protocol_later_eq(95),
-            {'has_position': Boolean},
-            {'looked_at_block': Position},
-        ]
