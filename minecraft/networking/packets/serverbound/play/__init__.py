@@ -279,7 +279,14 @@ class TabCompletePacket(Packet):
                0x15 if context.protocol_later_eq(69) else \
                0x14
     packet_name = "tab complete"
-    get_definition = staticmethod(lambda context: [
-        {'transaction_id': VarInt},
-        {'text': String}
-    ])
+    @staticmethod
+    def get_definition(context):
+        return [
+            {'transaction_id': VarInt},
+            {'text': String},
+        ] if context.protocol_later_eq(351) else [
+            {'text': String},
+            {'assume_command': Boolean} if context.protocol_later_eq(95),
+            {'has_position': Boolean},
+            {'looked_at_block': Position},
+        ]
