@@ -34,7 +34,7 @@ def get_packets(context):
         }
     # For some reason this packet did not exist on protocols 343 & 344.
     if context.protocol_later_eq(345) or \
-        context.protocol_earlier_eq(342):
+            context.protocol_earlier_eq(342):
         packets |= {
             TabCompletePacket,
         }
@@ -266,4 +266,3 @@ class UseItemPacket(Packet):
         {'hand': VarInt}])
 
     Hand = RelativeHand
-
