@@ -365,5 +365,7 @@ class ResourcePackSendPacket(Packet):
     def get_id(context):
         return 0x38
     packet_name = "resource pack send"
-    get_definition = staticmethod(lambda context: [{"url": String}, {"hash": String}])
-
+    get_definition = staticmethod(lambda context: [
+        {"url": String},
+        {"hash": String}
+    ])
