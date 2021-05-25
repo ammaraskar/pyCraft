@@ -44,7 +44,8 @@ def get_packets(context):
         RespawnPacket,
         PluginMessagePacket,
         PlayerListHeaderAndFooterPacket,
-        EntityLookPacket
+        EntityLookPacket,
+        ResourcePackSendPacket
     }
     if context.protocol_earlier_eq(47):
         packets |= {
@@ -357,3 +358,12 @@ class EntityLookPacket(Packet):
         {'pitch': Angle},
         {'on_ground': Boolean}
     ]
+
+
+class ResourcePackSendPacket(Packet):
+    @staticmethod
+    def get_id(context):
+        return 0x38
+    packet_name = "resource pack send"
+    get_definition = staticmethod(lambda context: [{"url": String}, {"hash": String}])
+
