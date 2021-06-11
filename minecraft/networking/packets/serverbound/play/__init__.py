@@ -37,7 +37,8 @@ def get_packets(context):
 class KeepAlivePacket(AbstractKeepAlivePacket):
     @staticmethod
     def get_id(context):
-        return 0x10 if context.protocol_later_eq(712) else \
+        return 0x0F if context.protocol_later_eq(755) else \
+               0x10 if context.protocol_later_eq(712) else \
                0x0F if context.protocol_later_eq(471) else \
                0x10 if context.protocol_later_eq(464) else \
                0x0E if context.protocol_later_eq(389) else \
@@ -53,7 +54,8 @@ class KeepAlivePacket(AbstractKeepAlivePacket):
 class ChatPacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x03 if context.protocol_later_eq(464) else \
+        return 0x03 if context.protocol_later_eq(755) else \
+               0x03 if context.protocol_later_eq(464) else \
                0x02 if context.protocol_later_eq(389) else \
                0x01 if context.protocol_later_eq(343) else \
                0x02 if context.protocol_later_eq(336) else \
@@ -79,7 +81,8 @@ class ChatPacket(Packet):
 class PositionAndLookPacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x13 if context.protocol_later_eq(712) else \
+        return 0x12 if context.protocol_later_eq(755) else \
+               0x13 if context.protocol_later_eq(712) else \
                0x12 if context.protocol_later_eq(471) else \
                0x13 if context.protocol_later_eq(464) else \
                0x11 if context.protocol_later_eq(389) else \
@@ -126,7 +129,8 @@ class TeleportConfirmPacket(Packet):
 class AnimationPacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x2C if context.protocol_later_eq(738) else \
+        return 0x2C if context.protocol_later_eq(755) else \
+               0x2C if context.protocol_later_eq(738) else \
                0x2B if context.protocol_later_eq(712) else \
                0x2A if context.protocol_later_eq(468) else \
                0x29 if context.protocol_later_eq(464) else \
@@ -150,7 +154,8 @@ class AnimationPacket(Packet):
 class ClientStatusPacket(Packet, Enum):
     @staticmethod
     def get_id(context):
-        return 0x04 if context.protocol_later_eq(464) else \
+        return 0x04 if context.protocol_later_eq(755) else \
+               0x04 if context.protocol_later_eq(464) else \
                0x03 if context.protocol_later_eq(389) else \
                0x02 if context.protocol_later_eq(343) else \
                0x03 if context.protocol_later_eq(336) else \
@@ -175,7 +180,8 @@ class ClientStatusPacket(Packet, Enum):
 class PluginMessagePacket(AbstractPluginMessagePacket):
     @staticmethod
     def get_id(context):
-        return 0x0B if context.protocol_later_eq(464) else \
+        return 0x0A if context.protocol_later_eq(755) else \
+               0x0B if context.protocol_later_eq(464) else \
                0x0A if context.protocol_later_eq(389) else \
                0x09 if context.protocol_later_eq(345) else \
                0x08 if context.protocol_later_eq(343) else \
@@ -201,7 +207,8 @@ class PlayerBlockPlacementPacket(Packet):
 
     @staticmethod
     def get_id(context):
-        return 0x2E if context.protocol_later_eq(738) else \
+        return 0x2E if context.protocol_later_eq(755) else \
+               0x2E if context.protocol_later_eq(738) else \
                0x2D if context.protocol_later_eq(712) else \
                0x2C if context.protocol_later_eq(468) else \
                0x2B if context.protocol_later_eq(464) else \
@@ -240,7 +247,8 @@ class PlayerBlockPlacementPacket(Packet):
 class UseItemPacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x2F if context.protocol_later_eq(738) else \
+        return 0x2F if context.protocol_later_eq(755) else \
+               0x2F if context.protocol_later_eq(738) else \
                0x2E if context.protocol_later_eq(712) else \
                0x2D if context.protocol_later_eq(468) else \
                0x2C if context.protocol_later_eq(464) else \
@@ -259,3 +267,12 @@ class UseItemPacket(Packet):
         {'hand': VarInt}])
 
     Hand = RelativeHand
+
+class ResourcePackStatusPacket(Packet):
+    @staticmethod
+    def get_id(context):
+        return 0x21
+    packet_name = "resource pask status"
+    definition = [
+        {"result": VarInt}
+    ]
