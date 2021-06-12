@@ -355,7 +355,7 @@ class PlayerListHeaderAndFooterPacket(Packet):
 class EntityLookPacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x3E if context.protocol_later_eq(755) else \
+        return 0x2B if context.protocol_later_eq(755) else \
                0x29 if context.protocol_later_eq(741) else \
                0x2A if context.protocol_later_eq(721) else \
                0x2B if context.protocol_later_eq(550) else \

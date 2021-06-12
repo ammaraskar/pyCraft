@@ -9,7 +9,8 @@ from minecraft.networking.types import (
 class BlockChangePacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x0B if context.protocol_later_eq(721) else \
+        return 0x0C if context.protocol_later_eq(755) else \
+               0x0B if context.protocol_later_eq(721) else \
                0x0C if context.protocol_later_eq(550) else \
                0x0B if context.protocol_later_eq(332) else \
                0x0C if context.protocol_later_eq(318) else \
