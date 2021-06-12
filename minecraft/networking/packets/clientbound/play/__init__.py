@@ -148,7 +148,7 @@ class SetCompressionPacket(Packet):
     # Note: removed between protocol versions 47 and 107.
     @staticmethod
     def get_id(context):
-        return 0x02 if context.protocol_later_eq(755) else \
+        return 0x03 if context.protocol_later_eq(755) else \
                0x46
     
     packet_name = "set compression"
