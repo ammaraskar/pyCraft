@@ -2,6 +2,7 @@ from collections import deque
 from threading import RLock
 import zlib
 import threading
+import socks
 import socket
 import timeit
 import select
@@ -78,6 +79,7 @@ class Connection(object):
         allowed_versions=None,
         handle_exception=None,
         handle_exit=None,
+        proxy=None,
     ):
         """Sets up an instance of this object to be able to connect to a
         minecraft server.
@@ -119,7 +121,8 @@ class Connection(object):
                             server terminates, not caused by an exception,
                             and not with the intention to automatically
                             reconnect. Exceptions raised from this function
-                            will be handled by any matching exception handlers.
+                            will be handled by any matching exception handle
+		:param proxy: can now set proxy for PyCraft ; ) {type=1, ip="127.0.0.1", 8569}
         """  # NOQA
 
         # This lock is re-entrant because it may be acquired in a re-entrant
@@ -158,7 +161,8 @@ class Connection(object):
             self.default_proto_version = latest_allowed_proto
         else:
             self.default_proto_version = proto_version(initial_version)
-
+        
+        self.proxy = proxy
         self.context = ConnectionContext(protocol_version=latest_allowed_proto)
 
         self.options = _ConnectionOptions()
@@ -438,7 +442,9 @@ class Connection(object):
                    1 if ai[0] == socket.AF_INET6 else 2
         ai_faml, ai_type, ai_prot, _ai_cnam, ai_addr = min(info, key=key)
 
-        self.socket = socket.socket(ai_faml, ai_type, ai_prot)
+        self.socket = socks.socksocket(ai_faml, ai_type, ai_prot)
+        if self.proxy is not None:
+            self.socket.set_proxy(int(self.proxy["type"]), str(self.proxy["ip"]), int(self.proxy["port"]))
         self.socket.connect(ai_addr)
         self.file_object = self.socket.makefile("rb", 0)
         self.options.compression_enabled = False
