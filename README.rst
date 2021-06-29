@@ -62,6 +62,7 @@ Requirements
 ------------
 - `cryptography <https://github.com/pyca/cryptography#cryptography>`_
 - `requests <http://docs.python-requests.org/en/latest/>`_
+- `PySocks <https://github.com/Anorov/PySocks/>`_
 - `PyNBT <https://github.com/TkTech/PyNBT>`_
 
 The requirements are also stored in ``setup.py``
