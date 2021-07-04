@@ -8,7 +8,8 @@ from minecraft.networking.types import (
 class MapPacket(Packet):
     @staticmethod
     def get_id(context):
-        return 0x25 if context.protocol_later_eq(741) else \
+        return 0x27 if context.protocol_later_eq(755) else \
+               0x25 if context.protocol_later_eq(741) else \
                0x26 if context.protocol_later_eq(721) else \
                0x27 if context.protocol_later_eq(550) else \
                0x26 if context.protocol_later_eq(389) else \
