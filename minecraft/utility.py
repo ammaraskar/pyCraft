@@ -1,10 +1,14 @@
 """ Miscellaneous general utilities.
 """
 import types
+import re
+import json
 from itertools import chain
 
 from . import PROTOCOL_VERSION_INDICES
 
+colors = {'random': '&u','obfuscated':'&k', 'bold':'&l', 'strikethrough':'&m', 'underlined':'&n', 'italic':'&o', 'reset':'&r',  'black':'&0', 'dark_blue':'&1', 'dark_green':'&2', 'dark_aqua':'&3', 'dark_red':'&4', 'dark_purple':'&5', 'gold':'&6', 'gray':'&7', 'dark_gray':'&8', 'blue':'&9', 'green':'&a', 'aqua':'&b', 'red':'&c', 'light_purple':'&d', 'yellow':'&e', 'white':'&f'}
+pycolors = {"&r": "\x1b[0m", "&f": "\x1b[0m", "&l": "\x1b[1m", "&o": "\x1b[3m", "&n": "\x1b[4m", "&m": "\x1b[9m", "&0": "\x1b[30m", "&4": "\x1b[31m", "&2": "\x1b[32m", "&6": "\x1b[33m", "&1": "\x1b[34m", "&5": "\x1b[35m", "&3": "\x1b[36m", "&7": "\x1b[37m", "&8": "\x1b[90m", "&c": "\x1b[91m", "&a": "\x1b[92m", "&e": "\x1b[93m", "&9": "\x1b[94m", "&d": "\x1b[95m", "&b": "\x1b[96m"}
 
 def protocol_earlier(pv1, pv2):
     """ Returns True if protocol version 'pv1' was published before 'pv2',
@@ -154,6 +158,25 @@ class descriptor(overridable_descriptor):
     def __delete__(self, instance):
         return self._fdel(self, instance)
 
+class chat_component:
+    def __init__(self, chatMessage):
+        if type(chatMessage) == str: chatMessage = json.loads(chatMessage)
+        self.chatMessage = chatMessage
+    
+    def toPlaintText(self):
+        chatMessage = (self.__parse(self.chatMessage) if "text" in self.chatMessage else "") + "".join([self.__parse(extra) for extra in (self.chatMessage["extra"] if "extra" in self.chatMessage else []) + (self.chatMessage["with"] if "with" in self.chatMessage else [])])
+        if chatMessage.startswith("&f"): chatMessage = chatMessage.replace("&f", "", 1)
+        return chatMessage
+    
+    def __parse(self, obj):
+        obj = {"text": obj} if type(obj) == str else obj
+        return "{color}{tags}{text}".format(tags=" ".join([colors[b] for b in obj if (type(obj[b]) is bool and obj[b])]), color=colors[obj.get("color", "white")], text=obj.get("text", ""))
+    
+    def toColored(self):
+        return re.sub(u"([&%][0-9a-zA-Z])", self.__escape, self.toPlaintText().replace(chr(167), '&')) + "\x1b[0m"
+    
+    def __escape(self, TextC):
+        return pycolors[TextC.group(1).lower()] if TextC.group(1).lower() in pycolors else TextC.group()
 
 class class_and_instancemethod:
     """ A decorator for functions defined in a class namespace which are to be
