@@ -374,6 +374,7 @@ class EntityLookPacket(Packet):
         {'on_ground': Boolean}
     ]
 
+
 class ResourcePackSendPacket(Packet):
     @staticmethod
     def get_id(context):
