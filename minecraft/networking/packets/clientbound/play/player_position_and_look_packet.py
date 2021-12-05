@@ -34,7 +34,8 @@ class PlayerPositionAndLookPacket(Packet, BitFieldEnum):
         {'pitch': Float},
         {'flags': Byte},
         {'teleport_id': VarInt} if context.protocol_later_eq(107) else {},
-        {'dismount_vehicle': Boolean} if context.protocol_later_eq(755) else {},
+        {'dismount_vehicle': Boolean} if context.protocol_later_eq(755) \
+             else {},
     ])
 
     # Access the 'x', 'y', 'z' fields as a Vector tuple.
