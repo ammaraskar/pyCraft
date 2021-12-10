@@ -150,7 +150,7 @@ class SetCompressionPacket(Packet):
     def get_id(context):
         return 0x03 if context.protocol_later_eq(755) else \
                0x46
-
+    
     packet_name = "set compression"
     definition = [
         {'threshold': VarInt}]
@@ -374,7 +374,6 @@ class EntityLookPacket(Packet):
         {'on_ground': Boolean}
     ]
 
-
 class ResourcePackSendPacket(Packet):
     @staticmethod
     def get_id(context):
@@ -384,5 +383,7 @@ class ResourcePackSendPacket(Packet):
     packet_name = "resource pack send"
     definition = [
         {"url": String},
-        {"hash": String}
+        {"hash": String},
+        {"forced": Boolean},
+        {"forced_message": String}
     ]

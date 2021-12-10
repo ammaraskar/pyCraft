@@ -101,7 +101,10 @@ class MapPacket(Packet):
             icon = MapPacket.MapIcon(type, direction, (x, z), display_name)
             self.icons.append(icon)
 
-        self.width = UnsignedByte.read(file_object)
+        try:
+            self.width = UnsignedByte.read(file_object)
+        except:
+            self.width = None
         if self.width:
             self.height = UnsignedByte.read(file_object)
             x = Byte.read(file_object)

@@ -268,7 +268,6 @@ class UseItemPacket(Packet):
 
     Hand = RelativeHand
 
-
 class ResourcePackStatusPacket(Packet):
     @staticmethod
     def get_id(context):
