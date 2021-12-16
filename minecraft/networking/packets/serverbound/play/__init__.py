@@ -268,11 +268,12 @@ class UseItemPacket(Packet):
 
     Hand = RelativeHand
 
+
 class ResourcePackStatusPacket(Packet):
     @staticmethod
     def get_id(context):
         return 0x21
-    packet_name = "resource pask status"
+    packet_name = "resource pack status"
     definition = [
         {"result": VarInt}
     ]

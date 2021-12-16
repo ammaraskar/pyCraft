@@ -33,7 +33,20 @@ def attribute_alias(name):
     """An attribute descriptor that redirects access to a different attribute
        with a given name.
     """
-    return attribute_transform(name, lambda x: x, lambda x: x)
+    return property(
+        fget=(lambda self: getattr(self, name)),
+        fset=(lambda self, value: setattr(self, name, value)),
+        fdel=(lambda self: delattr(self, name)))
+
+
+def partial_attribute_alias(name, part):
+    """An attribute descriptor that redirects access to a particular named
+       attribute, 'part', on a different attribute with a given name.
+    """
+    return property(
+        fget=(lambda self: getattr(getattr(self, name), part)),
+        fset=(lambda self, value: setattr(getattr(self, name), part, value)),
+        fdel=(lambda self: delattr(getattr(self, name), part)))
 
 
 def multi_attribute_alias(container, *arg_names, **kwd_names):

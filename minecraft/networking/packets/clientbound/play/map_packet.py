@@ -1,3 +1,4 @@
+from minecraft import PRE
 from minecraft.networking.packets import Packet
 from minecraft.networking.types import (
     VarInt, Byte, Boolean, UnsignedByte, VarIntPrefixedByteArray, String,
@@ -72,15 +73,18 @@ class MapPacket(Packet):
         self.map_id = VarInt.read(file_object)
         self.scale = Byte.read(file_object)
 
-        if self.context.protocol_later_eq(107):
+        if self.context.protocol_in_range(107, PRE | 6):
             self.is_tracking_position = Boolean.read(file_object)
-        else:
+        elif self.context.protocol_earlier(107):
             self.is_tracking_position = True
 
         if self.context.protocol_later_eq(452):
             self.is_locked = Boolean.read(file_object)
         else:
             self.is_locked = False
+
+        if self.context.protocol_later_eq(PRE | 6):
+            self.is_tracking_position = Boolean.read(file_object)
 
         icon_count = VarInt.read(file_object)
         self.icons = []
@@ -101,10 +105,7 @@ class MapPacket(Packet):
             icon = MapPacket.MapIcon(type, direction, (x, z), display_name)
             self.icons.append(icon)
 
-        try:
-            self.width = UnsignedByte.read(file_object)
-        except:
-            self.width = None
+        self.width = UnsignedByte.read(file_object)
         if self.width:
             self.height = UnsignedByte.read(file_object)
             x = Byte.read(file_object)

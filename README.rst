@@ -1,7 +1,7 @@
 pyCraft
 =======
-.. image:: https://travis-ci.org/ammaraskar/pyCraft.svg?branch=master
-    :target: https://travis-ci.org/ammaraskar/pyCraft
+.. image:: https://app.travis-ci.com/ammaraskar/pyCraft.svg?branch=master 
+    :target: https://app.travis-ci.com/github/ammaraskar/pyCraft 
 .. image:: https://readthedocs.org/projects/pycraft/badge/?version=latest
     :target: https://pycraft.readthedocs.org/en/latest
 .. image:: https://coveralls.io/repos/ammaraskar/pyCraft/badge.svg?branch=master 
@@ -31,7 +31,9 @@ pyCraft is compatible with the following Minecraft releases:
 * 1.13, 1.13.1, 1.13.2
 * 1.14, 1.14.1, 1.14.2, 1.14.3, 1.14.4
 * 1.15, 1.15.1, 1.15.2
-* 1.16, 1.16.1, 1.16.2, 1.16.3, 1.16.4
+* 1.16, 1.16.1, 1.16.2, 1.16.3, 1.16.4, 1.16.5
+* 1.17, 1.17.1
+* 1.18, 1.18.1
 
 In addition, some development snapshots and pre-release versions are supported:
 `<minecraft/__init__.py>`_ contains a full list of supported Minecraft versions
@@ -55,6 +57,7 @@ pyCraft is compatible with (at least) the following Python implementations:
 * Python 3.6
 * Python 3.7
 * Python 3.8
+* Python 3.9
 * PyPy
 
 Requirements

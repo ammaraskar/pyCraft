@@ -4,6 +4,7 @@ from minecraft.networking.packets import PacketBuffer
 from minecraft.networking.packets.clientbound.play import (
     PlayerPositionAndLookPacket, PlayerListItemPacket, MapPacket
 )
+from minecraft.networking.packets import serverbound
 from minecraft.networking.connection import ConnectionContext
 
 from tests.test_packets import TEST_VERSIONS
@@ -306,3 +307,16 @@ class PlayerListItemTest(unittest.TestCase):
             packet.write_fields(packet_buffer)
             self.read_and_apply(context, packet_buffer, player_list)
             self.assertNotIn(fake_uuid, player_list.players_by_uuid)
+
+
+class ClientSettingsTest(unittest.TestCase):
+    def test_enable_disable_text_filtering(self):
+        packet = serverbound.play.ClientSettingsPacket()
+        self.assertEqual(packet.enable_text_filtering, False)
+        self.assertEqual(packet.disable_text_filtering, True)
+        packet.enable_text_filtering = True
+        self.assertEqual(packet.enable_text_filtering, True)
+        self.assertEqual(packet.disable_text_filtering, False)
+        packet.disable_text_filtering = True
+        self.assertEqual(packet.enable_text_filtering, False)
+        self.assertEqual(packet.disable_text_filtering, True)

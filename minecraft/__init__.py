@@ -460,8 +460,21 @@ KNOWN_MINECRAFT_VERSION_RECORDS = [
     Version('20w45a',                PRE | 5,  True),
     Version('20w46a',                PRE | 6,  True),
     Version('20w48a',                PRE | 7,  True),
+    Version('20w49a',                PRE | 8,  False),
+    Version('20w51a',                PRE | 9,  False),
+    Version('1.16.5',                754,      False),
+    Version('21w03a',                PRE | 11, False),
+    Version('21w05a',                PRE | 12, False),
+    Version('21w05b',                PRE | 13, False),
+    Version('21w06a',                PRE | 14, False),
+    Version('21w07a',                PRE | 15, False),
+    Version('1.17-rc2',              PRE | 35, False),
     Version('1.17',                  755,      True),
-    Version('1.17.1',                  756,      True),
+    Version('1.17.1',                756,      True),
+    Version('21w44a',                PRE | 48, False),
+    Version('1.18-rc4',              PRE | 60, False),
+    Version('1.18',                  757,      True),
+    Version('1.18.1',                757,      True),
 ]
 
 # An OrderedDict mapping the id string of each known Minecraft version to its

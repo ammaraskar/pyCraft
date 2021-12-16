@@ -6,7 +6,10 @@ import struct
 from zlib import decompress
 from random import choice
 
-from minecraft import SUPPORTED_PROTOCOL_VERSIONS, RELEASE_PROTOCOL_VERSIONS
+from minecraft.utility import protocol_earlier
+from minecraft import (
+    PRE, SUPPORTED_PROTOCOL_VERSIONS, RELEASE_PROTOCOL_VERSIONS,
+)
 from minecraft.networking.connection import ConnectionContext
 from minecraft.networking.types import (
     VarInt, Enum, Vector, PositionAndLook, OriginPoint,
@@ -157,19 +160,21 @@ class TestReadWritePackets(unittest.TestCase):
     maxDiff = None
 
     def test_explosion_packet(self):
+        context = ConnectionContext(protocol_version=TEST_VERSIONS[-1])
         Record = clientbound.play.ExplosionPacket.Record
         packet = clientbound.play.ExplosionPacket(
                     position=Vector(787, -37, 0), radius=15,
                     records=[Record(-14, -116, -5), Record(-77, 34, -36),
                              Record(-35, -127, 95), Record(11, 113, -8)],
-                    player_motion=Vector(4, 5, 0))
+                    player_motion=Vector(4, 5, 0), context=context)
 
         self.assertEqual(
             str(packet),
-            'ExplosionPacket(x=787, y=-37, z=0, radius=15, records=['
+            '0x%02X ExplosionPacket(x=787, y=-37, z=0, radius=15, records=['
             'Record(-14, -116, -5), Record(-77, 34, -36), '
             'Record(-35, -127, 95), Record(11, 113, -8)], '
             'player_motion_x=4, player_motion_y=5, player_motion_z=0)'
+            % packet.id
         )
 
         self._test_read_write_packet(packet)
@@ -181,7 +186,16 @@ class TestReadWritePackets(unittest.TestCase):
             str(packet),
             'CombatEventPacket(event=EnterCombatEvent())'
         )
-        self._test_read_write_packet(packet)
+        self._test_read_write_packet(packet, vmax=PRE | 14)
+        with self.assertRaises(NotImplementedError):
+            self._test_read_write_packet(packet, vmin=PRE | 15)
+
+        specialised_packet = clientbound.play.EnterCombatEventPacket()
+        self.assertIsInstance(specialised_packet.event, type(packet.event))
+        for field in specialised_packet.fields:
+            value = getattr(packet.event, field)
+            setattr(specialised_packet, field, value)
+            self.assertEqual(getattr(specialised_packet.event, field), value)
 
         packet = clientbound.play.CombatEventPacket(
             event=clientbound.play.CombatEventPacket.EndCombatEvent(
@@ -189,7 +203,16 @@ class TestReadWritePackets(unittest.TestCase):
         self.assertEqual(str(packet),
                          'CombatEventPacket(event=EndCombatEvent('
                          'duration=415, entity_id=91063502))')
-        self._test_read_write_packet(packet)
+        self._test_read_write_packet(packet, vmax=PRE | 14)
+        with self.assertRaises(NotImplementedError):
+            self._test_read_write_packet(packet, vmin=PRE | 15)
+
+        specialised_packet = clientbound.play.EndCombatEventPacket()
+        self.assertIsInstance(specialised_packet.event, type(packet.event))
+        for field in specialised_packet.fields:
+            value = getattr(packet.event, field)
+            setattr(specialised_packet, field, value)
+            self.assertEqual(getattr(specialised_packet.event, field), value)
 
         packet = clientbound.play.CombatEventPacket(
             event=clientbound.play.CombatEventPacket.EntityDeadEvent(
@@ -199,7 +222,16 @@ class TestReadWritePackets(unittest.TestCase):
             "CombatEventPacket(event=EntityDeadEvent("
             "player_id=178, entity_id=36, message='RIP'))"
         )
-        self._test_read_write_packet(packet)
+        self._test_read_write_packet(packet, vmax=PRE | 14)
+        with self.assertRaises(NotImplementedError):
+            self._test_read_write_packet(packet, vmin=PRE | 15)
+
+        specialised_packet = clientbound.play.DeathCombatEventPacket()
+        self.assertIsInstance(specialised_packet.event, type(packet.event))
+        for field in specialised_packet.fields:
+            value = getattr(packet.event, field)
+            setattr(specialised_packet, field, value)
+            self.assertEqual(getattr(specialised_packet.event, field), value)
 
     def test_multi_block_change_packet(self):
         Record = clientbound.play.MultiBlockChangePacket.Record
@@ -348,16 +380,22 @@ class TestReadWritePackets(unittest.TestCase):
             )
             self._test_read_write_packet(packet, context)
 
-    def _test_read_write_packet(self, packet_in, context=None, **kwargs):
+    def _test_read_write_packet(
+        self, packet_in, context=None, vmin=None, vmax=None, **kwargs
+    ):
         """
         If kwargs are specified, the key will be tested against the
         respective delta value. Useful for testing FixedPointNumbers
         where there is precision lost in the resulting value.
         """
         if context is None:
-            for protocol_version in TEST_VERSIONS:
-                logging.debug('protocol_version = %r' % protocol_version)
-                context = ConnectionContext(protocol_version=protocol_version)
+            for pv in TEST_VERSIONS:
+                if vmin is not None and protocol_earlier(pv, vmin):
+                    continue
+                if vmax is not None and protocol_earlier(vmax, pv):
+                    continue
+                logging.debug('protocol_version = %r' % pv)
+                context = ConnectionContext(protocol_version=pv)
                 self._test_read_write_packet(packet_in, context)
         else:
             packet_in.context = context

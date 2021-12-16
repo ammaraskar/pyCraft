@@ -1,11 +1,13 @@
 language: python
 dist: focal
-python: 3.8
+python: 3.9
 
 matrix:
   include:
     - python: pypy3
       env: TOX_ENV=pypy
+      before_install:
+      - python -m pip install --upgrade virtualenv
     - python: 3.5
       env: TOX_ENV=py35
     - python: 3.6
@@ -14,13 +16,15 @@ matrix:
       env: TOX_ENV=py37
     - python: 3.8
       env: TOX_ENV=py38
-    - python: 3.8
+    - python: 3.9
+      env: TOX_ENV=py39
+    - python: 3.9
       env: TOX_ENV=flake8
-    - python: 3.8
+    - python: 3.9
       env: TOX_ENV=pylint-errors
-    - python: 3.8
+    - python: 3.9
       env: TOX_ENV=pylint-full
-    - python: 3.8
+    - python: 3.9
       env: TOX_ENV=verify-manifest
 
 before_install:
@@ -32,6 +36,6 @@ install:
 script:
   - tox -e $TOX_ENV
 after_script:
-  - if [ "$TOX_ENV" = "py38" ]; then tox -e coveralls; fi
+  - if [ "$TOX_ENV" = "py39" ]; then tox -e coveralls; fi
 notifications:
   email: false

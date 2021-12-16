@@ -1,5 +1,6 @@
 from minecraft.networking.types import (
     Vector, Float, Byte, Integer, PrefixedArray, multi_attribute_alias, Type,
+    VarInt,
 )
 from minecraft.networking.packets import Packet
 
@@ -34,15 +35,22 @@ class ExplosionPacket(Packet):
             for coord in record:
                 Byte.send(coord, socket)
 
-    definition = [
-        {'x': Float},
-        {'y': Float},
-        {'z': Float},
-        {'radius': Float},
-        {'records': PrefixedArray(Integer, Record)},
-        {'player_motion_x': Float},
-        {'player_motion_y': Float},
-        {'player_motion_z': Float}]
+    @staticmethod
+    def get_definition(context):
+        return [
+            {'x': Float},
+            {'y': Float},
+            {'z': Float},
+            {'radius': Float},
+
+            {'records': PrefixedArray(VarInt, ExplosionPacket.Record)}
+            if context.protocol_later_eq(755) else
+            {'records': PrefixedArray(Integer, ExplosionPacket.Record)},
+
+            {'player_motion_x': Float},
+            {'player_motion_y': Float},
+            {'player_motion_z': Float},
+        ]
 
     # Access the 'x', 'y', 'z' fields as a Vector tuple.
     position = multi_attribute_alias(Vector, 'x', 'y', 'z')

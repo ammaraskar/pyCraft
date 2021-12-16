@@ -115,7 +115,8 @@ class FakeClientHandler(object):
             world_name='minecraft:overworld',
             hashed_seed=12345, difficulty=2, max_players=1,
             level_type='default', reduced_debug_info=False, render_distance=9,
-            respawn_screen=False, is_debug=False, is_flat=False)
+            simulation_distance=9, respawn_screen=False, is_debug=False,
+            is_flat=False)
 
         if self.server.context.protocol_later_eq(748):
             packet.dimension = pynbt.TAG_Compound({
