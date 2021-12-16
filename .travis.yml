@@ -6,8 +6,6 @@ matrix:
   include:
     - python: pypy3
       env: TOX_ENV=pypy
-      before_install:
-      - python -m pip install --upgrade virtualenv
     - python: 3.5
       env: TOX_ENV=py35
     - python: 3.6
@@ -26,9 +24,6 @@ matrix:
       env: TOX_ENV=pylint-full
     - python: 3.9
       env: TOX_ENV=verify-manifest
-
-before_install:
-  - python -m pip install --upgrade virtualenv
 
 install:
   - pip install tox
