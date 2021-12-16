@@ -23,6 +23,9 @@ matrix:
     - python: 3.8
       env: TOX_ENV=verify-manifest
 
+before_install:
+  - python -m pip install --upgrade virtualenv
+
 install:
   - pip install tox
   - pip install python-coveralls
