@@ -462,7 +462,7 @@ KNOWN_MINECRAFT_VERSION_RECORDS = [
     Version('20w48a',                PRE | 7,  True),
     Version('20w49a',                PRE | 8,  False),
     Version('20w51a',                PRE | 9,  False),
-    Version('1.16.5',                754,      False),
+    Version('1.16.5',                754,      True),
     Version('21w03a',                PRE | 11, False),
     Version('21w05a',                PRE | 12, False),
     Version('21w05b',                PRE | 13, False),
