@@ -2,6 +2,7 @@ from minecraft.networking.packets import (
     Packet, AbstractKeepAlivePacket, AbstractPluginMessagePacket
 )
 
+
 from minecraft.networking.types import (
     Double, Float, Boolean, VarInt, String, Byte, Position, Enum,
     RelativeHand, BlockFace, Vector, Direction, PositionAndLook,
@@ -9,19 +10,22 @@ from minecraft.networking.types import (
 )
 
 from .client_settings_packet import ClientSettingsPacket
-
+from .vehicle_move_packet import VehicleMovePacket
+from .player_position_packet import PlayerPositionPacket
 
 # Formerly known as state_playing_serverbound.
 def get_packets(context):
     packets = {
         KeepAlivePacket,
         ChatPacket,
+        PlayerPositionPacket,
         PositionAndLookPacket,
         AnimationPacket,
         ClientStatusPacket,
         ClientSettingsPacket,
         PluginMessagePacket,
         PlayerBlockPlacementPacket,
+        VehicleMovePacket
     }
     if context.protocol_later_eq(69):
         packets |= {
