@@ -11,7 +11,7 @@ pyCraft
 Minecraft Python Client Library!
 
 This projects aims to be a modern, Python3-compatible, well-documented library for
-communication with a MineCraft server.
+communication with a Minecraft server.
 
 Detailed information for developers can be found here:
 `<http://pycraft.readthedocs.org/en/latest/>`_.
