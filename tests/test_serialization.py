@@ -27,7 +27,7 @@ TEST_DATA = {
     UnsignedShort: [0, 400],
     UnsignedLong: [0, 400],
     Integer: [-1000, 1000],
-    FixedPointInteger: [float(-13098.3435), float(-0.83), float(1000)],
+    FixedPointInteger: [-13098.3435, -0.83, float(1000)],
     Angle: [0, 360.0, 720, 47.12947238973, -108.7],
     VarInt: [1, 250, 50000, 10000000],
     Long: [50000000],
@@ -44,7 +44,7 @@ TEST_DATA = {
         for x in [-0x200000, -123, -1, 0, 123, 0x1FFFFF]
         for z in [-0x200000, -456, -1, 0, 456, 0x1FFFFF]
         for y in [-0x80000, -789, -1, 0, 789, 0x7FFFF]
-    ]
+    ],
 }
 
 

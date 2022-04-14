@@ -54,8 +54,8 @@ def get_options():
                      r"(:(?P<port>\d+))?$", options.server)
     if match is None:
         raise ValueError("Invalid server address: '%s'." % options.server)
-    options.address = match.group("host") or match.group("addr")
-    options.port = int(match.group("port") or 25565)
+    options.address = match["host"] or match["addr"]
+    options.port = int(match["port"] or 25565)
 
     return options
 
@@ -85,12 +85,12 @@ def main():
                 # that it is a packet of unknown type, so we do not print it
                 # unless explicitly requested by the user.
                 if options.dump_unknown:
-                    print('--> [unknown packet] %s' % packet, file=sys.stderr)
+                    print(f'--> [unknown packet] {packet}', file=sys.stderr)
             else:
-                print('--> %s' % packet, file=sys.stderr)
+                print(f'--> {packet}', file=sys.stderr)
 
         def print_outgoing(packet):
-            print('<-- %s' % packet, file=sys.stderr)
+            print(f'<-- {packet}', file=sys.stderr)
 
         connection.register_packet_listener(
             print_incoming, Packet, early=True)
@@ -104,8 +104,9 @@ def main():
         handle_join_game, clientbound.play.JoinGamePacket)
 
     def print_chat(chat_packet):
-        print("Message (%s): %s" % (
-            chat_packet.field_string('position'), chat_packet.json_data))
+        print(
+            f"Message ({chat_packet.field_string('position')}): {chat_packet.json_data}"
+        )
 
     connection.register_packet_listener(
         print_chat, clientbound.play.ChatMessagePacket)

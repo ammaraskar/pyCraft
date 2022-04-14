@@ -7,11 +7,10 @@ from minecraft.networking.types import (
 
 # Formerly known as state_status_clientbound.
 def get_packets(context):
-    packets = {
+    return {
         ResponsePacket,
         PingResponsePacket,
     }
-    return packets
 
 
 class ResponsePacket(Packet):

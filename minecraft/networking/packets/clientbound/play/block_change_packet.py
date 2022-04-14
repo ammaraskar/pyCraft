@@ -128,7 +128,7 @@ class MultiBlockChangePacket(Packet):
             return record
 
         @classmethod
-        def send_with_context(self, record, socket, context):
+        def send_with_context(cls, record, socket, context):
             if context.protocol_later_eq(741):
                 value = record.block_state_id << 12 | \
                         (record.x & 0xF) << 8 | \

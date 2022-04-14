@@ -13,7 +13,7 @@ print("language: python")
 print("python: 3.5")
 print("env:")
 for env in parseconfig(None, 'tox').envlist:
-    print("  - TOX_ENV=%s" % env)
+    print(f"  - TOX_ENV={env}")
 print("install:")
 print("  - pip install tox")
 print("  - pip install python-coveralls")

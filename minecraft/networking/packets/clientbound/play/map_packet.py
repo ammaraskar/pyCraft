@@ -55,7 +55,7 @@ class MapPacket(Packet):
             self.icons = []
             self.width = width
             self.height = height
-            self.pixels = bytearray(0 for i in range(width*height))
+            self.pixels = bytearray(0 for _ in range(width*height))
             self.is_tracking_position = True
             self.is_locked = False
 
@@ -67,7 +67,7 @@ class MapPacket(Packet):
 
         def __repr__(self):
             maps = (repr(map) for map in self.maps_by_id.values())
-            return 'MapSet(%s)' % ', '.join(maps)
+            return f"MapSet({', '.join(maps)})"
 
     def read(self, file_object):
         self.map_id = VarInt.read(file_object)
@@ -88,7 +88,7 @@ class MapPacket(Packet):
 
         icon_count = VarInt.read(file_object)
         self.icons = []
-        for i in range(icon_count):
+        for _ in range(icon_count):
             if self.context.protocol_later_eq(373):
                 type = VarInt.read(file_object)
             else:

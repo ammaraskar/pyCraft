@@ -370,11 +370,10 @@ class ExceptionReconnectTest(ConnectTest):
     def _start_client(self, client):
         @client.listener(clientbound.play.JoinGamePacket)
         def handle_join_game(packet):
-            if self.phase == 0:
-                self.phase += 1
-                raise self.CustomException
-            else:
+            if self.phase != 0:
                 raise fake_server.FakeServerTestSuccess
+            self.phase += 1
+            raise self.CustomException
 
         @client.exception_handler(self.CustomException, early=True)
         def handle_custom_exception(exc, exc_info):

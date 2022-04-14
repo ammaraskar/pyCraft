@@ -55,7 +55,7 @@ class CombatEventPacket(Packet):
         def type_from_id(cls, event_id):
             subcls = cls.type_from_id_dict.get(event_id)
             if subcls is None:
-                raise ValueError('Unknown combat event ID: %s.' % event_id)
+                raise ValueError(f'Unknown combat event ID: {event_id}.')
             return subcls
 
     class EnterCombatEvent(EventType):

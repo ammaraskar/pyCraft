@@ -63,10 +63,7 @@ class PluginResponsePacket(Packet):
     def read(self, file_object):
         self.message_id = VarInt.read(file_object)
         self.successful = Boolean.read(file_object)
-        if self.successful:
-            self.data = TrailingByteArray.read(file_object)
-        else:
-            self.data = None
+        self.data = TrailingByteArray.read(file_object) if self.successful else None
 
     def write_fields(self, packet_buffer):
         VarInt.send(self.message_id, packet_buffer)

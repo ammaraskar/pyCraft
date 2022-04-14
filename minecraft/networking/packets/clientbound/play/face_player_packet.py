@@ -34,8 +34,7 @@ class FacePlayerPacket(Packet):
             self.x = Double.read(file_object)
             self.y = Double.read(file_object)
             self.z = Double.read(file_object)
-            is_entity = Boolean.read(file_object)
-            if is_entity:
+            if is_entity := Boolean.read(file_object):
                 # If the entity given by entity ID cannot be found,
                 # this packet should be treated as if is_entity was false.
                 self.entity_id = VarInt.read(file_object)
@@ -64,15 +63,15 @@ class FacePlayerPacket(Packet):
             else:
                 Boolean.send(False, packet_buffer)
 
-        else:  # Protocol version 352
-            if self.entity_id is not None:
-                Boolean.send(True, packet_buffer)
-                VarInt.send(self.entity_id, packet_buffer)
-            else:
-                Boolean.send(False, packet_buffer)
-                Double.send(self.x, packet_buffer)
-                Double.send(self.y, packet_buffer)
-                Double.send(self.z, packet_buffer)
+        elif self.entity_id is None:
+            Boolean.send(False, packet_buffer)
+            Double.send(self.x, packet_buffer)
+            Double.send(self.y, packet_buffer)
+            Double.send(self.z, packet_buffer)
+
+        else:
+            Boolean.send(True, packet_buffer)
+            VarInt.send(self.entity_id, packet_buffer)
 
     # These aliases declare the Enum type corresponding to each field:
     Origin = OriginPoint
