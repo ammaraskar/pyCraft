@@ -62,7 +62,7 @@ class SoundEffectPacket(Packet):
     class EffectPosition(Type):
         @classmethod
         def read(cls, file_object):
-            return Vector(*(Integer.read(file_object) / 8.0 for i in range(3)))
+            return Vector(*(Integer.read(file_object) / 8.0 for _ in range(3)))
 
         @classmethod
         def send(cls, value, socket):

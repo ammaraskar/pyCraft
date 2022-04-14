@@ -77,7 +77,7 @@ class PacketSerializationTest(unittest.TestCase):
             logging.debug('protocol_version = %r' % protocol_version)
             context = ConnectionContext(protocol_version=protocol_version)
 
-            msg = ''.join(choice(string.ascii_lowercase) for i in range(500))
+            msg = ''.join(choice(string.ascii_lowercase) for _ in range(500))
             packet = serverbound.play.ChatPacket(context)
             packet.message = msg
 

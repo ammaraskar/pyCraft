@@ -28,7 +28,7 @@ class ExplosionPacket(Packet):
 
         @classmethod
         def read(cls, file_object):
-            return cls(*(Byte.read(file_object) for i in range(3)))
+            return cls(*(Byte.read(file_object) for _ in range(3)))
 
         @classmethod
         def send(cls, record, socket):

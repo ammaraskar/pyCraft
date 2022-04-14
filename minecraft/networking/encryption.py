@@ -11,9 +11,11 @@ def generate_shared_secret():
 
 
 def create_AES_cipher(shared_secret):
-    cipher = Cipher(algorithms.AES(shared_secret), modes.CFB8(shared_secret),
-                    backend=default_backend())
-    return cipher
+    return Cipher(
+        algorithms.AES(shared_secret),
+        modes.CFB8(shared_secret),
+        backend=default_backend(),
+    )
 
 
 def encrypt_token_and_secret(pubkey, verification_token, shared_secret):

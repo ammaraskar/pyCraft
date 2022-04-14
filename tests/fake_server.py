@@ -102,8 +102,12 @@ class FakeClientHandler(object):
         # compression and encryption, if applicable, have been set up. The
         # client's LoginStartPacket is given as an argument.
         self.user_name = login_start_packet.name
-        self.user_uuid = uuid.UUID(bytes=hashlib.md5(
-            ('OfflinePlayer:%s' % self.user_name).encode('utf8')).digest())
+        self.user_uuid = uuid.UUID(
+            bytes=hashlib.md5(
+                f'OfflinePlayer:{self.user_name}'.encode('utf8')
+            ).digest()
+        )
+
         self.write_packet(clientbound.login.LoginSuccessPacket(
             UUID=str(self.user_uuid), Username=self.user_name))
 
@@ -202,7 +206,7 @@ class FakeClientHandler(object):
     def write_packet(self, packet):
         # Send and log a clientbound packet.
         packet.context = self.server.context
-        logging.debug('[S-> ] %s' % packet)
+        logging.debug(f'[S-> ] {packet}')
         packet.write(self.socket, **(
             {'compression_threshold': self.server.compression_threshold}
             if self.compression_enabled else {}))
@@ -217,7 +221,7 @@ class FakeClientHandler(object):
             packet.read(buffer)
         else:
             packet = packets.Packet(self.server.context, id=packet_id)
-        logging.debug('[ ->S] %s' % packet)
+        logging.debug(f'[ ->S] {packet}')
         return packet
 
     def _run_handshake(self):
@@ -234,7 +238,7 @@ class FakeClientHandler(object):
             elif packet.next_state == 2:
                 self._run_handshake_play(packet)
             else:
-                raise AssertionError('Unknown state: %s' % packet.next_state)
+                raise AssertionError(f'Unknown state: {packet.next_state}')
         except FakeServerDisconnect:
             pass
 
@@ -248,8 +252,7 @@ class FakeClientHandler(object):
             msg = "Outdated server! I'm still on %s" \
                   % self.server.minecraft_version
         else:
-            msg = 'Outdated client! Please use %s' \
-                  % self.server.minecraft_version
+            msg = f'Outdated client! Please use {self.server.minecraft_version}'
         self.handle_login_server_disconnect(msg)
 
     def _run_login(self):
@@ -341,8 +344,7 @@ class FakeClientHandler(object):
             data_length = types.VarInt.read(buffer)
             if data_length > 0:
                 data = zlib.decompress(buffer.read())
-                assert len(data) == data_length, \
-                    '%s != %s' % (len(data), data_length)
+                assert len(data) == data_length, f'{len(data)} != {data_length}'
                 buffer.reset()
                 buffer.send(data)
                 buffer.reset_cursor()
@@ -432,9 +434,9 @@ class FakeServer(object):
             while True:
                 try:
                     client_socket, addr = self.listen_socket.accept()
-                    logging.debug('[ ++ ] Client %s connected.' % (addr,))
+                    logging.debug(f'[ ++ ] Client {addr} connected.')
                     self.client_handler_type(self, client_socket).run()
-                    logging.debug('[ -- ] Client %s disconnected.' % (addr,))
+                    logging.debug(f'[ -- ] Client {addr} disconnected.')
                 except socket.timeout:
                     pass
                 with self.lock:
@@ -566,11 +568,11 @@ class _FakeServerTest(unittest.TestCase):
 
         @client.listener(packets.Packet, early=True)
         def handle_incoming_packet(packet):
-            logging.debug('[ ->C] %s' % packet)
+            logging.debug(f'[ ->C] {packet}')
 
         @client.listener(packets.Packet, early=True, outgoing=True)
         def handle_outgoing_packet(packet):
-            logging.debug('[C-> ] %s' % packet)
+            logging.debug(f'[C-> ] {packet}')
 
         server_thread = threading.Thread(
             name='FakeServer',

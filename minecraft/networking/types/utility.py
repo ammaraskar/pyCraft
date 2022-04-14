@@ -21,12 +21,18 @@ class Vector(namedtuple('BaseVector', ('x', 'y', 'z'))):
     __slots__ = ()
 
     def __add__(self, other):
-        return NotImplemented if not isinstance(other, Vector) else \
-               type(self)(self.x + other.x, self.y + other.y, self.z + other.z)
+        return (
+            type(self)(self.x + other.x, self.y + other.y, self.z + other.z)
+            if isinstance(other, Vector)
+            else NotImplemented
+        )
 
     def __sub__(self, other):
-        return NotImplemented if not isinstance(other, Vector) else \
-               type(self)(self.x - other.x, self.y - other.y, self.z - other.z)
+        return (
+            type(self)(self.x - other.x, self.y - other.y, self.z - other.z)
+            if isinstance(other, Vector)
+            else NotImplemented
+        )
 
     def __neg__(self):
         return type(self)(-self.x, -self.y, -self.z)
@@ -83,9 +89,7 @@ class MutableRecord(object):
     def _all_slots(cls):
         for supcls in reversed(cls.__mro__):
             slots = supcls.__dict__.get('__slots__', ())
-            slots = (slots,) if isinstance(slots, str) else slots
-            for slot in slots:
-                yield slot
+            yield from (slots,) if isinstance(slots, str) else slots
 
 
 Direction = namedtuple('Direction', ('yaw', 'pitch'))

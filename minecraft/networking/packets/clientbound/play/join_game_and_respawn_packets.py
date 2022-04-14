@@ -26,8 +26,7 @@ def nbt_to_snbt(tag):
         pynbt.TAG_Long_Array: 'L',
     }
     if type(tag) in arrays:
-        return '[' + arrays[type(tag)] + ';' + \
-               ','.join(map(repr, tag.value)) + ']'
+        return ((f'[{arrays[type(tag)]};' + ','.join(map(repr, tag.value))) + ']')
 
     if isinstance(tag, pynbt.TAG_String):
         return repr(tag.value)
@@ -36,8 +35,10 @@ def nbt_to_snbt(tag):
         return '[' + ','.join(map(nbt_to_snbt, tag.value)) + ']'
 
     if isinstance(tag, pynbt.TAG_Compound):
-        return '{' + ','.join(n + ':' + nbt_to_snbt(v)
-                              for (n, v) in tag.items()) + '}'
+        return (
+            '{' + ','.join(f'{n}:{nbt_to_snbt(v)}' for (n, v) in tag.items())
+        ) + '}'
+
 
     raise TypeError('Unknown NBT tag type: %r' % type(tag))
 

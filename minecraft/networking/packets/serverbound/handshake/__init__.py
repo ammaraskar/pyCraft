@@ -7,10 +7,7 @@ from minecraft.networking.types import (
 
 # Formerly known as state_handshake_serverbound.
 def get_packets(context):
-    packets = {
-        HandShakePacket
-    }
-    return packets
+    return {HandShakePacket}
 
 
 class HandShakePacket(Packet):
