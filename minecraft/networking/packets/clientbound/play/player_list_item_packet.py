@@ -48,8 +48,7 @@ class PlayerListItemPacket(Packet):
         def read(self, file_object):
             self.name = String.read(file_object)
             self.value = String.read(file_object)
-            is_signed = Boolean.read(file_object)
-            if is_signed:
+            if is_signed := Boolean.read(file_object):
                 self.signature = String.read(file_object)
             else:
                 self.signature = None
@@ -87,7 +86,7 @@ class PlayerListItemPacket(Packet):
             for subcls in cls.__subclasses__():
                 if subcls.action_id == action_id:
                     return subcls
-            raise ValueError("Unknown player list action ID: %s." % action_id)
+            raise ValueError(f"Unknown player list action ID: {action_id}.")
 
     class AddPlayerAction(Action):
         __slots__ = 'name', 'properties', 'gamemode', 'ping', 'display_name'
@@ -103,8 +102,7 @@ class PlayerListItemPacket(Packet):
                 self.properties.append(property)
             self.gamemode = VarInt.read(file_object)
             self.ping = VarInt.read(file_object)
-            has_display_name = Boolean.read(file_object)
-            if has_display_name:
+            if has_display_name := Boolean.read(file_object):
                 self.display_name = String.read(file_object)
             else:
                 self.display_name = None
@@ -143,8 +141,7 @@ class PlayerListItemPacket(Packet):
             VarInt.send(self.gamemode, packet_buffer)
 
         def apply(self, player_list):
-            player = player_list.players_by_uuid.get(self.uuid)
-            if player:
+            if player := player_list.players_by_uuid.get(self.uuid):
                 player.gamemode = self.gamemode
 
     class UpdateLatencyAction(Action):
@@ -158,8 +155,7 @@ class PlayerListItemPacket(Packet):
             VarInt.send(self.ping, packet_buffer)
 
         def apply(self, player_list):
-            player = player_list.players_by_uuid.get(self.uuid)
-            if player:
+            if player := player_list.players_by_uuid.get(self.uuid):
                 player.ping = self.ping
 
     class UpdateDisplayNameAction(Action):
@@ -167,8 +163,7 @@ class PlayerListItemPacket(Packet):
         action_id = 3
 
         def _read(self, file_object):
-            has_display_name = Boolean.read(file_object)
-            if has_display_name:
+            if has_display_name := Boolean.read(file_object):
                 self.display_name = String.read(file_object)
             else:
                 self.display_name = None
@@ -181,8 +176,7 @@ class PlayerListItemPacket(Packet):
                 Boolean.send(False, packet_buffer)
 
         def apply(self, player_list):
-            player = player_list.players_by_uuid.get(self.uuid)
-            if player:
+            if player := player_list.players_by_uuid.get(self.uuid):
                 player.display_name = self.display_name
 
     class RemovePlayerAction(Action):
@@ -203,7 +197,7 @@ class PlayerListItemPacket(Packet):
         self.action_type = PlayerListItemPacket.Action.type_from_id(action_id)
         action_count = VarInt.read(file_object)
         self.actions = []
-        for i in range(action_count):
+        for _ in range(action_count):
             action = self.action_type()
             action.read(file_object)
             self.actions.append(action)

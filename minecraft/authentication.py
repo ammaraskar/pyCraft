@@ -31,8 +31,7 @@ class Profile(object):
             raise AttributeError("Profile is not yet populated.")
 
     def __bool__(self):
-        bool_state = self.id_ is not None and self.name is not None
-        return bool_state
+        return self.id_ is not None and self.name is not None
 
     # Python 2 support
     def __nonzero__(self):
@@ -277,9 +276,12 @@ def _make_request(server, endpoint, data):
     Returns:
         A `requests.Request` object.
     """
-    res = requests.post(server + "/" + endpoint, data=json.dumps(data),
-                        headers=HEADERS, timeout=15)
-    return res
+    return requests.post(
+        f"{server}/{endpoint}",
+        data=json.dumps(data),
+        headers=HEADERS,
+        timeout=15,
+    )
 
 
 def _raise_from_response(res):
@@ -295,7 +297,7 @@ def _raise_from_response(res):
 
     try:
         json_resp = res.json()
-        if not ("error" in json_resp and "errorMessage" in json_resp):
+        if "error" not in json_resp or "errorMessage" not in json_resp:
             raise ValueError
     except ValueError:
         message = "[{status_code}] Malformed error message: '{response_text}'"

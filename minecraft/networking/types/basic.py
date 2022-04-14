@@ -25,12 +25,12 @@ class Type(object):
     __slots__ = ()
 
     @class_and_instancemethod
-    def read_with_context(cls_or_self, file_object, _context):
-        return cls_or_self.read(file_object)
+    def read_with_context(self, file_object, _context):
+        return self.read(file_object)
 
     @class_and_instancemethod
-    def send_with_context(cls_or_self, value, socket, _context):
-        return cls_or_self.send(value, socket)
+    def send_with_context(self, value, socket, _context):
+        return self.send(value, socket)
 
     @classmethod
     def read(cls, file_object):
@@ -249,7 +249,7 @@ class ShortPrefixedByteArray(Type):
     @staticmethod
     def read(file_object):
         length = Short.read(file_object)
-        return struct.unpack(str(length) + "s", file_object.read(length))[0]
+        return struct.unpack(f"{str(length)}s", file_object.read(length))[0]
 
     @staticmethod
     def send(value, socket):
@@ -261,12 +261,12 @@ class VarIntPrefixedByteArray(Type):
     @staticmethod
     def read(file_object):
         length = VarInt.read(file_object)
-        return struct.unpack(str(length) + "s", file_object.read(length))[0]
+        return struct.unpack(f"{str(length)}s", file_object.read(length))[0]
 
     @staticmethod
     def send(value, socket):
         VarInt.send(len(value), socket)
-        socket.send(struct.pack(str(len(value)) + "s", value))
+        socket.send(struct.pack(f"{len(value)}s", value))
 
 
 class TrailingByteArray(Type):
@@ -379,7 +379,7 @@ class PrefixedArray(Type):
 
     def __read(self, file_object, element_read):
         length = self.length_type.read(file_object)
-        return [element_read(file_object) for i in range(length)]
+        return [element_read(file_object) for _ in range(length)]
 
     def __send(self, value, socket, element_send):
         self.length_type.send(len(value), socket)

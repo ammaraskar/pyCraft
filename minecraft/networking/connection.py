@@ -269,10 +269,16 @@ class Connection(object):
         """
         outgoing = kwds.pop('outgoing', False)
         early = kwds.pop('early', False)
-        target = self.packet_listeners if not early and not outgoing \
-            else self.early_packet_listeners if early and not outgoing \
-            else self.outgoing_packet_listeners if not early \
+        target = (
+            self.packet_listeners
+            if not early and not outgoing
+            else self.early_packet_listeners
+            if early and not outgoing
             else self.early_outgoing_packet_listeners
+            if early
+            else self.outgoing_packet_listeners
+        )
+
         target.append(packets.PacketListener(method, *packet_types, **kwds))
 
     def register_exception_handler(self, handler_func, *exc_types, **kwds):
@@ -314,19 +320,10 @@ class Connection(object):
             self._exception_handlers.append((handler_func, exc_types))
 
     def _pop_packet(self):
-        # Pops the topmost packet off the outgoing queue and writes it out
-        # through the socket
-        #
-        # Mostly an internal convenience function, caller should make sure
-        # they have the write lock acquired to avoid issues caused by
-        # asynchronous access to the socket.
-        # This should be the only method that removes elements from the
-        # outbound queue
         if len(self._outgoing_packet_queue) == 0:
             return False
-        else:
-            self._write_packet(self._outgoing_packet_queue.popleft())
-            return True
+        self._write_packet(self._outgoing_packet_queue.popleft())
+        return True
 
     def _write_packet(self, packet):
         # Immediately writes the given packet to the network. The caller must
@@ -543,11 +540,12 @@ class Connection(object):
             server_protocol = KNOWN_MINECRAFT_VERSIONS.get(server_version)
 
         if server_protocol is None:
-            vs = 'version' if server_version is None else \
-                 ('version of %s' % server_version)
+            vs = 'version' if server_version is None else f'version of {server_version}'
         else:
-            vs = ('protocol version of %d' % server_protocol) + \
-                 ('' if server_version is None else ' (%s)' % server_version)
+            vs = 'protocol version of %d' % server_protocol + (
+                '' if server_version is None else f' ({server_version})'
+            )
+
         ss = 'supported, but not allowed for this connection' \
              if server_protocol in SUPPORTED_PROTOCOL_VERSIONS \
              else 'not supported'
@@ -615,11 +613,7 @@ class NetworkingThread(threading.Thread):
                 # If any packets remain to be written, resume writing as soon
                 # as possible after reading any available packets; otherwise,
                 # wait for up to 50ms (1 tick) for new packets to arrive.
-                if self.connection._outgoing_packet_queue:
-                    read_timeout = 0
-                else:
-                    read_timeout = 0.05
-
+                read_timeout = 0 if self.connection._outgoing_packet_queue else 0.05
             # Read and react to as many as 50 packets.
             while num_packets < 50 and not self.interrupt:
                 packet = self.connection.reactor.read_packet(
@@ -658,49 +652,44 @@ class PacketReactor(object):
             for packet in self.__class__.get_clientbound_packets(context)}
 
     def read_packet(self, stream, timeout=0):
-        # Block for up to `timeout' seconds waiting for `stream' to become
-        # readable, returning `None' if the timeout elapses.
-        ready_to_read = select.select([stream], [], [], timeout)[0]
-
-        if ready_to_read:
-            length = VarInt.read(stream)
-
-            packet_data = packets.PacketBuffer()
-            packet_data.send(stream.read(length))
-            # Ensure we read all the packet
-            while len(packet_data.get_writable()) < length:
-                packet_data.send(
-                    stream.read(length - len(packet_data.get_writable())))
-            packet_data.reset_cursor()
-
-            if self.connection.options.compression_enabled:
-                decompressed_size = VarInt.read(packet_data)
-                if decompressed_size > 0:
-                    decompressor = zlib.decompressobj()
-                    decompressed_packet = decompressor.decompress(
-                                                       packet_data.read())
-                    assert len(decompressed_packet) == decompressed_size, \
-                        'decompressed length %d, but expected %d' % \
-                        (len(decompressed_packet), decompressed_size)
-                    packet_data.reset()
-                    packet_data.send(decompressed_packet)
-                    packet_data.reset_cursor()
-
-            packet_id = VarInt.read(packet_data)
-
-            # If we know the structure of the packet, attempt to parse it
-            # otherwise, just return an instance of the base Packet class.
-            if packet_id in self.clientbound_packets:
-                packet = self.clientbound_packets[packet_id]()
-                packet.context = self.connection.context
-                packet.read(packet_data)
-            else:
-                packet = packets.Packet()
-                packet.context = self.connection.context
-                packet.id = packet_id
-            return packet
-        else:
+        if not (ready_to_read := select.select([stream], [], [], timeout)[0]):
             return None
+        length = VarInt.read(stream)
+
+        packet_data = packets.PacketBuffer()
+        packet_data.send(stream.read(length))
+        # Ensure we read all the packet
+        while len(packet_data.get_writable()) < length:
+            packet_data.send(
+                stream.read(length - len(packet_data.get_writable())))
+        packet_data.reset_cursor()
+
+        if self.connection.options.compression_enabled:
+            decompressed_size = VarInt.read(packet_data)
+            if decompressed_size > 0:
+                decompressor = zlib.decompressobj()
+                decompressed_packet = decompressor.decompress(
+                                                   packet_data.read())
+                assert len(decompressed_packet) == decompressed_size, \
+                    'decompressed length %d, but expected %d' % \
+                    (len(decompressed_packet), decompressed_size)
+                packet_data.reset()
+                packet_data.send(decompressed_packet)
+                packet_data.reset_cursor()
+
+        packet_id = VarInt.read(packet_data)
+
+        # If we know the structure of the packet, attempt to parse it
+        # otherwise, just return an instance of the base Packet class.
+        if packet_id in self.clientbound_packets:
+            packet = self.clientbound_packets[packet_id]()
+            packet.context = self.connection.context
+            packet.read(packet_data)
+        else:
+            packet = packets.Packet()
+            packet.context = self.connection.context
+            packet.id = packet_id
+        return packet
 
     def react(self, packet):
         """Called with each incoming packet after early packet listeners are
@@ -760,9 +749,11 @@ class LoginReactor(PacketReactor):
                 msg = json.loads(packet.json_data)['text']
             except (ValueError, TypeError, KeyError):
                 msg = packet.json_data
-            match = re.match(r"Outdated (client! Please use|server!"
-                             r" I'm still on) (?P<ver>\S+)$", msg)
-            if match:
+            if match := re.match(
+                r"Outdated (client! Please use|server!"
+                r" I'm still on) (?P<ver>\S+)$",
+                msg,
+            ):
                 ver = match.group('ver')
                 self.connection._version_mismatch(server_version=ver)
             raise LoginDisconnect('The server rejected our login attempt '

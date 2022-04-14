@@ -7,11 +7,7 @@ from minecraft.networking.types import (
 
 # Formerly known as state_status_serverbound.
 def get_packets(context):
-    packets = {
-        RequestPacket,
-        PingPacket
-    }
-    return packets
+    return {RequestPacket, PingPacket}
 
 
 class RequestPacket(Packet):

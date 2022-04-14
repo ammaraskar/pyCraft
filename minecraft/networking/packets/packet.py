@@ -117,9 +117,11 @@ class Packet(object):
             str = '0x%02X %s' % (self.id, str)
         fields = self.fields
         if fields is not None:
-            inner_str = ', '.join('%s=%s' % (a, self.field_string(a))
-                                  for a in fields if hasattr(self, a))
-            str = '%s(%s)' % (str, inner_str)
+            inner_str = ', '.join(
+                f'{a}={self.field_string(a)}' for a in fields if hasattr(self, a)
+            )
+
+            str = f'{str}({inner_str})'
         return str
 
     @property
