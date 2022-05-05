@@ -475,6 +475,7 @@ KNOWN_MINECRAFT_VERSION_RECORDS = [
     Version('1.18-rc4',              PRE | 60, False),
     Version('1.18',                  757,      True),
     Version('1.18.1',                757,      True),
+    Version('1.18.2',                758,      True),
 ]
 
 # An OrderedDict mapping the id string of each known Minecraft version to its
