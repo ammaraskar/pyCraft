@@ -442,10 +442,11 @@ class Microsoft_AuthenticationToken(object):
             XSTS = self.GetXSTS(XBL['Token'])
             XBOX = self.GetXBOX(XSTS['Token'],XSTS['uhs'])
             if self.GetProfile(XBOX):
-                print(f'账户: {self.profile.id_}')
+                self.PersistenceLogoin_w()
+                print(f'account: {self.profile.id_}')
                 return True
             else:
-                print('账户不存在')
+                print('Account does not exist')
                 return False
 
     def join(self, server_id):
@@ -501,7 +502,7 @@ class Microsoft_AuthenticationToken(object):
                 Persistence = json.loads(Persistence)
                 self.access_token = Persistence["access_token"]
                 self.oauth20_refresh_token = Persistence["oauth20_refresh_token"]
-                self.GetProfile(self.access_token)
+                self.refresh()
             return self.authenticated
         else:
             return False
