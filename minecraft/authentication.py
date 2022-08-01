@@ -389,6 +389,8 @@ class Microsoft_AuthenticationToken(object):
     def authenticate(self):
         "Get verification information for a Microsoft account"
         oauth20 = self.GetoAuth20()
+        if oauth20 == 1:
+            return False
         XBL = self.GetXBL(oauth20['access_token'])
         XSTS = self.GetXSTS(XBL['Token'])
         XBOX = self.GetXBOX(XSTS['Token'],XSTS['uhs'])
@@ -479,24 +481,29 @@ class Microsoft_AuthenticationToken(object):
 
     def PersistenceLogoin_w(self):
         "Save access token persistent login"
+        ProjectDir = os.path.dirname(os.path.dirname(f'{__file__}'))
+        PersistenceDir = f'{ProjectDir}/Persistence'
         if not self.authenticated:
             err = "AuthenticationToken hasn't been authenticated yet!"
             raise YggdrasilError(err)
-        if not os.path.exists("Persistence"):
-            os.mkdir("Persistence")
+        if not os.path.exists(PersistenceDir):
+            os.mkdir(PersistenceDir)
+        print(PersistenceDir)
         "Save access_token and oauth20_refresh_token"
-        with open(f"Persistence/{self.username}", mode='w', encoding='utf-8') as file_obj:
+        with open(f"{PersistenceDir}/{self.username}", mode='w', encoding='utf-8') as file_obj:
             file_obj.write(f'{{"access_token": "{self.access_token}","oauth20_refresh_token": "{self.oauth20_refresh_token}"}}')
             file_obj.close()
         return True
 
     def PersistenceLogoin_r(self, GameID: str):
         "Load access token persistent login"
-        if not os.path.exists("Persistence"):
+        ProjectDir = os.path.dirname(os.path.dirname(f'{__file__}'))
+        PersistenceDir = f'{ProjectDir}/Persistence'
+        if not os.path.exists(PersistenceDir):
             return False
         "Load access_token and oauth20_refresh_token"
-        if os.path.isfile(f"Persistence/{GameID}"):
-            with open(f"Persistence/{GameID}", mode='r', encoding='utf-8') as file_obj:
+        if os.path.isfile(f"{PersistenceDir}/{GameID}"):
+            with open(f"{PersistenceDir}/{GameID}", mode='r', encoding='utf-8') as file_obj:
                 Persistence = file_obj.read()
                 file_obj.close()
                 Persistence = json.loads(Persistence)

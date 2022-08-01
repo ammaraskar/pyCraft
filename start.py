@@ -86,9 +86,11 @@ def main():
             try:
                 if options.username:
                     if not auth_token.PersistenceLogoin_r(options.username):
-                        print(f"登陆 {options.username} 失败")
+                        print(f"Login to {options.username} failed")
+                        sys.exit(1)
                 else:
-                    auth_token.authenticate()
+                    if not auth_token.authenticate():
+                        sys.exit(2)
             except YggdrasilError as e:
                 print(e)
                 sys.exit()
