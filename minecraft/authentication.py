@@ -265,6 +265,7 @@ class AuthenticationToken(object):
             _raise_from_response(res)
         return True
 
+
 class Microsoft_AuthenticationToken(object):
     """
     Represents an authentication token.
@@ -283,29 +284,31 @@ https%3A%2F%2Flogin.live.com%2Foauth20_desktop.srf"
 authentication/login_with_xbox"
     CheckAccount_URL = 'https://api.minecraftservices.com/entitlements/mcstore'
     Profile_URL = 'https://api.minecraftservices.com/minecraft/profile'
+
     jwt_Token = ''
-    def __init__(self, access_token=None):
+
+    def __init__(self, access_token = None):
         self.access_token = access_token
         self.profile = Profile()
-    
+
     def GetoAuth20(self, code: str='') -> object:
-        if code == '' : 
+        if code == '':
             print(
                 "Please copy this link to your browser to open:"
                 "\n%s" % self.UserLoginURL
             )
-            code = input( 
+            code = input(
                 "After logging in,"
-                "paste the 'code' field in your browser's address bar here:" 
+                "paste the 'code' field in your browser's address bar here:"
             )
         oauth20 = requests.post(self.oauth20_URL, data={
-                "client_id": "00000000402b5328", 
-                "code": f"{code}", 
-                "grant_type": "authorization_code", 
-                "redirect_uri": "https://login.live.com/oauth20_desktop.srf", 
+                "client_id": "00000000402b5328",
+                "code": "{}".format(code),
+                "grant_type": "authorization_code",
+                "redirect_uri": "https://login.live.com/oauth20_desktop.srf",
                 "scope": "service::user.auth.xboxlive.com::MBI_SSL"
             },
-            headers={"content-type": "application/x-www-form-urlencoded"}, 
+            headers={"content-type": "application/x-www-form-urlencoded"},
             timeout=15
         )
         oauth20 = json.loads(oauth20.text)
@@ -324,16 +327,18 @@ authentication/login_with_xbox"
 
     def GetXBL(self, access_token: str) -> object:
         XBL = requests.post(self.XBL_URL,
-            json={
+            json =
+            {
                 "Properties": {
                     "AuthMethod": "RPS",
                     "SiteName": "user.auth.xboxlive.com",
-                    "RpsTicket": f"{access_token}"
+                    "RpsTicket": "{}".format(access_token)
                 },
                 "RelyingParty": "http://auth.xboxlive.com",
                 "TokenType": "JWT"
             },
-            headers=HEADERS, timeout=15
+            headers = HEADERS,
+            timeout = 15
         )
         return {
             "Token": json.loads(XBL.text)['Token'],
@@ -342,16 +347,17 @@ authentication/login_with_xbox"
 
     def GetXSTS(self, access_token: str) -> object:
         XBL = requests.post(self.XSTS_URL,
-            json={
+            json =
+            {
                 "Properties": {
                     "SandboxId": "RETAIL",
-                    "UserTokens": [f"{access_token}"]
+                    "UserTokens": ["{}".format(access_token)]
                 },
                 "RelyingParty": "rp://api.minecraftservices.com/",
                 "TokenType": "JWT"
             },
-            headers=HEADERS,
-            timeout=15
+            headers = HEADERS,
+            timeout = 15
         )
         return {
             "Token": json.loads(XBL.text)['Token'],
@@ -361,7 +367,10 @@ authentication/login_with_xbox"
     def GetXBOX(self, access_token: str, uhs: str) -> str:
         mat_jwt = requests.post(
             self.LOGIN_WITH_XBOX_URL,
-            json={"identityToken": f"XBL3.0 x={uhs};{access_token}"},
+            json=
+            {
+                "identityToken": "XBL3.0 x={};{}".format(uhs, access_token)
+            },
             headers=HEADERS, timeout=15
         )
         self.access_token = json.loads(mat_jwt.text)['access_token']
@@ -370,7 +379,7 @@ authentication/login_with_xbox"
     def CheckAccount(self, jwt_Token: str) -> bool:
         CheckAccount = requests.get(
             self.CheckAccount_URL,
-            headers={"Authorization": f"Bearer {jwt_Token}"},
+            headers={"Authorization": "Bearer {}".format(jwt_Token)},
             timeout=15
         )
         CheckAccount = len(json.loads(CheckAccount.text)['items'])
@@ -383,7 +392,7 @@ authentication/login_with_xbox"
         if self.CheckAccount(access_token):
             Profile = requests.get(
                 self.Profile_URL,
-                headers={"Authorization": f"Bearer {access_token}"},
+                headers={"Authorization": "Bearer {}".format(access_token)},
                 timeout=15
             )
             Profile = json.loads(Profile.text)
@@ -425,7 +434,7 @@ authentication/login_with_xbox"
         XSTS = self.GetXSTS(XBL['Token'])
         XBOX = self.GetXBOX(XSTS['Token'], XSTS['uhs'])
         if self.GetProfile(XBOX):
-            print(f'GameID: {self.profile.id_}')
+            print('GameID: {}'.format(self.profile.id_))
             self.PersistenceLogoin_w()
             return True
         else:
@@ -455,7 +464,7 @@ authentication/login_with_xbox"
 
         oauth20 = requests.post(self.oauth20_URL, data={
             "client_id": "00000000402b5328",
-            "refresh_token": f"{self.oauth20_refresh_token}",
+            "refresh_token": "{}".format(self.oauth20_refresh_token),
             "grant_type": "refresh_token",
             "redirect_uri": "https://login.live.com/oauth20_desktop.srf",
             "scope": "service::user.auth.xboxlive.com::MBI_SSL"
@@ -475,7 +484,7 @@ authentication/login_with_xbox"
             XBOX = self.GetXBOX(XSTS['Token'], XSTS['uhs'])
             if self.GetProfile(XBOX):
                 self.PersistenceLogoin_w()
-                print(f'account: {self.profile.id_}')
+                print('account: {}'.format(self.profile.id_))
                 return True
             else:
                 print('Account does not exist')
@@ -511,8 +520,8 @@ authentication/login_with_xbox"
 
     def PersistenceLogoin_w(self):
         "Save access token persistent login"
-        ProjectDir = os.path.dirname(os.path.dirname(f'{__file__}'))
-        PersistenceDir = f'{ProjectDir}/Persistence'
+        ProjectDir = os.path.dirname(os.path.dirname('{}'.format(__file__)))
+        PersistenceDir = '{}/Persistence'.format(ProjectDir)
         if not self.authenticated:
             err = "AuthenticationToken hasn't been authenticated yet!"
             raise YggdrasilError(err)
@@ -521,26 +530,31 @@ authentication/login_with_xbox"
         print(PersistenceDir)
         "Save access_token and oauth20_refresh_token"
         with open(
-                f"{PersistenceDir}/{self.username}",
+                "{}/{}".format(PersistenceDir,self.username),
                 mode='w',
                 encoding='utf-8'
             ) as file_obj:
-            file_obj.write(
-                f'{{"access_token": "{self.access_token}","oauth20_refresh_token": "{self.oauth20_refresh_token}"}}'
-            )
-            file_obj.close()
+                file_obj.write(
+                    '{{"access_token": "{}","oauth20_refresh_token": "{}"}}'.
+                        format(
+                            self.access_token,
+                            self.oauth20_refresh_token
+                        )
+                )
+                file_obj.close()
         return True
 
     def PersistenceLogoin_r(self, GameID: str):
         "Load access token persistent login"
-        ProjectDir = os.path.dirname(os.path.dirname(f'{__file__}'))
-        PersistenceDir = f'{ProjectDir}/Persistence'
+        ProjectDir = os.path.dirname(os.path.dirname('{}'.format(__file__)))
+        PersistenceDir = '{}/Persistence'.format(ProjectDir)
         if not os.path.exists(PersistenceDir):
             return False
         "Load access_token and oauth20_refresh_token"
-        if os.path.isfile(f"{PersistenceDir}/{GameID}"):
+        if os.path.isfile("{}/{}".format(PersistenceDir, GameID)):
             with open(
-                f"{PersistenceDir}/{GameID}", mode='r', encoding='utf-8'
+                "{}/{}".format(PersistenceDir, GameID),
+                mode='r', encoding='utf-8'
             ) as file_obj:
                 Persistence = file_obj.read()
                 file_obj.close()

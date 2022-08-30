@@ -21,8 +21,9 @@ def get_options():
 
     parser.add_option("-u", "--username", dest="username", default=None,
                       help="User name used for login, "
-                        "if AUTH is microsoft and a persistent archive is detected locally, "
-                        "the persistent login information will be read first")
+                           "if AUTH is microsoft and a persistent archive "
+                           "is detected locally, the persistent login "
+                           "information will be read first")
 
     parser.add_option("-p", "--password", dest="password", default=None,
                       help="password to log in with")
