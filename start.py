@@ -16,10 +16,13 @@ def get_options():
 
     parser.add_option("-a", "--authentication-method", dest="auth",
                       default="microsoft",
-                      help="what to use for authentication, allowed values are: microsoft, mojang")
+                      help="what to use for authentication, "
+                           "allowed values are: microsoft, mojang")
 
     parser.add_option("-u", "--username", dest="username", default=None,
-                      help="User name used for login, if AUTH is microsoft and a persistent archive is detected locally, the persistent login information will be read first")
+                      help="User name used for login, "
+                        "if AUTH is microsoft and a persistent archive is detected locally, "
+                        "the persistent login information will be read first")
 
     parser.add_option("-p", "--password", dest="password", default=None,
                       help="password to log in with")
@@ -94,7 +97,7 @@ def main():
             except YggdrasilError as e:
                 print(e)
                 sys.exit()
-        
+
         print("Logged in as %s..." % auth_token.username)
         connection = Connection(
             options.address, options.port, auth_token=auth_token)
