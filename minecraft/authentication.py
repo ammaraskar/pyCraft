@@ -287,11 +287,11 @@ authentication/login_with_xbox"
 
     jwt_Token = ''
 
-    def __init__(self, access_token = None):
+    def __init__(self, access_token=None):
         self.access_token = access_token
         self.profile = Profile()
 
-    def GetoAuth20(self, code: str='') -> object:
+    def GetoAuth20(self, code='') -> object:
         if code == '':
             print(
                 "Please copy this link to your browser to open:"
@@ -327,18 +327,18 @@ authentication/login_with_xbox"
 
     def GetXBL(self, access_token: str) -> object:
         XBL = requests.post(self.XBL_URL,
-            json =
-            {
-                "Properties": {
-                    "AuthMethod": "RPS",
-                    "SiteName": "user.auth.xboxlive.com",
-                    "RpsTicket": "{}".format(access_token)
+            json=
+                {
+                    "Properties": {
+                        "AuthMethod": "RPS",
+                        "SiteName": "user.auth.xboxlive.com",
+                        "RpsTicket": "{}".format(access_token)
+                    },
+                    "RelyingParty": "http://auth.xboxlive.com",
+                    "TokenType": "JWT"
                 },
-                "RelyingParty": "http://auth.xboxlive.com",
-                "TokenType": "JWT"
-            },
-            headers = HEADERS,
-            timeout = 15
+            headers=HEADERS,
+            timeout=15
         )
         return {
             "Token": json.loads(XBL.text)['Token'],
@@ -347,17 +347,17 @@ authentication/login_with_xbox"
 
     def GetXSTS(self, access_token: str) -> object:
         XBL = requests.post(self.XSTS_URL,
-            json =
-            {
-                "Properties": {
-                    "SandboxId": "RETAIL",
-                    "UserTokens": ["{}".format(access_token)]
+            json=
+                {
+                    "Properties": {
+                        "SandboxId": "RETAIL",
+                        "UserTokens": ["{}".format(access_token)]
+                    },
+                    "RelyingParty": "rp://api.minecraftservices.com/",
+                    "TokenType": "JWT"
                 },
-                "RelyingParty": "rp://api.minecraftservices.com/",
-                "TokenType": "JWT"
-            },
-            headers = HEADERS,
-            timeout = 15
+            headers=HEADERS,
+            timeout=15
         )
         return {
             "Token": json.loads(XBL.text)['Token'],
@@ -368,9 +368,9 @@ authentication/login_with_xbox"
         mat_jwt = requests.post(
             self.LOGIN_WITH_XBOX_URL,
             json=
-            {
-                "identityToken": "XBL3.0 x={};{}".format(uhs, access_token)
-            },
+                {
+                    "identityToken": "XBL3.0 x={};{}".format(uhs, access_token)
+                },
             headers=HEADERS, timeout=15
         )
         self.access_token = json.loads(mat_jwt.text)['access_token']
@@ -530,16 +530,17 @@ authentication/login_with_xbox"
         print(PersistenceDir)
         "Save access_token and oauth20_refresh_token"
         with open(
-                "{}/{}".format(PersistenceDir,self.username),
+                "{}/{}".format(PersistenceDir, self.username),
                 mode='w',
                 encoding='utf-8'
             ) as file_obj:
                 file_obj.write(
-                    '{{"access_token": "{}","oauth20_refresh_token": "{}"}}'.
-                        format(
-                            self.access_token,
-                            self.oauth20_refresh_token
-                        )
+                    '{{"{}": "{}","{}": "{}"}}'.format(
+                        'access_token',
+                        self.access_token,
+                        'oauth20_refresh_token',
+                        self.oauth20_refresh_token
+                    )
                 )
                 file_obj.close()
         return True
