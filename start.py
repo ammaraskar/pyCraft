@@ -90,7 +90,7 @@ def main():
             try:
                 if options.username:
                     if not auth_token.PersistenceLogoin_r(options.username):
-                        print(f"Login to {options.username} failed")
+                        print("Login to {} failed".format(options.username))
                         sys.exit(1)
                 else:
                     if not auth_token.authenticate():
