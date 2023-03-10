@@ -68,15 +68,15 @@ def main():
         connection = Connection(
             options.address, options.port, username=options.username)
     else:
-        auth_token = authentication.AuthenticationToken()
+
         try:
-            auth_token.authenticate(options.username, options.password)
+            auth_token = authentication.Microsoft_AuthenticationToken()
+            auth_token.authenticate()
         except YggdrasilError as e:
             print(e)
             sys.exit()
         print("Logged in as %s..." % auth_token.username)
-        connection = Connection(
-            options.address, options.port, auth_token=auth_token)
+        connection = Connection(options.address, options.port, auth_token, None, "1.8")
 
     if options.dump_packets:
         def print_incoming(packet):
