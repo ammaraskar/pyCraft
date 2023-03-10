@@ -324,6 +324,15 @@ class Microsoft_AuthenticationToken(object):
     """
     Represents an authentication token.
     See https://wiki.vg/Microsoft_Authentication_Scheme.
+
+    This class was shameless copied from github issue, 
+      https://github.com/ammaraskar/pyCraft/issues/234.
+    
+    The user https://github.com/shikukuya, contributed the comment:
+        https://github.com/ammaraskar/pyCraft/issues/234#issuecomment-1365140050
+    
+    I have simply created a fork and submitted the changes as they describe
+    the usage in their comment.  All credit for this goes to shikukua.
     """
 
     UserLoginURL = "https://login.live.com/oauth20_authorize.srf?\
