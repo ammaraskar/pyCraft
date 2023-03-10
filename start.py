@@ -36,15 +36,19 @@ def get_options():
                       action="store_true",
                       help="include unknown packets in --dump-packets output")
 
+    parser.add_option("-m", "--microsoft", dest="microsoft", action="store_true",
+                      help="Enable Microsoft Auth")
+
     (options, args) = parser.parse_args()
 
-    if not options.username:
-        options.username = input("Enter your username: ")
+    if not options.microsoft:
+        if not options.username:
+            options.username = input("Enter your username: ")
 
-    if not options.password and not options.offline:
-        options.password = getpass.getpass("Enter your password (leave "
-                                           "blank for offline mode): ")
-        options.offline = options.offline or (options.password == "")
+        if not options.password and not options.offline:
+            options.password = getpass.getpass("Enter your password (leave "
+                                            "blank for offline mode): ")
+            options.offline = options.offline or (options.password == "")
 
     if not options.server:
         options.server = input("Enter server host or host:port "
