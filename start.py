@@ -36,8 +36,12 @@ def get_options():
                       action="store_true",
                       help="include unknown packets in --dump-packets output")
 
-    parser.add_option("-m", "--microsoft", dest="microsoft", action="store_true",
-                      help="Enable Microsoft Auth")
+    parser.add_option(
+        "-m",
+        "--microsoft",
+        dest="microsoft",
+        action="store_true",
+        help="Enable Microsoft Auth")
 
     (options, args) = parser.parse_args()
 
@@ -47,7 +51,7 @@ def get_options():
 
         if not options.password and not options.offline:
             options.password = getpass.getpass("Enter your password (leave "
-                                            "blank for offline mode): ")
+                                               "blank for offline mode): ")
             options.offline = options.offline or (options.password == "")
 
     if not options.server:
@@ -80,7 +84,12 @@ def main():
             print(e)
             sys.exit()
         print("Logged in as %s..." % auth_token.username)
-        connection = Connection(options.address, options.port, auth_token, None, "1.8")
+        connection = Connection(
+            options.address,
+            options.port,
+            auth_token,
+            None,
+            "1.8")
 
     if options.dump_packets:
         def print_incoming(packet):
