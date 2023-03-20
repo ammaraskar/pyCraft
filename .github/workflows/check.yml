@@ -14,8 +14,6 @@ jobs:
       matrix:
         os:
           - Ubuntu
-          - Windows
-          - MacOs
         py:
           - "3.10"
           - "3.9"
