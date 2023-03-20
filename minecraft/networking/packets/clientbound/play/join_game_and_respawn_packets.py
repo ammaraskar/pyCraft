@@ -46,6 +46,7 @@ class AbstractDimensionPacket(Packet):
     ''' The abstract superclass of JoinGamePacket and RespawnPacket, containing
         common definitions relating to their 'dimension' field.
     '''
+
     def field_string(self, field):
         # pylint: disable=no-member
         if self.context.protocol_later_eq(748) and field == 'dimension':
@@ -59,15 +60,15 @@ class JoinGamePacket(AbstractDimensionPacket):
     @staticmethod
     def get_id(context):
         return 0x26 if context.protocol_later_eq(755) else \
-               0x24 if context.protocol_later_eq(741) else \
-               0x25 if context.protocol_later_eq(721) else \
-               0x26 if context.protocol_later_eq(550) else \
-               0x25 if context.protocol_later_eq(389) else \
-               0x24 if context.protocol_later_eq(345) else \
-               0x23 if context.protocol_later_eq(332) else \
-               0x24 if context.protocol_later_eq(318) else \
-               0x23 if context.protocol_later_eq(107) else \
-               0x01
+            0x24 if context.protocol_later_eq(741) else \
+            0x25 if context.protocol_later_eq(721) else \
+            0x26 if context.protocol_later_eq(550) else \
+            0x25 if context.protocol_later_eq(389) else \
+            0x24 if context.protocol_later_eq(345) else \
+            0x23 if context.protocol_later_eq(332) else \
+            0x24 if context.protocol_later_eq(318) else \
+            0x23 if context.protocol_later_eq(107) else \
+            0x01
 
     packet_name = "join game"
     get_definition = staticmethod(lambda context: [
@@ -174,20 +175,20 @@ class RespawnPacket(AbstractDimensionPacket):
     @staticmethod
     def get_id(context):
         return 0x3D if context.protocol_later_eq(755) else \
-               0x39 if context.protocol_later_eq(741) else \
-               0x3A if context.protocol_later_eq(721) else \
-               0x3B if context.protocol_later_eq(550) else \
-               0x3A if context.protocol_later_eq(471) else \
-               0x38 if context.protocol_later_eq(461) else \
-               0x39 if context.protocol_later_eq(451) else \
-               0x38 if context.protocol_later_eq(389) else \
-               0x37 if context.protocol_later_eq(352) else \
-               0x36 if context.protocol_later_eq(345) else \
-               0x35 if context.protocol_later_eq(336) else \
-               0x34 if context.protocol_later_eq(332) else \
-               0x35 if context.protocol_later_eq(318) else \
-               0x33 if context.protocol_later_eq(70) else \
-               0x07
+            0x39 if context.protocol_later_eq(741) else \
+            0x3A if context.protocol_later_eq(721) else \
+            0x3B if context.protocol_later_eq(550) else \
+            0x3A if context.protocol_later_eq(471) else \
+            0x38 if context.protocol_later_eq(461) else \
+            0x39 if context.protocol_later_eq(451) else \
+            0x38 if context.protocol_later_eq(389) else \
+            0x37 if context.protocol_later_eq(352) else \
+            0x36 if context.protocol_later_eq(345) else \
+            0x35 if context.protocol_later_eq(336) else \
+            0x34 if context.protocol_later_eq(332) else \
+            0x35 if context.protocol_later_eq(318) else \
+            0x33 if context.protocol_later_eq(70) else \
+            0x07
 
     packet_name = 'respawn'
     get_definition = staticmethod(lambda context: [

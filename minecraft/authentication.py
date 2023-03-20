@@ -17,6 +17,7 @@ class Profile(object):
     Container class for a MineCraft Selected profile.
     See: `<http://wiki.vg/Authentication>`_
     """
+
     def __init__(self, id_=None, name=None):
         self.id_ = id_
         self.name = name
@@ -316,21 +317,17 @@ def _raise_from_response(res):
     raise exception
 
 
-
-
-
-
 class Microsoft_AuthenticationToken(object):
     """
     Represents an authentication token.
     See https://wiki.vg/Microsoft_Authentication_Scheme.
 
-    This class was shameless copied from github issue, 
+    This class was shameless copied from github issue,
       https://github.com/ammaraskar/pyCraft/issues/234.
-    
+
     The user https://github.com/shikukuya, contributed the comment:
         https://github.com/ammaraskar/pyCraft/issues/234#issuecomment-1365140050
-    
+
     I have simply created a fork and submitted the changes as they describe
     the usage in their comment.  All credit for this goes to shikukua.
     """

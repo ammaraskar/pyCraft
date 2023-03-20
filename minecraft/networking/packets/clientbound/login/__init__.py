@@ -24,8 +24,8 @@ class DisconnectPacket(Packet):
     @staticmethod
     def get_id(context):
         return 0x00 if context.protocol_later_eq(391) else \
-               0x01 if context.protocol_later_eq(385) else \
-               0x00
+            0x01 if context.protocol_later_eq(385) else \
+            0x00
 
     packet_name = "disconnect"
     definition = [
@@ -36,8 +36,8 @@ class EncryptionRequestPacket(Packet):
     @staticmethod
     def get_id(context):
         return 0x01 if context.protocol_later_eq(391) else \
-               0x02 if context.protocol_later_eq(385) else \
-               0x01
+            0x02 if context.protocol_later_eq(385) else \
+            0x01
 
     packet_name = "encryption request"
     definition = [
@@ -50,8 +50,8 @@ class LoginSuccessPacket(Packet):
     @staticmethod
     def get_id(context):
         return 0x02 if context.protocol_later_eq(391) else \
-               0x03 if context.protocol_later_eq(385) else \
-               0x02
+            0x03 if context.protocol_later_eq(385) else \
+            0x02
 
     packet_name = "login success"
     get_definition = staticmethod(lambda context: [
@@ -64,8 +64,8 @@ class SetCompressionPacket(Packet):
     @staticmethod
     def get_id(context):
         return 0x03 if context.protocol_later_eq(391) else \
-               0x04 if context.protocol_later_eq(385) else \
-               0x03
+            0x04 if context.protocol_later_eq(385) else \
+            0x03
 
     packet_name = "set compression"
     definition = [
@@ -90,7 +90,7 @@ class PluginRequestPacket(Packet):
     @staticmethod
     def get_id(context):
         return 0x04 if context.protocol_later_eq(391) else \
-               0x00
+            0x00
 
     packet_name = 'login plugin request'
     definition = [

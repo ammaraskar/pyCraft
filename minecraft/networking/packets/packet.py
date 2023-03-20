@@ -40,7 +40,7 @@ class Packet(object):
     @overridable_property
     def definition(self):
         return None if self.context is None else \
-               self.get_definition(self.context)
+            self.get_definition(self.context)
 
     # In general, a packet instance must have its 'context' attribute set to an
     # instance of 'ConnectionContext', for example to decide on version-
