@@ -16,6 +16,10 @@ account, edit profiles etc
 The Connection class under the networking package handles
 connecting to a server, sending packets, listening for packets etc
 
+The example implementation show a couple different approaches to how
+you can get started with the library. One from command line and the
+other being more programmatically inclined.
+
 
 Contents:
  
@@ -24,3 +28,4 @@ Contents:
 
    authentication
    connecting
+   example
