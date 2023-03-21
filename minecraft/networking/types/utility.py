@@ -8,7 +8,7 @@ import types
 # These aliases are retained for backward compatibility
 from minecraft.utility import (  # noqa: F401
     descriptor, overridable_descriptor, overridable_property, attribute_alias,
-    multi_attribute_alias, attribute_transform, class_and_instancemethod
+    multi_attribute_alias, attribute_transform
 )
 
 
@@ -237,6 +237,25 @@ class MutableRecord(object):
 
 #     def __delete__(self, instance):
 #         return self._fdel(self, instance)
+
+class class_and_instancemethod:
+    """ A decorator for functions defined in a class namespace which are to be
+        accessed as both class and instance methods: retrieving the method from
+        a class will return a bound class method (like the built-in
+        'classmethod' decorator), but retrieving the method from an instance
+        will return a bound instance method (as if the function were not
+        decorated). Therefore, the first argument of the decorated function may
+        be either a class or an instance, depending on how it was called.
+    """
+
+    __slots__ = '_func',
+
+    def __init__(self, func):
+        self._func = func
+
+    def __get__(self, inst, owner=None):
+        bind_to = owner if inst is None else inst
+        return types.MethodType(self._func, bind_to)
 
 
 
