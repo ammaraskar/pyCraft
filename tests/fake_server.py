@@ -38,6 +38,7 @@ class FakeServerDisconnect(Exception):
         the client's connection. 'message' is provided as an argument to
         'handle_play_server_disconnect' or 'handle_login_server_disconnect'.
     """
+
     def __init__(self, message=None):
         self.message = message
 
@@ -166,14 +167,14 @@ class FakeClientHandler(object):
         packet = clientbound.status.ResponsePacket()
         packet.json_response = json.dumps({
             'version': {
-                'name':     self.server.minecraft_version,
+                'name': self.server.minecraft_version,
                 'protocol': self.server.context.protocol_version},
             'players': {
-                'max':      1,
-                'online':   0,
-                'sample':   []},
+                'max': 1,
+                'online': 0,
+                'sample': []},
             'description': {
-                'text':     'FakeServer'}})
+                'text': 'FakeServer'}})
         self.write_packet(packet)
 
     def handle_ping(self, ping_packet):
@@ -227,7 +228,7 @@ class FakeClientHandler(object):
             self.handle_connection()
             packet = self.read_packet()
             assert isinstance(packet, serverbound.handshake.HandShakePacket), \
-                   type(packet)
+                type(packet)
             self.handle_handshake(packet)
             if packet.next_state == 1:
                 self._run_status()

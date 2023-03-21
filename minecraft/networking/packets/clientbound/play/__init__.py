@@ -84,28 +84,28 @@ class KeepAlivePacket(AbstractKeepAlivePacket):
     @staticmethod
     def get_id(context):
         return 0x21 if context.protocol_later_eq(755) else \
-               0x1F if context.protocol_later_eq(741) else \
-               0x20 if context.protocol_later_eq(721) else \
-               0x21 if context.protocol_later_eq(550) else \
-               0x20 if context.protocol_later_eq(471) else \
-               0x21 if context.protocol_later_eq(389) else \
-               0x20 if context.protocol_later_eq(345) else \
-               0x1F if context.protocol_later_eq(332) else \
-               0x20 if context.protocol_later_eq(318) else \
-               0x1F if context.protocol_later_eq(107) else \
-               0x00
+            0x1F if context.protocol_later_eq(741) else \
+            0x20 if context.protocol_later_eq(721) else \
+            0x21 if context.protocol_later_eq(550) else \
+            0x20 if context.protocol_later_eq(471) else \
+            0x21 if context.protocol_later_eq(389) else \
+            0x20 if context.protocol_later_eq(345) else \
+            0x1F if context.protocol_later_eq(332) else \
+            0x20 if context.protocol_later_eq(318) else \
+            0x1F if context.protocol_later_eq(107) else \
+            0x00
 
 
 class ServerDifficultyPacket(Packet):
     @staticmethod
     def get_id(context):
         return 0x0E if context.protocol_later_eq(755) else \
-               0x0D if context.protocol_later_eq(721) else \
-               0x0E if context.protocol_later_eq(550) else \
-               0x0D if context.protocol_later_eq(332) else \
-               0x0E if context.protocol_later_eq(318) else \
-               0x0D if context.protocol_later_eq(70) else \
-               0x41
+            0x0D if context.protocol_later_eq(721) else \
+            0x0E if context.protocol_later_eq(550) else \
+            0x0D if context.protocol_later_eq(332) else \
+            0x0E if context.protocol_later_eq(318) else \
+            0x0D if context.protocol_later_eq(70) else \
+            0x41
 
     packet_name = 'server difficulty'
     get_definition = staticmethod(lambda context: [
@@ -121,13 +121,13 @@ class ChatMessagePacket(Packet):
     @staticmethod
     def get_id(context):
         return 0x0F if context.protocol_later_eq(755) else \
-               0x0E if context.protocol_later_eq(721) else \
-               0x0F if context.protocol_later_eq(550) else \
-               0x0E if context.protocol_later_eq(343) else \
-               0x0F if context.protocol_later_eq(332) else \
-               0x10 if context.protocol_later_eq(317) else \
-               0x0F if context.protocol_later_eq(107) else \
-               0x02
+            0x0E if context.protocol_later_eq(721) else \
+            0x0F if context.protocol_later_eq(550) else \
+            0x0E if context.protocol_later_eq(343) else \
+            0x0F if context.protocol_later_eq(332) else \
+            0x10 if context.protocol_later_eq(317) else \
+            0x0F if context.protocol_later_eq(107) else \
+            0x02
 
     packet_name = "chat message"
     get_definition = staticmethod(lambda context: [
@@ -146,15 +146,15 @@ class DisconnectPacket(Packet):
     @staticmethod
     def get_id(context):
         return 0x1A if context.protocol_later_eq(755) else \
-               0x19 if context.protocol_later_eq(741) else \
-               0x1A if context.protocol_later_eq(721) else \
-               0x1B if context.protocol_later_eq(550) else \
-               0x1A if context.protocol_later_eq(471) else \
-               0x1B if context.protocol_later_eq(345) else \
-               0x1A if context.protocol_later_eq(332) else \
-               0x1B if context.protocol_later_eq(318) else \
-               0x1A if context.protocol_later_eq(107) else \
-               0x40
+            0x19 if context.protocol_later_eq(741) else \
+            0x1A if context.protocol_later_eq(721) else \
+            0x1B if context.protocol_later_eq(550) else \
+            0x1A if context.protocol_later_eq(471) else \
+            0x1B if context.protocol_later_eq(345) else \
+            0x1A if context.protocol_later_eq(332) else \
+            0x1B if context.protocol_later_eq(318) else \
+            0x1A if context.protocol_later_eq(107) else \
+            0x40
 
     packet_name = "disconnect"
 
@@ -167,7 +167,7 @@ class SetCompressionPacket(Packet):
     @staticmethod
     def get_id(context):
         return 0x03 if context.protocol_later_eq(755) else \
-               0x46
+            0x46
 
     packet_name = "set compression"
     definition = [
@@ -178,8 +178,8 @@ class SpawnPlayerPacket(Packet):
     @staticmethod
     def get_id(context):
         return 0x04 if context.protocol_later_eq(721) else \
-               0x05 if context.protocol_later_eq(67) else \
-               0x0C
+            0x05 if context.protocol_later_eq(67) else \
+            0x0C
 
     packet_name = 'spawn player'
     get_definition = staticmethod(lambda context: [
@@ -214,21 +214,21 @@ class EntityVelocityPacket(Packet):
     @staticmethod
     def get_id(context):
         return 0x4F if context.protocol_later_eq(755) else \
-               0x46 if context.protocol_later_eq(721) else \
-               0x47 if context.protocol_later_eq(707) else \
-               0x46 if context.protocol_later_eq(550) else \
-               0x45 if context.protocol_later_eq(471) else \
-               0x41 if context.protocol_later_eq(461) else \
-               0x42 if context.protocol_later_eq(451) else \
-               0x41 if context.protocol_later_eq(389) else \
-               0x40 if context.protocol_later_eq(352) else \
-               0x3F if context.protocol_later_eq(345) else \
-               0x3E if context.protocol_later_eq(336) else \
-               0x3D if context.protocol_later_eq(332) else \
-               0x3B if context.protocol_later_eq(86) else \
-               0x3C if context.protocol_later_eq(77) else \
-               0x3B if context.protocol_later_eq(67) else \
-               0x12
+            0x46 if context.protocol_later_eq(721) else \
+            0x47 if context.protocol_later_eq(707) else \
+            0x46 if context.protocol_later_eq(550) else \
+            0x45 if context.protocol_later_eq(471) else \
+            0x41 if context.protocol_later_eq(461) else \
+            0x42 if context.protocol_later_eq(451) else \
+            0x41 if context.protocol_later_eq(389) else \
+            0x40 if context.protocol_later_eq(352) else \
+            0x3F if context.protocol_later_eq(345) else \
+            0x3E if context.protocol_later_eq(336) else \
+            0x3D if context.protocol_later_eq(332) else \
+            0x3B if context.protocol_later_eq(86) else \
+            0x3C if context.protocol_later_eq(77) else \
+            0x3B if context.protocol_later_eq(67) else \
+            0x12
 
     packet_name = 'entity velocity'
     get_definition = staticmethod(lambda context: [
@@ -243,23 +243,23 @@ class EntityPositionDeltaPacket(Packet):
     @staticmethod
     def get_id(context):
         return 0x29 if context.protocol_later_eq(755) else \
-               0x27 if context.protocol_later_eq(741) else \
-               0x28 if context.protocol_later_eq(721) else \
-               0x29 if context.protocol_later_eq(550) else \
-               0x28 if context.protocol_later_eq(389) else \
-               0x27 if context.protocol_later_eq(345) else \
-               0x26 if context.protocol_later_eq(318) else \
-               0x25 if context.protocol_later_eq(94) else \
-               0x26 if context.protocol_later_eq(70) else \
-               0x15
+            0x27 if context.protocol_later_eq(741) else \
+            0x28 if context.protocol_later_eq(721) else \
+            0x29 if context.protocol_later_eq(550) else \
+            0x28 if context.protocol_later_eq(389) else \
+            0x27 if context.protocol_later_eq(345) else \
+            0x26 if context.protocol_later_eq(318) else \
+            0x25 if context.protocol_later_eq(94) else \
+            0x26 if context.protocol_later_eq(70) else \
+            0x15
 
     packet_name = "entity position delta"
 
     @staticmethod
     def get_definition(context):
         delta_type = FixedPoint(Short, 12) \
-                     if context.protocol_later_eq(106) else \
-                     FixedPoint(Byte)
+            if context.protocol_later_eq(106) else \
+            FixedPoint(Byte)
         return [
             {'entity_id': VarInt},
             {'delta_x_float': delta_type},
@@ -272,31 +272,31 @@ class EntityPositionDeltaPacket(Packet):
     # they represent the delta values as fixed-point integers with 12 bits
     # of fractional part, regardless of the protocol version.
     delta_x = attribute_transform(
-                'delta_x_float', lambda x: int(x * 4096), lambda x: x / 4096)
+        'delta_x_float', lambda x: int(x * 4096), lambda x: x / 4096)
     delta_y = attribute_transform(
-                'delta_y_float', lambda y: int(y * 4096), lambda y: y / 4096)
+        'delta_y_float', lambda y: int(y * 4096), lambda y: y / 4096)
     delta_z = attribute_transform(
-                'delta_z_float', lambda z: int(z * 4096), lambda z: z / 4096)
+        'delta_z_float', lambda z: int(z * 4096), lambda z: z / 4096)
 
 
 class TimeUpdatePacket(Packet):
     @staticmethod
     def get_id(context):
         return 0x59 if context.protocol_later_eq(PRE | 48) else \
-               0x58 if context.protocol_later_eq(755) else \
-               0x4E if context.protocol_later_eq(721) else \
-               0x4F if context.protocol_later_eq(550) else \
-               0x4E if context.protocol_later_eq(471) else \
-               0x4A if context.protocol_later_eq(461) else \
-               0x4B if context.protocol_later_eq(451) else \
-               0x4A if context.protocol_later_eq(389) else \
-               0x49 if context.protocol_later_eq(352) else \
-               0x48 if context.protocol_later_eq(345) else \
-               0x47 if context.protocol_later_eq(336) else \
-               0x46 if context.protocol_later_eq(318) else \
-               0x44 if context.protocol_later_eq(94) else \
-               0x43 if context.protocol_later_eq(70) else \
-               0x03
+            0x58 if context.protocol_later_eq(755) else \
+            0x4E if context.protocol_later_eq(721) else \
+            0x4F if context.protocol_later_eq(550) else \
+            0x4E if context.protocol_later_eq(471) else \
+            0x4A if context.protocol_later_eq(461) else \
+            0x4B if context.protocol_later_eq(451) else \
+            0x4A if context.protocol_later_eq(389) else \
+            0x49 if context.protocol_later_eq(352) else \
+            0x48 if context.protocol_later_eq(345) else \
+            0x47 if context.protocol_later_eq(336) else \
+            0x46 if context.protocol_later_eq(318) else \
+            0x44 if context.protocol_later_eq(94) else \
+            0x43 if context.protocol_later_eq(70) else \
+            0x03
 
     packet_name = "time update"
     get_definition = staticmethod(lambda context: [
@@ -309,21 +309,21 @@ class UpdateHealthPacket(Packet):
     @staticmethod
     def get_id(context):
         return 0x52 if context.protocol_later_eq(755) else \
-               0x49 if context.protocol_later_eq(721) else \
-               0x4A if context.protocol_later_eq(707) else \
-               0x49 if context.protocol_later_eq(550) else \
-               0x48 if context.protocol_later_eq(471) else \
-               0x44 if context.protocol_later_eq(461) else \
-               0x45 if context.protocol_later_eq(451) else \
-               0x44 if context.protocol_later_eq(389) else \
-               0x43 if context.protocol_later_eq(352) else \
-               0x42 if context.protocol_later_eq(345) else \
-               0x41 if context.protocol_later_eq(336) else \
-               0x40 if context.protocol_later_eq(318) else \
-               0x3E if context.protocol_later_eq(86) else \
-               0x3F if context.protocol_later_eq(77) else \
-               0x3E if context.protocol_later_eq(67) else \
-               0x06
+            0x49 if context.protocol_later_eq(721) else \
+            0x4A if context.protocol_later_eq(707) else \
+            0x49 if context.protocol_later_eq(550) else \
+            0x48 if context.protocol_later_eq(471) else \
+            0x44 if context.protocol_later_eq(461) else \
+            0x45 if context.protocol_later_eq(451) else \
+            0x44 if context.protocol_later_eq(389) else \
+            0x43 if context.protocol_later_eq(352) else \
+            0x42 if context.protocol_later_eq(345) else \
+            0x41 if context.protocol_later_eq(336) else \
+            0x40 if context.protocol_later_eq(318) else \
+            0x3E if context.protocol_later_eq(86) else \
+            0x3F if context.protocol_later_eq(77) else \
+            0x3E if context.protocol_later_eq(67) else \
+            0x06
 
     packet_name = 'update health'
     get_definition = staticmethod(lambda context: [
@@ -337,34 +337,34 @@ class PluginMessagePacket(AbstractPluginMessagePacket):
     @staticmethod
     def get_id(context):
         return 0x18 if context.protocol_later_eq(755) else \
-               0x17 if context.protocol_later_eq(741) else \
-               0x18 if context.protocol_later_eq(721) else \
-               0x19 if context.protocol_later_eq(550) else \
-               0x18 if context.protocol_later_eq(471) else \
-               0x19 if context.protocol_later_eq(345) else \
-               0x18 if context.protocol_later_eq(332) else \
-               0x19 if context.protocol_later_eq(318) else \
-               0x18 if context.protocol_later_eq(70) else \
-               0x3F
+            0x17 if context.protocol_later_eq(741) else \
+            0x18 if context.protocol_later_eq(721) else \
+            0x19 if context.protocol_later_eq(550) else \
+            0x18 if context.protocol_later_eq(471) else \
+            0x19 if context.protocol_later_eq(345) else \
+            0x18 if context.protocol_later_eq(332) else \
+            0x19 if context.protocol_later_eq(318) else \
+            0x18 if context.protocol_later_eq(70) else \
+            0x3F
 
 
 class PlayerListHeaderAndFooterPacket(Packet):
     @staticmethod
     def get_id(context):
         return 0x5F if context.protocol_later_eq(PRE | 48) else \
-               0x5E if context.protocol_later_eq(755) else \
-               0x53 if context.protocol_later_eq(721) else \
-               0x54 if context.protocol_later_eq(550) else \
-               0x53 if context.protocol_later_eq(471) else \
-               0x5F if context.protocol_later_eq(461) else \
-               0x50 if context.protocol_later_eq(451) else \
-               0x4F if context.protocol_later_eq(441) else \
-               0x4E if context.protocol_later_eq(393) else \
-               0x4A if context.protocol_later_eq(338) else \
-               0x49 if context.protocol_later_eq(335) else \
-               0x47 if context.protocol_later_eq(110) else \
-               0x48 if context.protocol_later_eq(107) else \
-               0x47
+            0x5E if context.protocol_later_eq(755) else \
+            0x53 if context.protocol_later_eq(721) else \
+            0x54 if context.protocol_later_eq(550) else \
+            0x53 if context.protocol_later_eq(471) else \
+            0x5F if context.protocol_later_eq(461) else \
+            0x50 if context.protocol_later_eq(451) else \
+            0x4F if context.protocol_later_eq(441) else \
+            0x4E if context.protocol_later_eq(393) else \
+            0x4A if context.protocol_later_eq(338) else \
+            0x49 if context.protocol_later_eq(335) else \
+            0x47 if context.protocol_later_eq(110) else \
+            0x48 if context.protocol_later_eq(107) else \
+            0x47
 
     packet_name = 'player list header and footer'
     definition = [
@@ -376,15 +376,15 @@ class EntityLookPacket(Packet):
     @staticmethod
     def get_id(context):
         return 0x2B if context.protocol_later_eq(755) else \
-               0x29 if context.protocol_later_eq(741) else \
-               0x2A if context.protocol_later_eq(721) else \
-               0x2B if context.protocol_later_eq(550) else \
-               0x2A if context.protocol_later_eq(389) else \
-               0x29 if context.protocol_later_eq(345) else \
-               0x28 if context.protocol_later_eq(318) else \
-               0x27 if context.protocol_later_eq(94) else \
-               0x28 if context.protocol_later_eq(70) else \
-               0x16
+            0x29 if context.protocol_later_eq(741) else \
+            0x2A if context.protocol_later_eq(721) else \
+            0x2B if context.protocol_later_eq(550) else \
+            0x2A if context.protocol_later_eq(389) else \
+            0x29 if context.protocol_later_eq(345) else \
+            0x28 if context.protocol_later_eq(318) else \
+            0x27 if context.protocol_later_eq(94) else \
+            0x28 if context.protocol_later_eq(70) else \
+            0x16
 
     packet_name = 'entity look'
     definition = [
@@ -399,21 +399,21 @@ class ResourcePackSendPacket(Packet):
     @staticmethod
     def get_id(context):
         return 0x3C if context.protocol_later_eq(PRE | 15) else \
-               0x39 if context.protocol_later_eq(PRE | 8) else \
-               0x38 if context.protocol_later_eq(741) else \
-               0x39 if context.protocol_later_eq(721) else \
-               0x3A if context.protocol_later_eq(550) else \
-               0x39 if context.protocol_later_eq(471) else \
-               0x37 if context.protocol_later_eq(461) else \
-               0x38 if context.protocol_later_eq(451) else \
-               0x37 if context.protocol_later_eq(389) else \
-               0x36 if context.protocol_later_eq(352) else \
-               0x35 if context.protocol_later_eq(345) else \
-               0x34 if context.protocol_later_eq(336) else \
-               0x33 if context.protocol_later_eq(332) else \
-               0x34 if context.protocol_later_eq(318) else \
-               0x32 if context.protocol_later_eq(70) else \
-               0x48
+            0x39 if context.protocol_later_eq(PRE | 8) else \
+            0x38 if context.protocol_later_eq(741) else \
+            0x39 if context.protocol_later_eq(721) else \
+            0x3A if context.protocol_later_eq(550) else \
+            0x39 if context.protocol_later_eq(471) else \
+            0x37 if context.protocol_later_eq(461) else \
+            0x38 if context.protocol_later_eq(451) else \
+            0x37 if context.protocol_later_eq(389) else \
+            0x36 if context.protocol_later_eq(352) else \
+            0x35 if context.protocol_later_eq(345) else \
+            0x34 if context.protocol_later_eq(336) else \
+            0x33 if context.protocol_later_eq(332) else \
+            0x34 if context.protocol_later_eq(318) else \
+            0x32 if context.protocol_later_eq(70) else \
+            0x48
 
     packet_name = "resource pack send"
 

@@ -30,6 +30,7 @@ class ConnectionContext(object):
     shared by the Connection class with other classes, such as Packet.
     Importantly, it can be used without knowing the interface of Connection.
     """
+
     def __init__(self, **kwds):
         self.protocol_version = kwds.get('protocol_version')
 
@@ -75,6 +76,7 @@ class Connection(object):
     server, it handles everything from connecting, sending packets to
     handling default network behaviour
     """
+
     def __init__(
         self,
         address,
@@ -442,7 +444,7 @@ class Connection(object):
         # then IPv6, then other address families.
         def key(ai):
             return 0 if ai[0] == socket.AF_INET else \
-                   1 if ai[0] == socket.AF_INET6 else 2
+                1 if ai[0] == socket.AF_INET6 else 2
         ai_faml, ai_type, ai_prot, _ai_cnam, ai_addr = min(info, key=key)
 
         self.socket = socket.socket(ai_faml, ai_type, ai_prot)
@@ -678,7 +680,7 @@ class PacketReactor(object):
                 if decompressed_size > 0:
                     decompressor = zlib.decompressobj()
                     decompressed_packet = decompressor.decompress(
-                                                       packet_data.read())
+                        packet_data.read())
                     assert len(decompressed_packet) == decompressed_size, \
                         'decompressed length %d, but expected %d' % \
                         (len(decompressed_packet), decompressed_size)

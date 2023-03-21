@@ -1,6 +1,7 @@
 import requests
 import json
 import uuid
+import os
 from .exceptions import YggdrasilError
 
 #: The base url for Ygdrassil requests
@@ -16,6 +17,7 @@ class Profile(object):
     Container class for a MineCraft Selected profile.
     See: `<http://wiki.vg/Authentication>`_
     """
+
     def __init__(self, id_=None, name=None):
         self.id_ = id_
         self.name = name
@@ -313,3 +315,295 @@ def _raise_from_response(res):
         exception.yggdrasil_cause = json_resp.get("cause")
 
     raise exception
+
+
+class Microsoft_AuthenticationToken(object):
+    """
+    Represents an authentication token.
+    See https://wiki.vg/Microsoft_Authentication_Scheme.
+
+    This class was shameless copied from github issue,
+      https://github.com/ammaraskar/pyCraft/issues/234.
+
+    The user https://github.com/shikukuya, contributed the comment:
+        https://github.com/ammaraskar/pyCraft/issues/234#issuecomment-1365140050
+
+    I have simply created a fork and submitted the changes as they describe
+    the usage in their comment.  All credit for this goes to shikukua.
+    """
+
+    UserLoginURL = "https://login.live.com/oauth20_authorize.srf?\
+client_id=00000000402b5328&response_type=code\
+&scope=service%3A%3Auser.auth.xboxlive.com%3A%3AMBI_SSL&redirect_uri=\
+https%3A%2F%2Flogin.live.com%2Foauth20_desktop.srf"
+
+    oauth20_URL = 'https://login.live.com/oauth20_token.srf'
+    XBL_URL = 'https://user.auth.xboxlive.com/user/authenticate'
+    XSTS_URL = 'https://xsts.auth.xboxlive.com/xsts/authorize'
+    LOGIN_WITH_XBOX_URL = "https://api.minecraftservices.com/\
+authentication/login_with_xbox"
+
+    CheckAccount_URL = 'https://api.minecraftservices.com/entitlements/mcstore'
+    Profile_URL = 'https://api.minecraftservices.com/minecraft/profile'
+
+    jwt_Token = ''
+
+    def __init__(self, access_token=None):
+        self.access_token = access_token
+        self.profile = Profile()
+
+    def GetoAuth20(self, code='') -> object:
+        if code == '':
+            print("Please copy this link to your browser to open:"
+                  "\n%s" % self.UserLoginURL)
+            code = input(
+                "After logging in,"
+                "paste the 'code' field in your browser's address bar here:")
+        oauth20 = requests.post(
+            self.oauth20_URL,
+            data={
+                "client_id": "00000000402b5328",
+                "code": "{}".format(code),
+                "grant_type": "authorization_code",
+                "redirect_uri": "https://login.live.com/oauth20_desktop.srf",
+                "scope": "service::user.auth.xboxlive.com::MBI_SSL"
+            },
+            headers={"content-type": "application/x-www-form-urlencoded"},
+            timeout=15)
+        oauth20 = json.loads(oauth20.text)
+        if 'error' in oauth20:
+            print("Error: %s" % oauth20["error"])
+            return 1
+        else:
+            self.oauth20_access_token = oauth20['access_token']
+            self.oauth20_refresh_token = oauth20['refresh_token']
+            oauth20_access_token = oauth20['access_token']
+            oauth20_refresh_token = oauth20['refresh_token']
+        return {
+            "access_token": oauth20_access_token,
+            "refresh_token": oauth20_refresh_token
+        }
+
+    def GetXBL(self, access_token: str) -> object:
+        XBL = requests.post(self.XBL_URL,
+                            json={
+                                "Properties": {
+                                    "AuthMethod": "RPS",
+                                    "SiteName": "user.auth.xboxlive.com",
+                                    "RpsTicket": "{}".format(access_token)
+                                },
+                                "RelyingParty": "http://auth.xboxlive.com",
+                                "TokenType": "JWT"
+                            },
+                            headers=HEADERS,
+                            timeout=15)
+        return {
+            "Token": json.loads(XBL.text)['Token'],
+            "uhs": json.loads(XBL.text)['DisplayClaims']['xui'][0]['uhs']
+        }
+
+    def GetXSTS(self, access_token: str) -> object:
+        XBL = requests.post(self.XSTS_URL,
+                            json={
+                                "Properties": {
+                                    "SandboxId": "RETAIL",
+                                    "UserTokens": ["{}".format(access_token)]
+                                },
+                                "RelyingParty":
+                                "rp://api.minecraftservices.com/",
+                                "TokenType": "JWT"
+                            },
+                            headers=HEADERS,
+                            timeout=15)
+        return {
+            "Token": json.loads(XBL.text)['Token'],
+            "uhs": json.loads(XBL.text)['DisplayClaims']['xui'][0]['uhs']
+        }
+
+    def GetXBOX(self, access_token: str, uhs: str) -> str:
+        mat_jwt = requests.post(
+            self.LOGIN_WITH_XBOX_URL,
+            json={"identityToken": "XBL3.0 x={};{}".format(uhs, access_token)},
+            headers=HEADERS,
+            timeout=15)
+        self.access_token = json.loads(mat_jwt.text)['access_token']
+        return self.access_token
+
+    def CheckAccount(self, jwt_Token: str) -> bool:
+        CheckAccount = requests.get(
+            self.CheckAccount_URL,
+            headers={"Authorization": "Bearer {}".format(jwt_Token)},
+            timeout=15)
+        CheckAccount = len(json.loads(CheckAccount.text)['items'])
+        if CheckAccount != 0:
+            return True
+        else:
+            return False
+
+    def GetProfile(self, access_token: str) -> object:
+        if self.CheckAccount(access_token):
+            Profile = requests.get(
+                self.Profile_URL,
+                headers={"Authorization": "Bearer {}".format(access_token)},
+                timeout=15)
+            Profile = json.loads(Profile.text)
+            if 'error' in Profile:
+                return False
+            self.profile.id_ = Profile["id"]
+            self.profile.name = Profile["name"]
+            self.username = Profile["name"]
+            return True
+        else:
+            return False
+
+    @property
+    def authenticated(self):
+        """
+        Attribute which is ``True`` when the token is authenticated and
+        ``False`` when it isn't.
+        """
+        if not self.username:
+            return False
+
+        if not self.access_token:
+            return False
+
+        if not self.oauth20_refresh_token:
+            return False
+
+        if not self.profile:
+            return False
+
+        return True
+
+    def authenticate(self):
+        "Get verification information for a Microsoft account"
+        oauth20 = self.GetoAuth20()
+        if oauth20 == 1:
+            return False
+        XBL = self.GetXBL(oauth20['access_token'])
+        XSTS = self.GetXSTS(XBL['Token'])
+        XBOX = self.GetXBOX(XSTS['Token'], XSTS['uhs'])
+        if self.GetProfile(XBOX):
+            print('GameID: {}'.format(self.profile.id_))
+            self.PersistenceLogoin_w()
+            return True
+        else:
+            print('Account does not exist')
+            return False
+
+    def refresh(self):
+        """
+        Refreshes the `AuthenticationToken`. Used to keep a user logged in
+        between sessions and is preferred over storing a user's password in a
+        file.
+        Returns:
+            Returns `True` if `AuthenticationToken` was successfully refreshed.
+            Otherwise it raises an exception.
+        Raises:
+            minecraft.exceptions.YggdrasilError
+            ValueError - if `AuthenticationToken.access_token` or
+                `AuthenticationToken.client_token` isn't set.
+        """
+        if self.access_token is None:
+            raise ValueError("'access_token' not set!'")
+
+        if self.oauth20_refresh_token is None:
+            raise ValueError("'oauth20_refresh_token' is not set!")
+
+        oauth20 = requests.post(
+            self.oauth20_URL,
+            data={
+                "client_id": "00000000402b5328",
+                "refresh_token": "{}".format(self.oauth20_refresh_token),
+                "grant_type": "refresh_token",
+                "redirect_uri": "https://login.live.com/oauth20_desktop.srf",
+                "scope": "service::user.auth.xboxlive.com::MBI_SSL"
+            },
+            headers={"content-type": "application/x-www-form-urlencoded"},
+            timeout=15)
+        oauth20 = json.loads(oauth20.text)
+        if 'error' in oauth20:
+            print("Error: %s" % oauth20["error"])
+            return False
+        else:
+            self.oauth20_access_token = oauth20['access_token']
+            self.oauth20_refresh_token = oauth20['refresh_token']
+            XBL = self.GetXBL(self.oauth20_access_token)
+            XSTS = self.GetXSTS(XBL['Token'])
+            XBOX = self.GetXBOX(XSTS['Token'], XSTS['uhs'])
+            if self.GetProfile(XBOX):
+                self.PersistenceLogoin_w()
+                print('account: {}'.format(self.profile.id_))
+                return True
+            else:
+                print('Account does not exist')
+                return False
+
+    def join(self, server_id):
+        """
+        Informs the Mojang session-server that we're joining the
+        MineCraft server with id ``server_id``.
+        Parameters:
+            server_id - ``str`` with the server id
+        Returns:
+            ``True`` if no errors occured
+        Raises:
+            :class:`minecraft.exceptions.YggdrasilError`
+        """
+        if not self.authenticated:
+            err = "AuthenticationToken hasn't been authenticated yet!"
+            raise YggdrasilError(err)
+
+        res = _make_request(
+            SESSION_SERVER, "join", {
+                "accessToken": self.access_token,
+                "selectedProfile": self.profile.to_dict(),
+                "serverId": server_id
+            })
+
+        if res.status_code != 204:
+            _raise_from_response(res)
+        return True
+
+    def PersistenceLogoin_w(self):
+        "Save access token persistent login"
+        ProjectDir = os.path.dirname(os.path.dirname('{}'.format(__file__)))
+        PersistenceDir = '{}/Persistence'.format(ProjectDir)
+        if not self.authenticated:
+            err = "AuthenticationToken hasn't been authenticated yet!"
+            raise YggdrasilError(err)
+        if not os.path.exists(PersistenceDir):
+            os.mkdir(PersistenceDir)
+        print(PersistenceDir)
+        "Save access_token and oauth20_refresh_token"
+        with open("{}/{}".format(PersistenceDir, self.username),
+                  mode='w',
+                  encoding='utf-8') as file_obj:
+            file_obj.write('{{"{}": "{}","{}": "{}"}}'.format(
+                'access_token', self.access_token, 'oauth20_refresh_token',
+                self.oauth20_refresh_token))
+            file_obj.close()
+        return True
+
+    def PersistenceLogoin_r(self, GameID: str):
+        "Load access token persistent login"
+        ProjectDir = os.path.dirname(os.path.dirname('{}'.format(__file__)))
+        PersistenceDir = '{}/Persistence'.format(ProjectDir)
+        if not os.path.exists(PersistenceDir):
+            return False
+        "Load access_token and oauth20_refresh_token"
+        if os.path.isfile("{}/{}".format(PersistenceDir, GameID)):
+            with open("{}/{}".format(PersistenceDir, GameID),
+                      mode='r',
+                      encoding='utf-8') as file_obj:
+                Persistence = file_obj.read()
+                file_obj.close()
+                Persistence = json.loads(Persistence)
+                self.access_token = Persistence["access_token"]
+                self.oauth20_refresh_token = Persistence[
+                    "oauth20_refresh_token"]
+                self.refresh()
+            return self.authenticated
+        else:
+            return False

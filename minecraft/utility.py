@@ -122,6 +122,7 @@ class overridable_property(overridable_descriptor):
        descriptor, overridable by attributes of instances of the class
        in which the property occurs. See also 'overridable_descriptor' above.
     """
+
     def __get__(self, instance, _owner):
         return self._fget(instance)
 

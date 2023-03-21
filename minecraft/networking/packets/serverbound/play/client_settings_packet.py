@@ -12,12 +12,12 @@ class ClientSettingsPacket(Packet):
     @staticmethod
     def get_id(context):
         return 0x05 if context.protocol_later_eq(464) else \
-               0x04 if context.protocol_later_eq(389) else \
-               0x03 if context.protocol_later_eq(343) else \
-               0x04 if context.protocol_later_eq(336) else \
-               0x05 if context.protocol_later_eq(318) else \
-               0x04 if context.protocol_later_eq(94) else \
-               0x15
+            0x04 if context.protocol_later_eq(389) else \
+            0x03 if context.protocol_later_eq(343) else \
+            0x04 if context.protocol_later_eq(336) else \
+            0x05 if context.protocol_later_eq(318) else \
+            0x04 if context.protocol_later_eq(94) else \
+            0x15
 
     packet_name = 'client settings'
 

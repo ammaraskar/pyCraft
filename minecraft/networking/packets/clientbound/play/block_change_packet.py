@@ -10,13 +10,13 @@ class BlockChangePacket(Packet):
     @staticmethod
     def get_id(context):
         return 0x0C if context.protocol_later_eq(755) else \
-               0x0B if context.protocol_later_eq(721) else \
-               0x0C if context.protocol_later_eq(550) else \
-               0x0B if context.protocol_later_eq(332) else \
-               0x0C if context.protocol_later_eq(318) else \
-               0x0B if context.protocol_later_eq(67) else \
-               0x24 if context.protocol_later_eq(62) else \
-               0x23
+            0x0B if context.protocol_later_eq(721) else \
+            0x0C if context.protocol_later_eq(550) else \
+            0x0B if context.protocol_later_eq(332) else \
+            0x0C if context.protocol_later_eq(318) else \
+            0x0B if context.protocol_later_eq(67) else \
+            0x24 if context.protocol_later_eq(62) else \
+            0x23
 
     packet_name = 'block change'
     definition = [
@@ -50,14 +50,14 @@ class MultiBlockChangePacket(Packet):
     @staticmethod
     def get_id(context):
         return 0x3F if context.protocol_later_eq(755) else \
-               0x3B if context.protocol_later_eq(741) else \
-               0x0F if context.protocol_later_eq(721) else \
-               0x10 if context.protocol_later_eq(550) else \
-               0x0F if context.protocol_later_eq(343) else \
-               0x10 if context.protocol_later_eq(332) else \
-               0x11 if context.protocol_later_eq(318) else \
-               0x10 if context.protocol_later_eq(67) else \
-               0x22
+            0x3B if context.protocol_later_eq(741) else \
+            0x0F if context.protocol_later_eq(721) else \
+            0x10 if context.protocol_later_eq(550) else \
+            0x0F if context.protocol_later_eq(343) else \
+            0x10 if context.protocol_later_eq(332) else \
+            0x11 if context.protocol_later_eq(318) else \
+            0x10 if context.protocol_later_eq(67) else \
+            0x22
 
     packet_name = 'multi block change'
 
@@ -131,9 +131,9 @@ class MultiBlockChangePacket(Packet):
         def send_with_context(self, record, socket, context):
             if context.protocol_later_eq(741):
                 value = record.block_state_id << 12 | \
-                        (record.x & 0xF) << 8 | \
-                        (record.z & 0xF) << 4 | \
-                        record.y & 0xF
+                    (record.x & 0xF) << 8 | \
+                    (record.z & 0xF) << 4 | \
+                    record.y & 0xF
                 VarLong.send(value, socket)
             else:
                 UnsignedByte.send(record.x << 4 | record.z & 0xF, socket)
