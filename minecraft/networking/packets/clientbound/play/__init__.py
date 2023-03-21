@@ -23,9 +23,12 @@ from .sound_effect_packet import SoundEffectPacket
 from .face_player_packet import FacePlayerPacket
 from .join_game_and_respawn_packets import JoinGamePacket, RespawnPacket
 from .tab_complete_packet import TabCompletePacket
-
+from .destroy_entities_packet import DestroyEntitiesPacket
+from .spawn_mob_packet import SpawnMobPacket
 
 # Formerly known as state_playing_clientbound.
+
+
 def get_packets(context):
     packets = {
         KeepAlivePacket,
@@ -49,6 +52,12 @@ def get_packets(context):
         PluginMessagePacket,
         PlayerListHeaderAndFooterPacket,
         EntityLookPacket,
+        EntityLookPacket,
+        EntityPacket,
+        DestroyEntitiesPacket,
+        SpawnMobPacket,
+        BlockActionPacket,
+        EntityHeadLookPacket,
         ResourcePackSendPacket
     }
 
@@ -71,11 +80,12 @@ def get_packets(context):
     if context.protocol_later_eq(94):
         packets |= {
             SoundEffectPacket,
+            VehicleMovePacket,
         }
 
     if context.protocol_later_eq(352):
         packets |= {
-            FacePlayerPacket
+            FacePlayerPacket,
         }
     if context.protocol_later_eq(345) or \
             context.protocol_earlier_eq(342):
@@ -431,3 +441,95 @@ class ResourcePackSendPacket(Packet):
             {"forced_message": String}
             if context.protocol_later_eq(PRE | 15) else {},
         ]
+
+
+class EntityPacket(Packet):
+    @staticmethod
+    def get_id(context):
+        return 0x2B if context.protocol_version >= 471 else \
+            0x27 if context.protocol_version >= 389 else \
+            0x26 if context.protocol_version >= 345 else \
+            0x25 if context.protocol_version >= 332 else \
+            0x29 if context.protocol_version >= 318 else \
+            0x28 if context.protocol_version >= 94 else \
+            0x29 if context.protocol_version >= 70 else \
+            0x14
+
+    packet_name = "entity"
+    definition = [{"entity_id": VarInt}]
+
+
+class VehicleMovePacket(Packet):
+    @staticmethod
+    def get_id(context):
+        return 0x2C if context.protocol_version >= 471 else \
+            0x2B if context.protocol_version >= 389 else \
+            0x2A if context.protocol_version >= 345 else \
+            0x29 if context.protocol_version >= 332 else \
+            0x2A if context.protocol_version >= 318 else \
+            0x29  # Note: Packet added in protocol version 94
+
+    packet_name = "vehicle move clientbound"
+    definition = [
+        {'x': Double},
+        {'y': Double},
+        {'z': Double},
+        {'yaw': Float},
+        {'pitch': Float},
+    ]
+
+    # Access the 'x', 'y', 'z' fields as a Vector tuple.
+    position = multi_attribute_alias(Vector, 'x', 'y', 'z')
+
+    # Access the 'yaw', 'pitch' fields as a Direction tuple.
+    look = multi_attribute_alias(Direction, 'yaw', 'pitch')
+
+    # Access the 'x', 'y', 'z', 'yaw', 'pitch' fields as a PositionAndLook.
+    # NOTE: modifying the object retrieved from this property will not change
+    # the packet; it can only be changed by attribute or property assignment.
+    position_and_look = multi_attribute_alias(
+        PositionAndLook, 'x', 'y', 'z', 'yaw', 'pitch')
+
+
+class BlockActionPacket(Packet):
+    @staticmethod
+    def get_id(context):
+        return 0x0A if context.protocol_version >= 332 else \
+            0x0B if context.protocol_version >= 318 else \
+            0x0A if context.protocol_version >= 70 else \
+            0x25 if context.protocol_version >= 69 else \
+            0x24
+
+    packet_name = "block action"
+    get_definition = staticmethod(lambda context: [
+        {'location': Position},
+        {'block_type': VarInt} if context.protocol_version == 347 else {},
+        {'action_id': UnsignedByte},     # TODO Interpret action_id and
+        {'action_param': UnsignedByte},  # action_param fields.
+        {'block_type': VarInt} if context.protocol_version != 347 else {},
+    ])
+
+
+class EntityHeadLookPacket(Packet):
+    @staticmethod
+    def get_id(context):
+        return 0x3B if context.protocol_version >= 471 else \
+            0x39 if context.protocol_version >= 461 else \
+            0x3A if context.protocol_version >= 451 else \
+            0x39 if context.protocol_version >= 389 else \
+            0x38 if context.protocol_version >= 352 else \
+            0x37 if context.protocol_version >= 345 else \
+            0x36 if context.protocol_version >= 336 else \
+            0x35 if context.protocol_version >= 332 else \
+            0x36 if context.protocol_version >= 318 else \
+            0x34 if context.protocol_version >= 70 else \
+            0x19
+
+    packet_name = 'entity head look'
+
+    fields = 'entity_id', 'head_yaw'
+
+    definition = [
+        {'entity_id': VarInt},
+        {'head_yaw': Angle},
+    ]
