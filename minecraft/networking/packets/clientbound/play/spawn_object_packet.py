@@ -126,8 +126,8 @@ class SpawnObjectPacket(Packet):
         xyz_type = Double if self.context.protocol_later_eq(100) else Integer
         for coord in self.x, self.y, self.z:
             xyz_type.send(coord, packet_buffer)
-        for coord in self.pitch, self.yaw:
-            Angle.send(coord, packet_buffer)
+        for angle in self.pitch, self.yaw:
+            Angle.send(angle, packet_buffer)
 
         Integer.send(self.data, packet_buffer)
         if self.context.protocol_later_eq(49) or self.data > 0:

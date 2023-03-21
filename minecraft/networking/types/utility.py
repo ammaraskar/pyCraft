@@ -10,6 +10,13 @@ from minecraft.utility import (  # noqa: F401
 )
 
 
+__all__ = (
+    'Vector', 'MutableRecord', 'Direction', 'PositionAndLook',
+    'LookAndDirection', 'PositionLookAndDirection', 'descriptor',
+    'attribute_alias', 'multi_attribute_alias',
+)
+
+
 class Vector(namedtuple('BaseVector', ('x', 'y', 'z'))):
     """An immutable type usually used to represent 3D spatial coordinates,
        supporting elementwise vector addition, subtraction, and negation; and
@@ -88,6 +95,107 @@ class MutableRecord(object):
                 yield slot
 
 
+
+
+
+def attribute_alias(name):
+    """An attribute descriptor that redirects access to a different attribute
+       with a given name.
+    """
+    return property(fget=(lambda self: getattr(self, name)),
+                    fset=(lambda self, value: setattr(self, name, value)),
+                    fdel=(lambda self: delattr(self, name)))
+
+
+def multi_attribute_alias(container, *arg_names, **kwd_names):
+    """A descriptor for an attribute whose value is a container of a given type
+       with several fields, each of which is aliased to a different attribute
+       of the parent object.
+       The 'n'th name in 'arg_names' is the parent attribute that will be
+       aliased to the field of 'container' settable by the 'n'th positional
+       argument to its constructor, and accessible as its 'n'th iterable
+       element.
+       As a special case, 'tuple' may be given as the 'container' when there
+       are positional arguments, and (even though the tuple constructor does
+       not take positional arguments), the arguments will be aliased to the
+       corresponding positions in a tuple.
+       The name in 'kwd_names' mapped to by the key 'k' is the parent attribute
+       that will be aliased to the field of 'container' settable by the keyword
+       argument 'k' to its constructor, and accessible as its 'k' attribute.
+    """
+    if container is tuple:
+        container = lambda *args: args  # noqa: E731
+
+    @property
+    def alias(self):
+        return container(
+            *(getattr(self, name) for name in arg_names),
+            **{kwd: getattr(self, name) for (kwd, name) in kwd_names.items()})
+
+    @alias.setter
+    def alias(self, values):
+        if arg_names:
+            for name, value in zip(arg_names, values):
+                setattr(self, name, value)
+        for kwd, name in kwd_names.items():
+            setattr(self, name, getattr(values, kwd))
+
+    @alias.deleter
+    def alias(self):
+        for name in chain(arg_names, kwd_names.values()):
+            delattr(self, name)
+
+    return alias
+
+
+class descriptor(object):
+    """Behaves identically to the builtin 'property' function of Python,
+       except that the getter, setter and deleter functions given by the
+       user are used as the raw __get__, __set__ and __delete__ functions
+       as defined in Python's descriptor protocol.
+    """
+    __slots__ = '_fget', '_fset', '_fdel'
+
+    def __init__(self, fget=None, fset=None, fdel=None):
+        self._fget = fget if fget is not None else self._default_get
+        self._fset = fset if fset is not None else self._default_set
+        self._fdel = fdel if fdel is not None else self._default_del
+
+    def getter(self, fget):
+        self._fget = fget
+        return self
+
+    def setter(self, fset):
+        self._fset = fset
+        return self
+
+    def deleter(self, fdel):
+        self._fdel = fdel
+        return self
+
+    @staticmethod
+    def _default_get(instance, owner):
+        raise AttributeError('unreadable attribute')
+
+    @staticmethod
+    def _default_set(instance, value):
+        raise AttributeError("can't set attribute")
+
+    @staticmethod
+    def _default_del(instance):
+        raise AttributeError("can't delete attribute")
+
+    def __get__(self, instance, owner):
+        return self._fget(self, instance, owner)
+
+    def __set__(self, instance, value):
+        return self._fset(self, instance, value)
+
+    def __delete__(self, instance):
+        return self._fdel(self, instance)
+
+
+
 Direction = namedtuple('Direction', ('yaw', 'pitch'))
 
 
@@ -100,3 +208,23 @@ class PositionAndLook(MutableRecord):
     position = multi_attribute_alias(Vector, 'x', 'y', 'z')
 
     look = multi_attribute_alias(Direction, 'yaw', 'pitch')
+
+
+LookAndDirection = namedtuple('LookAndDirection',
+                              ('yaw', 'pitch', 'head_pitch'))
+
+
+class PositionLookAndDirection(MutableRecord):
+    """
+    A mutable record containing 3 spatial position coordinates,
+    2 rotational components and an additional rotational component for
+    the head of the object.
+    """
+    __slots__ = 'x', 'y', 'z', 'yaw', 'pitch', 'head_pitch'
+
+    position = multi_attribute_alias(Vector, 'x', 'y', 'z')
+
+    look = multi_attribute_alias(Direction, 'yaw', 'pitch')
+
+    look_and_direction = multi_attribute_alias(LookAndDirection,
+                                               'yaw', 'pitch', 'head_pitch')

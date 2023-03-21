@@ -10,7 +10,7 @@ from minecraft.networking.types import (
 
 from .client_settings_packet import ClientSettingsPacket
 from .tab_complete_packet import TabCompletePacket
-
+from .use_entity_packet import UseEntityPacket
 
 # Formerly known as state_playing_serverbound.
 def get_packets(context):
@@ -23,11 +23,16 @@ def get_packets(context):
         ClientSettingsPacket,
         PluginMessagePacket,
         PlayerBlockPlacementPacket,
+        UseEntityPacket
     }
     if context.protocol_later_eq(69):
         packets |= {
             UseItemPacket,
         }
+    if context.protocol_version >= 94:
+        packets |= {
+            VehicleMovePacket,
+        }        
     if context.protocol_later_eq(107):
         packets |= {
             TeleportConfirmPacket,
@@ -250,6 +255,38 @@ class PlayerBlockPlacementPacket(Packet):
     # PlayerBlockPlacementPacket.Face is an alias for BlockFace.
     Face = BlockFace
 
+class VehicleMovePacket(Packet):
+    @staticmethod
+    def get_id(context):
+        return 0x15 if context.protocol_version >= 464 else \
+               0x13 if context.protocol_version >= 389 else \
+               0x11 if context.protocol_version >= 386 else \
+               0x10 if context.protocol_version >= 345 else \
+               0x0F if context.protocol_version >= 343 else \
+               0x10 if context.protocol_version >= 336 else \
+               0x11 if context.protocol_version >= 318 else \
+               0x10  # Note: Packet added in protocol version 94
+
+    packet_name = "vehicle move serverbound"
+    definition = [
+        {'x': Double},
+        {'y': Double},
+        {'z': Double},
+        {'yaw': Float},
+        {'pitch': Float},
+    ]
+
+    # Access the 'x', 'y', 'z' fields as a Vector tuple.
+    position = multi_attribute_alias(Vector, 'x', 'y', 'z')
+
+    # Access the 'yaw', 'pitch' fields as a Direction tuple.
+    look = multi_attribute_alias(Direction, 'yaw', 'pitch')
+
+    # Access the 'x', 'y', 'z', 'yaw', 'pitch' fields as a PositionAndLook.
+    # NOTE: modifying the object retrieved from this property will not change
+    # the packet; it can only be changed by attribute or property assignment.
+    position_and_look = multi_attribute_alias(
+        PositionAndLook, 'x', 'y', 'z', 'yaw', 'pitch')
 
 class UseItemPacket(Packet):
     @staticmethod
