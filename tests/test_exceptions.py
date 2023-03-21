@@ -12,6 +12,7 @@ class BaseRaiseExceptionTest(unittest.TestCase):
             raise YggdrasilError("Error!")
 
         self.assertEqual(str(cm.exception), "Error!")
+
     def test_raise_error(self):
         with self.assertRaises(self.EXCEPTION_TO_TEST):
             raise self.EXCEPTION_TO_TEST
