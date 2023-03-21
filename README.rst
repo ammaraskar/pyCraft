@@ -16,7 +16,7 @@ communication with a MineCraft server.
 Detailed information for developers can be found here:
 `<http://pycraft.readthedocs.org/en/latest/>`_.
 
-``start.py`` is a basic example of a headless client using the library
+``start.py`` is a basic example of a headless client using the library that can be found under the `examples` folder.
 Use ``start.py --help`` for the options.
 
 Supported Minecraft versions

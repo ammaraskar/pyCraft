@@ -12,29 +12,66 @@ from minecraft.networking.packets import Packet, clientbound, serverbound
 
 
 def get_options():
+    """
+    Using Pythons OptionParser, get the sys args and the corresponding
+    input parsed as required until there is enough input to proceed.
+
+    Returns
+    -------
+    options
+        The options to run this instance with
+
+    """
     parser = OptionParser()
 
-    parser.add_option("-u", "--username", dest="username", default=None,
-                      help="username to log in with")
+    parser.add_option(
+        "-u",
+        "--username",
+        dest="username",
+        default=None,
+        help="username to log in with",
+    )
 
-    parser.add_option("-p", "--password", dest="password", default=None,
-                      help="password to log in with")
+    parser.add_option(
+        "-p",
+        "--password",
+        dest="password",
+        default=None,
+        help="password to log in with",
+    )
 
-    parser.add_option("-s", "--server", dest="server", default=None,
-                      help="server host or host:port "
-                           "(enclose IPv6 addresses in square brackets)")
+    parser.add_option(
+        "-s",
+        "--server",
+        dest="server",
+        default=None,
+        help="server host or host:port "
+        "(enclose IPv6 addresses in square brackets)",
+    )
 
-    parser.add_option("-o", "--offline", dest="offline", action="store_true",
-                      help="connect to a server in offline mode "
-                           "(no password required)")
+    parser.add_option(
+        "-o",
+        "--offline",
+        dest="offline",
+        action="store_true",
+        help="connect to a server in offline mode " "(no password required)",
+    )
 
-    parser.add_option("-d", "--dump-packets", dest="dump_packets",
-                      action="store_true",
-                      help="print sent and received packets to standard error")
+    parser.add_option(
+        "-d",
+        "--dump-packets",
+        dest="dump_packets",
+        action="store_true",
+        help="print sent and received packets to standard error",
+    )
 
-    parser.add_option("-v", "--dump-unknown-packets", dest="dump_unknown",
-                      action="store_true",
-                      help="include unknown packets in --dump-packets output")
+    parser.add_option(
+        "-v",
+        "--dump-unknown-packets",
+        dest="dump_unknown",
+        action="store_true",
+        help="include unknown packets in --dump-packets output",
+    )
 
     parser.add_option(
         "-m",
@@ -55,11 +92,15 @@ def get_options():
             options.offline = options.offline or (options.password == "")
 
     if not options.server:
-        options.server = input("Enter server host or host:port "
-                               "(enclose IPv6 addresses in square brackets): ")
+        options.server = input(
+            "Enter server host or host:port "
+            "(enclose IPv6 addresses in square brackets): "
+        )
     # Try to split out port and address
-    match = re.match(r"((?P<host>[^\[\]:]+)|\[(?P<addr>[^\[\]]+)\])"
-                     r"(:(?P<port>\d+))?$", options.server)
+    match = re.match(
+        r"((?P<host>[^\[\]:]+)|\[(?P<addr>[^\[\]]+)\])" r"(:(?P<port>\d+))?$",
+        options.server,
+    )
     if match is None:
         raise ValueError("Invalid server address: '%s'." % options.server)
     options.address = match.group("host") or match.group("addr")
@@ -69,12 +110,27 @@ def get_options():
 
 
 def main():
+    """Our main function for running the simple pyCraft implementation.
+
+    This function handles and maintains:
+     - Gaining authentication tokens & 'logging in'
+     - Connecting to the provided server, online or offline
+     - Prints the chat packet data to standard out on Clientbound Packet
+     - Writes Serverbound chat Packets when required
+     - Dumping all packets to standard out
+
+    Notes
+    -----
+    This is a blocking function.
+
+    """
     options = get_options()
 
     if options.offline:
         print("Connecting in offline mode...")
         connection = Connection(
-            options.address, options.port, username=options.username)
+            options.address, options.port, username=options.username
+        )
     else:
 
         try:
@@ -92,33 +148,36 @@ def main():
             "1.8")
 
     if options.dump_packets:
+
         def print_incoming(packet):
             if type(packet) is Packet:
                 # This is a direct instance of the base Packet type, meaning
                 # that it is a packet of unknown type, so we do not print it
                 # unless explicitly requested by the user.
                 if options.dump_unknown:
-                    print('--> [unknown packet] %s' % packet, file=sys.stderr)
+                    print("--> [unknown packet] %s" % packet, file=sys.stderr)
             else:
-                print('--> %s' % packet, file=sys.stderr)
+                print("--> %s" % packet, file=sys.stderr)
 
         def print_outgoing(packet):
-            print('<-- %s' % packet, file=sys.stderr)
+            print("<-- %s" % packet, file=sys.stderr)
 
-        connection.register_packet_listener(
-            print_incoming, Packet, early=True)
+        connection.register_packet_listener(print_incoming, Packet, early=True)
         connection.register_packet_listener(
             print_outgoing, Packet, outgoing=True)
 
     def handle_join_game(join_game_packet):
-        print('Connected.')
+        print("Connected.")
 
     connection.register_packet_listener(
-        handle_join_game, clientbound.play.JoinGamePacket)
+        handle_join_game, clientbound.play.JoinGamePacket
+    )
 
     def print_chat(chat_packet):
-        print("Message (%s): %s" % (
-            chat_packet.field_string('position'), chat_packet.json_data))
+        print(
+            "Message (%s): %s"
+            % (chat_packet.field_string("position"), chat_packet.json_data)
+        )
 
     connection.register_packet_listener(
         print_chat, clientbound.play.ChatMessagePacket)
