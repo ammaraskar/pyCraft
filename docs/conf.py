@@ -64,7 +64,6 @@ author = u"Ammar Askar"
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
-
 # The short X.Y version.
 version = minecraft.__version__
 # The full version, including alpha/beta/rc tags.
@@ -124,7 +123,6 @@ todo_include_todos = True
 if os.environ.get("READTHEDOCS", "") != "True":
     try:
         import sphinx_rtd_theme
-
         html_theme = "sphinx_rtd_theme"
         html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
     except ImportError:
@@ -227,10 +225,13 @@ htmlhelp_basename = "pyCraftdoc"
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
     # 'papersize': 'letterpaper',
+
     # The font size ('10pt', '11pt' or '12pt').
     # 'pointsize': '10pt',
+
     # Additional stuff for the LaTeX preamble.
     # 'preamble': '',
+
     # Latex figure (float) alignment
     # 'figure_align': 'htbp',
 }
@@ -239,11 +240,8 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc,
-     "pyCraft.tex",
-     u"pyCraft Documentation",
-     u"Ammar Askar",
-     "manual"),
+    (master_doc, 'pyCraft.tex', u'pyCraft Documentation',
+     u'Ammar Askar', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -283,15 +281,9 @@ man_pages = [(master_doc, "pycraft", u"pyCraft Documentation", [author], 1)]
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (
-        master_doc,
-        "pyCraft",
-        u"pyCraft Documentation",
-        author,
-        "pyCraft",
-        "One line description of project.",
-        "Miscellaneous",
-    ),
+    (master_doc, 'pyCraft', u'pyCraft Documentation',
+     author, 'pyCraft', 'One line description of project.',
+     'Miscellaneous'),
 ]
 
 # Documents to append as an appendix to all manuals.

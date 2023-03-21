@@ -73,16 +73,23 @@ def get_options():
         help="include unknown packets in --dump-packets output",
     )
 
+    parser.add_option(
+        "-m",
+        "--microsoft",
+        dest="microsoft",
+        action="store_true",
+        help="Enable Microsoft Auth")
+
     (options, args) = parser.parse_args()
 
-    if not options.username:
-        options.username = input("Enter your username: ")
+    if not options.microsoft:
+        if not options.username:
+            options.username = input("Enter your username: ")
 
-    if not options.password and not options.offline:
-        options.password = getpass.getpass(
-            "Enter your password (leave " "blank for offline mode): "
-        )
-        options.offline = options.offline or (options.password == "")
+        if not options.password and not options.offline:
+            options.password = getpass.getpass("Enter your password (leave "
+                                               "blank for offline mode): ")
+            options.offline = options.offline or (options.password == "")
 
     if not options.server:
         options.server = input(
@@ -125,9 +132,10 @@ def main():
             options.address, options.port, username=options.username
         )
     else:
-        auth_token = authentication.AuthenticationToken()
+
         try:
-            auth_token.authenticate(options.username, options.password)
+            auth_token = authentication.Microsoft_AuthenticationToken()
+            auth_token.authenticate()
         except YggdrasilError as e:
             print(e)
             sys.exit()
@@ -135,7 +143,9 @@ def main():
         connection = Connection(
             options.address,
             options.port,
-            auth_token=auth_token)
+            auth_token,
+            None,
+            "1.8")
 
     if options.dump_packets:
 

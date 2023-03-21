@@ -498,9 +498,8 @@ class Connection(object):
         # versions that always resolved hostnames to IPv4 addresses),
         # then IPv6, then other address families.
         def key(ai):
-            return (0 if ai[0] == socket.AF_INET else 1 if ai[0]
-                    == socket.AF_INET6 else 2)
-
+            return 0 if ai[0] == socket.AF_INET else \
+                1 if ai[0] == socket.AF_INET6 else 2
         ai_faml, ai_type, ai_prot, _ai_cnam, ai_addr = min(info, key=key)
 
         self.socket = socket.socket(ai_faml, ai_type, ai_prot)
@@ -753,10 +752,9 @@ class PacketReactor(object):
                     decompressor = zlib.decompressobj()
                     decompressed_packet = decompressor.decompress(
                         packet_data.read())
-                    assert len(decompressed_packet) == decompressed_size, (
-                        "decompressed length %d, but expected %d"
-                        % (len(decompressed_packet), decompressed_size)
-                    )
+                    assert len(decompressed_packet) == decompressed_size, \
+                        'decompressed length %d, but expected %d' % \
+                        (len(decompressed_packet), decompressed_size)
                     packet_data.reset()
                     packet_data.send(decompressed_packet)
                     packet_data.reset_cursor()
