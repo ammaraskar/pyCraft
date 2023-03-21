@@ -6,13 +6,13 @@ class TabCompletePacket(Packet):
     @staticmethod
     def get_id(context):
         return 0x0F if context.protocol_later_eq(741) else \
-               0x10 if context.protocol_later_eq(721) else \
-               0x11 if context.protocol_later_eq(550) else \
-               0x10 if context.protocol_later_eq(345) else \
-               0x0E if context.protocol_later_eq(332) else \
-               0x0F if context.protocol_later_eq(318) else \
-               0x0E if context.protocol_later_eq(70) else \
-               0x3A
+            0x10 if context.protocol_later_eq(721) else \
+            0x11 if context.protocol_later_eq(550) else \
+            0x10 if context.protocol_later_eq(345) else \
+            0x0E if context.protocol_later_eq(332) else \
+            0x0F if context.protocol_later_eq(318) else \
+            0x0E if context.protocol_later_eq(70) else \
+            0x3A
 
     packet_name = 'tab complete'
 
