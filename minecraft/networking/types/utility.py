@@ -101,95 +101,95 @@ class MutableRecord(object):
 
 
 
-def attribute_alias(name):
-    """An attribute descriptor that redirects access to a different attribute
-       with a given name.
-    """
-    return property(fget=(lambda self: getattr(self, name)),
-                    fset=(lambda self, value: setattr(self, name, value)),
-                    fdel=(lambda self: delattr(self, name)))
+# def attribute_alias(name):
+#     """An attribute descriptor that redirects access to a different attribute
+#        with a given name.
+#     """
+#     return property(fget=(lambda self: getattr(self, name)),
+#                     fset=(lambda self, value: setattr(self, name, value)),
+#                     fdel=(lambda self: delattr(self, name)))
 
 
-def attribute_transform(name, from_orig, to_orig):
-    """An attribute descriptor that provides a view of a different attribute
-       with a given name via a given transformation and its given inverse."""
-    return property(
-        fget=(lambda self: from_orig(getattr(self, name))),
-        fset=(lambda self, value: setattr(self, name, to_orig(value))),
-        fdel=(lambda self: delattr(self, name)))
+# def attribute_transform(name, from_orig, to_orig):
+#     """An attribute descriptor that provides a view of a different attribute
+#        with a given name via a given transformation and its given inverse."""
+#     return property(
+#         fget=(lambda self: from_orig(getattr(self, name))),
+#         fset=(lambda self, value: setattr(self, name, to_orig(value))),
+#         fdel=(lambda self: delattr(self, name)))
 
 
-def multi_attribute_alias(container, *arg_names, **kwd_names):
-    """A descriptor for an attribute whose value is a container of a given type
-       with several fields, each of which is aliased to a different attribute
-       of the parent object.
-       The 'n'th name in 'arg_names' is the parent attribute that will be
-       aliased to the field of 'container' settable by the 'n'th positional
-       argument to its constructor, and accessible as its 'n'th iterable
-       element.
-       As a special case, 'tuple' may be given as the 'container' when there
-       are positional arguments, and (even though the tuple constructor does
-       not take positional arguments), the arguments will be aliased to the
-       corresponding positions in a tuple.
-       The name in 'kwd_names' mapped to by the key 'k' is the parent attribute
-       that will be aliased to the field of 'container' settable by the keyword
-       argument 'k' to its constructor, and accessible as its 'k' attribute.
-    """
-    if container is tuple:
-        container = lambda *args: args  # noqa: E731
+# def multi_attribute_alias(container, *arg_names, **kwd_names):
+#     """A descriptor for an attribute whose value is a container of a given type
+#        with several fields, each of which is aliased to a different attribute
+#        of the parent object.
+#        The 'n'th name in 'arg_names' is the parent attribute that will be
+#        aliased to the field of 'container' settable by the 'n'th positional
+#        argument to its constructor, and accessible as its 'n'th iterable
+#        element.
+#        As a special case, 'tuple' may be given as the 'container' when there
+#        are positional arguments, and (even though the tuple constructor does
+#        not take positional arguments), the arguments will be aliased to the
+#        corresponding positions in a tuple.
+#        The name in 'kwd_names' mapped to by the key 'k' is the parent attribute
+#        that will be aliased to the field of 'container' settable by the keyword
+#        argument 'k' to its constructor, and accessible as its 'k' attribute.
+#     """
+#     if container is tuple:
+#         container = lambda *args: args  # noqa: E731
 
-    @property
-    def alias(self):
-        return container(
-            *(getattr(self, name) for name in arg_names),
-            **{kwd: getattr(self, name) for (kwd, name) in kwd_names.items()})
+#     @property
+#     def alias(self):
+#         return container(
+#             *(getattr(self, name) for name in arg_names),
+#             **{kwd: getattr(self, name) for (kwd, name) in kwd_names.items()})
 
-    @alias.setter
-    def alias(self, values):
-        if arg_names:
-            for name, value in zip(arg_names, values):
-                setattr(self, name, value)
-        for kwd, name in kwd_names.items():
-            setattr(self, name, getattr(values, kwd))
+#     @alias.setter
+#     def alias(self, values):
+#         if arg_names:
+#             for name, value in zip(arg_names, values):
+#                 setattr(self, name, value)
+#         for kwd, name in kwd_names.items():
+#             setattr(self, name, getattr(values, kwd))
 
-    @alias.deleter
-    def alias(self):
-        for name in chain(arg_names, kwd_names.values()):
-            delattr(self, name)
+#     @alias.deleter
+#     def alias(self):
+#         for name in chain(arg_names, kwd_names.values()):
+#             delattr(self, name)
 
-    return alias
+#     return alias
 
-class overridable_descriptor:
-    """As 'descriptor' (defined below), except that only a getter can be
-       defined, and the resulting descriptor has no '__set__' or '__delete__'
-       methods defined; hence, attributes defined via this class can be
-       overridden by attributes of instances of the class in which it occurs.
-    """
-    __slots__ = '_fget',
+# class overridable_descriptor:
+#     """As 'descriptor' (defined below), except that only a getter can be
+#        defined, and the resulting descriptor has no '__set__' or '__delete__'
+#        methods defined; hence, attributes defined via this class can be
+#        overridden by attributes of instances of the class in which it occurs.
+#     """
+#     __slots__ = '_fget',
 
-    def __init__(self, fget=None):
-        self._fget = fget if fget is not None else self._default_get
+#     def __init__(self, fget=None):
+#         self._fget = fget if fget is not None else self._default_get
 
-    def getter(self, fget):
-        self._fget = fget
-        return self
+#     def getter(self, fget):
+#         self._fget = fget
+#         return self
 
-    @staticmethod
-    def _default_get(instance, owner):
-        raise AttributeError('unreadable attribute')
+#     @staticmethod
+#     def _default_get(instance, owner):
+#         raise AttributeError('unreadable attribute')
 
-    def __get__(self, instance, owner):
-        return self._fget(self, instance, owner)
+#     def __get__(self, instance, owner):
+#         return self._fget(self, instance, owner)
 
 
-class overridable_property(overridable_descriptor):
-    """As the builtin 'property' decorator of Python, except that only
-       a getter is defined and the resulting descriptor is a non-data
-       descriptor, overridable by attributes of instances of the class
-       in which the property occurs. See also 'overridable_descriptor' above.
-    """
-    def __get__(self, instance, _owner):
-        return self._fget(instance)
+# class overridable_property(overridable_descriptor):
+#     """As the builtin 'property' decorator of Python, except that only
+#        a getter is defined and the resulting descriptor is a non-data
+#        descriptor, overridable by attributes of instances of the class
+#        in which the property occurs. See also 'overridable_descriptor' above.
+#     """
+#     def __get__(self, instance, _owner):
+#         return self._fget(instance)
 
 
 # class descriptor(object):
