@@ -2,6 +2,7 @@
    network representation.
 """
 from collections import namedtuple
+from itertools import chain
 import types
 
 # These aliases are retained for backward compatibility
