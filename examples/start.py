@@ -45,7 +45,8 @@ def get_options():
         "--server",
         dest="server",
         default=None,
-        help="server host or host:port " "(enclose IPv6 addresses in square brackets)",
+        help="server host or host:port "
+        "(enclose IPv6 addresses in square brackets)",
     )
 
     parser.add_option(
@@ -131,7 +132,10 @@ def main():
             print(e)
             sys.exit()
         print("Logged in as %s..." % auth_token.username)
-        connection = Connection(options.address, options.port, auth_token=auth_token)
+        connection = Connection(
+            options.address,
+            options.port,
+            auth_token=auth_token)
 
     if options.dump_packets:
 
@@ -149,7 +153,8 @@ def main():
             print("<-- %s" % packet, file=sys.stderr)
 
         connection.register_packet_listener(print_incoming, Packet, early=True)
-        connection.register_packet_listener(print_outgoing, Packet, outgoing=True)
+        connection.register_packet_listener(
+            print_outgoing, Packet, outgoing=True)
 
     def handle_join_game(join_game_packet):
         print("Connected.")
@@ -164,7 +169,8 @@ def main():
             % (chat_packet.field_string("position"), chat_packet.json_data)
         )
 
-    connection.register_packet_listener(print_chat, clientbound.play.ChatMessagePacket)
+    connection.register_packet_listener(
+        print_chat, clientbound.play.ChatMessagePacket)
 
     connection.connect()
 

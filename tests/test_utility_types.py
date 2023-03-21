@@ -49,7 +49,7 @@ class VectorTest(unittest.TestCase):
         self.assertEqual(-Vector(1, -2, 0), Vector(-1, 2, 0))
         self.assertEqual(Vector(1, -2, 0) * 2, Vector(2, -4, 0))
         self.assertEqual(2 * Vector(1, -2, 0), Vector(2, -4, 0))
-        self.assertEqual(Vector(1, -2, 0) / 2, Vector(1/2, -2/2, 0/2))
+        self.assertEqual(Vector(1, -2, 0) / 2, Vector(1 / 2, -2 / 2, 0 / 2))
         self.assertEqual(Vector(1, -2, 0) // 2, Vector(0, -1, 0))
 
     def test_repr(self):
@@ -59,6 +59,7 @@ class VectorTest(unittest.TestCase):
 
 class PositionAndLookTest(unittest.TestCase):
     """ This also tests the MutableRecord base type. """
+
     def test_properties(self):
         pos_look_1 = PositionAndLook(position=(1, 2, 3), look=(4, 5))
         pos_look_2 = PositionAndLook(x=1, y=2, z=3, yaw=4, pitch=5)

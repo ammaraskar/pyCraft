@@ -130,13 +130,13 @@ class AllowedVersionsTest(fake_server._FakeServerTest):
         for index in self.test_indices:
             self._test_connect(
                 server_version=self.versions[index][0],
-                client_versions={v[0] for v in self.versions[:index+1]})
+                client_versions={v[0] for v in self.versions[:index + 1]})
 
     def test_with_protocol_numbers(self):
         for index in self.test_indices:
             self._test_connect(
                 server_version=self.versions[index][0],
-                client_versions={v[1] for v in self.versions[:index+1]})
+                client_versions={v[1] for v in self.versions[:index + 1]})
 
 
 class LoginDisconnectTest(fake_server._FakeServerTest):
@@ -220,11 +220,12 @@ class EarlyPacketListenerTest(ConnectTest):
     """ Early packet listeners should be called before ordinary ones, even when
         the early packet listener is registered afterwards.
     """
+
     def _start_client(self, client):
         @client.listener(clientbound.play.JoinGamePacket)
         def handle_join(packet):
             assert early_handle_join.called, \
-                   'Ordinary listener called before early listener.'
+                'Ordinary listener called before early listener.'
             handle_join.called = True
         handle_join.called = False
 
@@ -337,8 +338,8 @@ class IgnorePacketTest(ConnectTest):
 
         def handle_play_client_disconnect(self):
             assert self._keep_alive_ids_returned == [3], \
-                   'Returned keep-alive IDs %r != %r' % \
-                   (self._keep_alive_ids_returned, [3])
+                'Returned keep-alive IDs %r != %r' % \
+                (self._keep_alive_ids_returned, [3])
             raise fake_server.FakeServerTestSuccess
 
 
@@ -427,7 +428,7 @@ class VersionNegotiationEdgeCases(fake_server._FakeServerTest):
     def test_server_protocol_disallowed(self, client_versions=None):
         if client_versions is None:
             client_versions = set(SUPPORTED_PROTOCOL_VERSIONS) \
-                              - {self.latest_version}
+                - {self.latest_version}
         with self.assertRaisesRegexp(VersionMismatch, 'not allowed'):
             self._test_connect(client_versions={self.earliest_version},
                                server_version=self.latest_version)
@@ -465,7 +466,7 @@ class VersionNegotiationEdgeCases(fake_server._FakeServerTest):
         class ClientHandler(fake_server.FakeClientHandler):
             def handle_status(self, request_packet):
                 raise fake_server.FakeServerDisconnect(
-                      'Refusing to handle status request, for test purposes.')
+                    'Refusing to handle status request, for test purposes.')
 
             def handle_play_start(self):
                 super(ClientHandler, self).handle_play_start()

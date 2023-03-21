@@ -4,14 +4,15 @@ import json
 """
 A file for Player utilities, focused around parsing chat and making it human readable.
 
-The DefaultParser should be able to handle most situations currently, 
+The DefaultParser should be able to handle most situations currently,
 however, there are known weakness's in the approach but as it stands,
 it is better then other examples I have seen.
 
 DefaultParser - Tested on mc-central, should work decent globally
 """
 
-# TODO Parse banner messages, example: https://gyazo.com/c0a4cfee23a31fe8b6e4c7c7848e5e5a
+# TODO Parse banner messages, example:
+# https://gyazo.com/c0a4cfee23a31fe8b6e4c7c7848e5e5a
 
 
 def DefaultParser(data):
@@ -65,7 +66,8 @@ def DefaultParser(data):
                 stringDict["prefix"].append(text)
             elif not prefixing:
                 if "extra" in item:
-                    # Chat parsing for text means this is most likely another nested dict in list situation
+                    # Chat parsing for text means this is most likely another
+                    # nested dict in list situation
                     if len(item["extra"]) > 0:
                         if "text" in item["extra"][0]:
                             text = item["extra"][0]["text"]

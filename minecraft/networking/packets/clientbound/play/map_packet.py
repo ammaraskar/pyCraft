@@ -10,15 +10,15 @@ class MapPacket(Packet):
     @staticmethod
     def get_id(context):
         return 0x27 if context.protocol_later_eq(755) else \
-               0x25 if context.protocol_later_eq(741) else \
-               0x26 if context.protocol_later_eq(721) else \
-               0x27 if context.protocol_later_eq(550) else \
-               0x26 if context.protocol_later_eq(389) else \
-               0x25 if context.protocol_later_eq(345) else \
-               0x24 if context.protocol_later_eq(334) else \
-               0x25 if context.protocol_later_eq(318) else \
-               0x24 if context.protocol_later_eq(107) else \
-               0x34
+            0x25 if context.protocol_later_eq(741) else \
+            0x26 if context.protocol_later_eq(721) else \
+            0x27 if context.protocol_later_eq(550) else \
+            0x26 if context.protocol_later_eq(389) else \
+            0x25 if context.protocol_later_eq(345) else \
+            0x24 if context.protocol_later_eq(334) else \
+            0x25 if context.protocol_later_eq(318) else \
+            0x24 if context.protocol_later_eq(107) else \
+            0x34
 
     packet_name = 'map'
 
@@ -55,7 +55,7 @@ class MapPacket(Packet):
             self.icons = []
             self.width = width
             self.height = height
-            self.pixels = bytearray(0 for i in range(width*height))
+            self.pixels = bytearray(0 for i in range(width * height))
             self.is_tracking_position = True
             self.is_locked = False
 

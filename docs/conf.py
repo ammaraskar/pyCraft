@@ -12,6 +12,7 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
+import minecraft
 import sys
 import os
 import shlex
@@ -63,7 +64,6 @@ author = u"Ammar Askar"
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
-import minecraft
 
 # The short X.Y version.
 version = minecraft.__version__
@@ -226,20 +226,24 @@ htmlhelp_basename = "pyCraftdoc"
 
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
-    #'papersize': 'letterpaper',
+    # 'papersize': 'letterpaper',
     # The font size ('10pt', '11pt' or '12pt').
-    #'pointsize': '10pt',
+    # 'pointsize': '10pt',
     # Additional stuff for the LaTeX preamble.
-    #'preamble': '',
+    # 'preamble': '',
     # Latex figure (float) alignment
-    #'figure_align': 'htbp',
+    # 'figure_align': 'htbp',
 }
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, "pyCraft.tex", u"pyCraft Documentation", u"Ammar Askar", "manual"),
+    (master_doc,
+     "pyCraft.tex",
+     u"pyCraft Documentation",
+     u"Ammar Askar",
+     "manual"),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of

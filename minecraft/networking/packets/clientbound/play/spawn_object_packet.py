@@ -11,7 +11,7 @@ class SpawnObjectPacket(Packet):
     @staticmethod
     def get_id(context):
         return 0x00 if context.protocol_later_eq(67) else \
-               0x0E
+            0x0E
 
     packet_name = 'spawn object'
 
@@ -51,42 +51,42 @@ class SpawnObjectPacket(Packet):
 
         class EntityType(Enum):
             # XXX This has not been updated for >= v1.15
-            ACTIVATED_TNT     = (50, 55)[era]  # PrimedTnt
-            AREA_EFFECT_CLOUD = ( 3,  0)[era]
-            ARMORSTAND        = (78,  1)[era]
-            ARROW             = (60,  2)[era]
-            BOAT              = ( 1,  5)[era]
-            DRAGON_FIREBALL   = (93, 13)[era]
-            EGG               = (62, 74)[era]  # ThrownEgg
-            ENDERCRYSTAL      = (51, 16)[era]
-            ENDERPEARL        = (65, 75)[era]  # ThrownEnderpearl
-            EVOCATION_FANGS   = (79, 20)[era]
-            EXP_BOTTLE        = (75, 76)[era]  # ThrownExpBottle
-            EYE_OF_ENDER      = (72, 23)[era]  # EyeOfEnderSignal
-            FALLING_OBJECT    = (70, 24)[era]  # FallingSand
-            FIREBALL          = (63, 34)[era]  # Fireball (ghast)
-            FIRECHARGE        = (64, 65)[era]  # SmallFireball (blaze)
-            FIREWORK_ROCKET   = (76, 25)[era]  # FireworksRocketEntity
-            FISHING_HOOK      = (90, 93)[era]  # Fishing bobber
-            ITEM_FRAMES       = (71, 33)[era]  # ItemFrame
-            ITEM_STACK        = ( 2, 32)[era]  # Item
-            LEASH_KNOT        = (77, 35)[era]
-            LLAMA_SPIT        = (68, 37)[era]
-            MINECART          = (10, 39)[era]  # MinecartRideable
-            POTION            = (73, 77)[era]  # ThrownPotion
-            SHULKER_BULLET    = (67, 60)[era]
-            SNOWBALL          = (61, 67)[era]
-            SPECTRAL_ARROW    = (91, 68)[era]
-            WITHER_SKULL      = (66, 85)[era]
+            ACTIVATED_TNT = (50, 55)[era]  # PrimedTnt
+            AREA_EFFECT_CLOUD = (3, 0)[era]
+            ARMORSTAND = (78, 1)[era]
+            ARROW = (60, 2)[era]
+            BOAT = (1, 5)[era]
+            DRAGON_FIREBALL = (93, 13)[era]
+            EGG = (62, 74)[era]  # ThrownEgg
+            ENDERCRYSTAL = (51, 16)[era]
+            ENDERPEARL = (65, 75)[era]  # ThrownEnderpearl
+            EVOCATION_FANGS = (79, 20)[era]
+            EXP_BOTTLE = (75, 76)[era]  # ThrownExpBottle
+            EYE_OF_ENDER = (72, 23)[era]  # EyeOfEnderSignal
+            FALLING_OBJECT = (70, 24)[era]  # FallingSand
+            FIREBALL = (63, 34)[era]  # Fireball (ghast)
+            FIRECHARGE = (64, 65)[era]  # SmallFireball (blaze)
+            FIREWORK_ROCKET = (76, 25)[era]  # FireworksRocketEntity
+            FISHING_HOOK = (90, 93)[era]  # Fishing bobber
+            ITEM_FRAMES = (71, 33)[era]  # ItemFrame
+            ITEM_STACK = (2, 32)[era]  # Item
+            LEASH_KNOT = (77, 35)[era]
+            LLAMA_SPIT = (68, 37)[era]
+            MINECART = (10, 39)[era]  # MinecartRideable
+            POTION = (73, 77)[era]  # ThrownPotion
+            SHULKER_BULLET = (67, 60)[era]
+            SNOWBALL = (61, 67)[era]
+            SPECTRAL_ARROW = (91, 68)[era]
+            WITHER_SKULL = (66, 85)[era]
             if context.protocol_later_eq(393):
                 TRIDENT = 94
             if context.protocol_later_eq(458):
-                MINECART_CHEST =         40
+                MINECART_CHEST = 40
                 MINECART_COMMAND_BLOCK = 41
-                MINECART_FURNACE =       42
-                MINECART_HOPPER =        43
-                MINECART_SPAWNER =       44
-                MINECART_TNT =           45
+                MINECART_FURNACE = 42
+                MINECART_HOPPER = 43
+                MINECART_SPAWNER = 44
+                MINECART_TNT = 45
 
         setattr(cls, name, EntityType)
         return EntityType

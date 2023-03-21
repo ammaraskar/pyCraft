@@ -11,20 +11,20 @@ class SoundEffectPacket(Packet):
     @staticmethod
     def get_id(context):
         return 0x5D if context.protocol_later_eq(PRE | 48) else \
-               0x5C if context.protocol_later_eq(755) else \
-               0x51 if context.protocol_later_eq(721) else \
-               0x52 if context.protocol_later_eq(550) else \
-               0x51 if context.protocol_later_eq(471) else \
-               0x4D if context.protocol_later_eq(461) else \
-               0x4E if context.protocol_later_eq(451) else \
-               0x4D if context.protocol_later_eq(389) else \
-               0x4C if context.protocol_later_eq(352) else \
-               0x4B if context.protocol_later_eq(345) else \
-               0x4A if context.protocol_later_eq(343) else \
-               0x49 if context.protocol_later_eq(336) else \
-               0x48 if context.protocol_later_eq(318) else \
-               0x46 if context.protocol_later_eq(110) else \
-               0x47
+            0x5C if context.protocol_later_eq(755) else \
+            0x51 if context.protocol_later_eq(721) else \
+            0x52 if context.protocol_later_eq(550) else \
+            0x51 if context.protocol_later_eq(471) else \
+            0x4D if context.protocol_later_eq(461) else \
+            0x4E if context.protocol_later_eq(451) else \
+            0x4D if context.protocol_later_eq(389) else \
+            0x4C if context.protocol_later_eq(352) else \
+            0x4B if context.protocol_later_eq(345) else \
+            0x4A if context.protocol_later_eq(343) else \
+            0x49 if context.protocol_later_eq(336) else \
+            0x48 if context.protocol_later_eq(318) else \
+            0x46 if context.protocol_later_eq(110) else \
+            0x47
 
     packet_name = 'sound effect'
 

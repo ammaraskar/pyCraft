@@ -70,7 +70,8 @@ class Player:
             The text received from the server in human readable form
 
         """
-        message = DefaultParser(data)  # This is where you would call other parsers
+        message = DefaultParser(
+            data)  # This is where you would call other parsers
 
         if not message:
             return False
@@ -101,9 +102,9 @@ class Player:
             pass
 
         try:
-            found = re.search("(.+?) has requested to teleport to you.", message).group(
-                1
-            )
+            found = re.search(
+                "(.+?) has requested to teleport to you.",
+                message).group(1)
             if found in self.admins:
                 self.SendChat("/tpyes")
                 return

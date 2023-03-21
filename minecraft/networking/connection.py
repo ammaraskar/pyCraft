@@ -498,9 +498,8 @@ class Connection(object):
         # versions that always resolved hostnames to IPv4 addresses),
         # then IPv6, then other address families.
         def key(ai):
-            return (
-                0 if ai[0] == socket.AF_INET else 1 if ai[0] == socket.AF_INET6 else 2
-            )
+            return (0 if ai[0] == socket.AF_INET else 1 if ai[0]
+                    == socket.AF_INET6 else 2)
 
         ai_faml, ai_type, ai_prot, _ai_cnam, ai_addr = min(info, key=key)
 
@@ -744,14 +743,16 @@ class PacketReactor(object):
             packet_data.send(stream.read(length))
             # Ensure we read all the packet
             while len(packet_data.get_writable()) < length:
-                packet_data.send(stream.read(length - len(packet_data.get_writable())))
+                packet_data.send(stream.read(
+                    length - len(packet_data.get_writable())))
             packet_data.reset_cursor()
 
             if self.connection.options.compression_enabled:
                 decompressed_size = VarInt.read(packet_data)
                 if decompressed_size > 0:
                     decompressor = zlib.decompressobj()
-                    decompressed_packet = decompressor.decompress(packet_data.read())
+                    decompressed_packet = decompressor.decompress(
+                        packet_data.read())
                     assert len(decompressed_packet) == decompressed_size, (
                         "decompressed length %d, but expected %d"
                         % (len(decompressed_packet), decompressed_size)
@@ -827,8 +828,7 @@ class LoginReactor(PacketReactor):
                 self.connection.socket, encryptor, decryptor
             )
             self.connection.file_object = encryption.EncryptedFileObjectWrapper(
-                self.connection.file_object, decryptor
-            )
+                self.connection.file_object, decryptor)
 
         elif packet.packet_name == "disconnect":
             # Receiving a disconnect packet in the login state indicates an
@@ -838,9 +838,8 @@ class LoginReactor(PacketReactor):
             except (ValueError, TypeError, KeyError):
                 msg = packet.json_data
             match = re.match(
-                r"Outdated (client! Please use|server!" r" I'm still on) (?P<ver>\S+)$",
-                msg,
-            )
+                r"Outdated (client! Please use|server!"
+                r" I'm still on) (?P<ver>\S+)$", msg, )
             if match:
                 ver = match.group("ver")
                 self.connection._version_mismatch(server_version=ver)
@@ -945,8 +944,8 @@ class PlayingStatusReactor(StatusReactor):
         proto = status["version"]["protocol"]
         if proto not in self.connection.allowed_proto_versions:
             self.connection._version_mismatch(
-                server_protocol=proto, server_version=status["version"].get("name")
-            )
+                server_protocol=proto,
+                server_version=status["version"].get("name"))
 
         self.handle_proto_version(proto)
 

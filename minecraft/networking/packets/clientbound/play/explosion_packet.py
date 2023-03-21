@@ -9,17 +9,17 @@ class ExplosionPacket(Packet):
     @staticmethod
     def get_id(context):
         return 0x1C if context.protocol_later_eq(755) else \
-               0x1B if context.protocol_later_eq(741) else \
-               0x1C if context.protocol_later_eq(721) else \
-               0x1D if context.protocol_later_eq(550) else \
-               0x1C if context.protocol_later_eq(471) else \
-               0x1E if context.protocol_later_eq(389) else \
-               0x1D if context.protocol_later_eq(345) else \
-               0x1C if context.protocol_later_eq(332) else \
-               0x1D if context.protocol_later_eq(318) else \
-               0x1C if context.protocol_later_eq(80) else \
-               0x1B if context.protocol_later_eq(67) else \
-               0x27
+            0x1B if context.protocol_later_eq(741) else \
+            0x1C if context.protocol_later_eq(721) else \
+            0x1D if context.protocol_later_eq(550) else \
+            0x1C if context.protocol_later_eq(471) else \
+            0x1E if context.protocol_later_eq(389) else \
+            0x1D if context.protocol_later_eq(345) else \
+            0x1C if context.protocol_later_eq(332) else \
+            0x1D if context.protocol_later_eq(318) else \
+            0x1C if context.protocol_later_eq(80) else \
+            0x1B if context.protocol_later_eq(67) else \
+            0x27
 
     packet_name = 'explosion'
 

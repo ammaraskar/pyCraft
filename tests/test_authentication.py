@@ -209,7 +209,7 @@ class MakeRequest(unittest.TestCase):
                 "George": 1,
                 "Nestly": {
                     "Nestling": "Nestling's tail"
-                    },
+                },
                 "Listly": ["listling1", 2, "listling 3"]
                 }
 
