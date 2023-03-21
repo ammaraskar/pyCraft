@@ -81,4 +81,19 @@ class IgnorePacket(Exception):
        `PacketReactor.react' or a packet listener added with
        `Connection.register_packet_listener', to stop any subsequent handlers
        from being called on that particular packet.
+    Base ``Exception`` for the Yggdrasil authentication service.
+    """
+
+
+class DeserializationError(Exception):
+    """
+    ``Exception`` raised when something went wrong during the deserialization
+    process.
+    """
+
+
+class SerializationError(Exception):
+    """
+    ``Exception`` raised when something went wrong during the serialization
+    process.
     """
