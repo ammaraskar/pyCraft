@@ -9,6 +9,7 @@ from minecraft.networking.types import (
 )
 
 from .client_settings_packet import ClientSettingsPacket
+from .tab_complete_packet import TabCompletePacket
 
 
 # Formerly known as state_playing_serverbound.
@@ -30,6 +31,12 @@ def get_packets(context):
     if context.protocol_later_eq(107):
         packets |= {
             TeleportConfirmPacket,
+        }
+    # For some reason this packet did not exist on protocols 343 & 344.
+    if context.protocol_later_eq(345) or \
+            context.protocol_earlier_eq(342):
+        packets |= {
+            TabCompletePacket,
         }
     return packets
 
