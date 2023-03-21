@@ -2,6 +2,7 @@
    network representation.
 """
 from collections import namedtuple
+import types
 
 # These aliases are retained for backward compatibility
 from minecraft.utility import (  # noqa: F401
