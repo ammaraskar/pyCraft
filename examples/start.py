@@ -9,7 +9,6 @@ from minecraft import authentication
 from minecraft.exceptions import YggdrasilError
 from minecraft.networking.connection import Connection
 from minecraft.networking.packets import Packet, clientbound, serverbound
-from minecraft.networking.types import Vector
 
 
 def get_options():
@@ -183,50 +182,17 @@ def main():
     connection.register_packet_listener(
         print_chat, clientbound.play.ChatMessagePacket)
 
-
-    def print_location(location_packet):
-        print(
-            "MapPacket (%s): %s"
-            % (location_packet.field_string("position"), location_packet.json_data)
-        )
-
-    connection.register_packet_listener(
-        print_location, clientbound.play.MapPacket)
-
-    current_x_pos = float(-7.5)
-    def print_postion(postion_packet):
-        global current_x_pos
-        current_x_pos = postion_packet.x
-        print(
-            "PositionPacket (%s): %s"
-            % (postion_packet.field_string("position"), postion_packet.x)
-        )
-
-    connection.register_packet_listener(
-        print_postion, clientbound.play.PlayerPositionAndLookPacket
-    )
-
     connection.connect()
 
-    count = 0
     while True:
         try:
             text = input()
-            if text == "test":
-                print(f"Testing, currentpos: {current_x_pos}")
-                new_x = float(current_x_pos + 0.5)
-                pos_packet = serverbound.play.PositionAndLookPacket()
-                pos_packet.x = new_x
-                pos_packet.feet_y = float(68.0)
-                pos_packet.z = float(-1.5)
-                pos_packet.yaw = 0.0
-                pos_packet.pitch = 0.0
-                pos_packet.on_ground = False
-                connection.write_packet(pos_packet, force=True)
-                current_x_pos = new_x
-
+            if text == "/respawn":
+                print("respawning...")
+                packet = serverbound.play.ClientStatusPacket()
+                packet.action_id = serverbound.play.ClientStatusPacket.RESPAWN
+                connection.write_packet(packet)
             else:
-                print(f"Count2: {count}")
                 packet = serverbound.play.ChatPacket()
                 packet.message = text
                 connection.write_packet(packet)
