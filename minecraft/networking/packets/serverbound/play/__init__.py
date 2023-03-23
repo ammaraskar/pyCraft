@@ -27,7 +27,8 @@ def get_packets(context):
         PluginMessagePacket,
         PlayerBlockPlacementPacket,
         UseEntityPacket,
-        VehicleMovePacket
+        VehicleMovePacket,
+        QueryBlockNBTPacket
     }
     if context.protocol_later_eq(69):
         packets |= {
@@ -325,4 +326,16 @@ class ResourcePackStatusPacket(Packet):
     packet_name = "resource pack status"
     definition = [
         {"result": VarInt}
+    ]
+
+
+class QueryBlockNBTPacket(Packet):
+    @staticmethod
+    def get_id(context):
+        return 0x01
+
+    packet_name = "query block nbt"
+    definition = [
+        {"transaction_id": VarInt},
+        {"location": Position}
     ]
