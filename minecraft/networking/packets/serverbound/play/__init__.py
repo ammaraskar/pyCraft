@@ -9,21 +9,26 @@ from minecraft.networking.types import (
 )
 
 from .client_settings_packet import ClientSettingsPacket
-from .tab_complete_packet import TabCompletePacket
+# from .tab_complete_packet import TabCompletePacket
 from .use_entity_packet import UseEntityPacket
+from .vehicle_move_packet import VehicleMovePacket
+from .player_position_packet import PlayerPositionPacket
 
 # Formerly known as state_playing_serverbound.
 def get_packets(context):
     packets = {
         KeepAlivePacket,
         ChatPacket,
+        PlayerPositionPacket,
         PositionAndLookPacket,
         AnimationPacket,
         ClientStatusPacket,
         ClientSettingsPacket,
         PluginMessagePacket,
         PlayerBlockPlacementPacket,
-        UseEntityPacket
+        UseEntityPacket,
+        VehicleMovePacket,
+        QueryBlockNBTPacket
     }
     if context.protocol_later_eq(69):
         packets |= {
@@ -38,11 +43,12 @@ def get_packets(context):
             TeleportConfirmPacket,
         }
     # For some reason this packet did not exist on protocols 343 & 344.
-    if context.protocol_later_eq(345) or \
-            context.protocol_earlier_eq(342):
-        packets |= {
-            TabCompletePacket,
-        }
+    # if context.protocol_later_eq(345) or \
+    #         context.protocol_earlier_eq(342):
+    #     packets |= {
+    #         TabCompletePacket,
+    #     }
+        
     return packets
 
 
@@ -320,4 +326,16 @@ class ResourcePackStatusPacket(Packet):
     packet_name = "resource pack status"
     definition = [
         {"result": VarInt}
+    ]
+
+
+class QueryBlockNBTPacket(Packet):
+    @staticmethod
+    def get_id(context):
+        return 0x01
+
+    packet_name = "query block nbt"
+    definition = [
+        {"transaction_id": VarInt},
+        {"location": Position}
     ]

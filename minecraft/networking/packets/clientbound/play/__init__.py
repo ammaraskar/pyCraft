@@ -87,11 +87,11 @@ def get_packets(context):
         packets |= {
             FacePlayerPacket,
         }
-    if context.protocol_later_eq(345) or \
-            context.protocol_earlier_eq(342):
-        packets |= {
-            TabCompletePacket,
-        }
+    # if context.protocol_later_eq(345) or \
+    #         context.protocol_earlier_eq(342):
+    #     packets |= {
+    #         TabCompletePacket,
+    #     }
     return packets
 
 
