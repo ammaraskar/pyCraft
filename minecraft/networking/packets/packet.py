@@ -39,6 +39,9 @@ class Packet(object):
 
     @overridable_property
     def definition(self):
+        if not hasattr(self, "context"):
+            return None
+        
         return None if self.context is None else \
             self.get_definition(self.context)
 
