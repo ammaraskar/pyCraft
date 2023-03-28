@@ -6,7 +6,7 @@ from minecraft.networking.packets import (
 from minecraft.networking.types import (
     FixedPoint, Integer, Angle, UnsignedByte, Byte, Boolean, UUID, Short,
     VarInt, Double, Float, String, Enum, Difficulty, Long, Vector, Direction,
-    PositionAndLook, multi_attribute_alias, attribute_transform,
+    PositionAndLook, multi_attribute_alias, attribute_transform, NBT, Position
 )
 
 from .combat_event_packet import (
