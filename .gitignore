@@ -86,3 +86,4 @@ sftp-config.json
 
 ### pyCraft ###
 credentials
+Persistence/*

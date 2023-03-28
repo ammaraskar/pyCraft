@@ -135,7 +135,13 @@ def main():
 
         try:
             auth_token = authentication.Microsoft_AuthenticationToken()
-            auth_token.authenticate()
+            if options.username:
+                if not auth_token.PersistenceLogoin_r(options.username):
+                    print("Login to {} failed".format(options.username))
+                    sys.exit(1)
+            else:
+                if not auth_token.authenticate():
+                    sys.exit(2)            
         except YggdrasilError as e:
             print(e)
             sys.exit()
