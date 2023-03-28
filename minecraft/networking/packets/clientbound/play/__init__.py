@@ -6,7 +6,7 @@ from minecraft.networking.packets import (
 from minecraft.networking.types import (
     FixedPoint, Integer, Angle, UnsignedByte, Byte, Boolean, UUID, Short,
     VarInt, Double, Float, String, Enum, Difficulty, Long, Vector, Direction,
-    PositionAndLook, multi_attribute_alias, attribute_transform,
+    PositionAndLook, multi_attribute_alias, attribute_transform, NBT, Position
 )
 
 from .combat_event_packet import (
@@ -22,7 +22,6 @@ from .explosion_packet import ExplosionPacket
 from .sound_effect_packet import SoundEffectPacket
 from .face_player_packet import FacePlayerPacket
 from .join_game_and_respawn_packets import JoinGamePacket, RespawnPacket
-from .tab_complete_packet import TabCompletePacket
 from .destroy_entities_packet import DestroyEntitiesPacket
 from .spawn_mob_packet import SpawnMobPacket
 
@@ -58,7 +57,8 @@ def get_packets(context):
         SpawnMobPacket,
         BlockActionPacket,
         EntityHeadLookPacket,
-        ResourcePackSendPacket
+        ResourcePackSendPacket,
+        NBTQueryPacket
     }
 
     if context.protocol_earlier_eq(47):
@@ -532,4 +532,16 @@ class EntityHeadLookPacket(Packet):
     definition = [
         {'entity_id': VarInt},
         {'head_yaw': Angle},
+    ]
+
+class NBTQueryPacket(Packet):
+    @staticmethod
+    def get_id(context):
+        return 0x60
+
+    packet_name = 'nbt query response'
+
+    definition = [
+        {'transaction_id': VarInt},
+        {'nbt': NBT}
     ]

@@ -7,7 +7,7 @@ from collections import OrderedDict, namedtuple
 import re
 
 # The version number of the most recent pyCraft release.
-__version__ = "0.7.0"
+__version__ = "0.7.1"
 
 # This bit occurs in the protocol numbers of pre-release versions after 1.16.3.
 PRE = 1 << 30
