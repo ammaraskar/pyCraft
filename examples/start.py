@@ -151,7 +151,7 @@ def main():
             options.port,
             auth_token,
             None,
-            "1.8")
+            "1.12.2")
 
     if options.dump_packets:
 
