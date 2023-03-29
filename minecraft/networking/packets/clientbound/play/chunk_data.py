@@ -2,8 +2,8 @@ from math import floor
 
 from minecraft.networking.packets import Packet, PacketBuffer
 from minecraft.networking.types import (
-    VarInt, Integer, Boolean, Nbt, UnsignedByte, Long, Short,
-    multi_attribute_alias, Vector, UnsignedLong
+    VarInt, Integer, Boolean, UnsignedByte, Long, Short,
+    multi_attribute_alias, Vector, UnsignedLong, NBT
 )
 
 
@@ -20,7 +20,7 @@ class ChunkDataPacket(Packet):
         self.z = Integer.read(file_object)
         self.full_chunk = Boolean.read(file_object)
         self.bit_mask_y = VarInt.read(file_object)
-        self.heightmaps = Nbt.read(file_object)
+        self.heightmaps = NBT.read(file_object)
         self.biomes = []
         if self.full_chunk:
             for i in range(1024):
@@ -30,7 +30,7 @@ class ChunkDataPacket(Packet):
         size_entities = VarInt.read(file_object)
         self.entities = []
         for i in range(size_entities):
-            self.entities.append(Nbt.read(file_object))
+            self.entities.append(NBT.read(file_object))
 
         self.decode_chunk_data()
 
