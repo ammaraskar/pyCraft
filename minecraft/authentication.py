@@ -2,6 +2,7 @@ import requests
 import json
 import uuid
 import os
+from selenium import webdriver
 from .exceptions import YggdrasilError
 
 #: The base url for Ygdrassil requests
