@@ -348,6 +348,7 @@ class Microsoft_AuthenticationToken(object):
 
     def __init__(self, access_token=None):
         self.access_token = access_token
+        self.profile = Profile()
         self.driver = webdriver.Chrome()
 
     def GetoAuth20(self, code='') -> object:
