@@ -2,6 +2,7 @@ import requests
 import json
 import uuid
 import os
+import time
 from selenium import webdriver
 from .exceptions import YggdrasilError
 
@@ -332,7 +333,7 @@ class Microsoft_AuthenticationToken(object):
     I have simply created a fork and submitted the changes as they describe
     the usage in their comment.  All credit for this goes to shikukua.
     
-    EDIT: Made web request automatic
+    EDIT: Made web request automatic, courtesy of CoCFire#1111
     """
 
     oauth20_URL = 'https://login.live.com/oauth20_token.srf'
