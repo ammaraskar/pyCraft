@@ -1,3 +1,4 @@
 cryptography
 requests
 six
+selenium
