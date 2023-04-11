@@ -330,18 +330,15 @@ class Microsoft_AuthenticationToken(object):
 
     I have simply created a fork and submitted the changes as they describe
     the usage in their comment.  All credit for this goes to shikukua.
+    
+    EDIT: Made web request automatic
     """
-
-    UserLoginURL = "https://login.live.com/oauth20_authorize.srf?\
-client_id=00000000402b5328&response_type=code\
-&scope=service%3A%3Auser.auth.xboxlive.com%3A%3AMBI_SSL&redirect_uri=\
-https%3A%2F%2Flogin.live.com%2Foauth20_desktop.srf"
 
     oauth20_URL = 'https://login.live.com/oauth20_token.srf'
     XBL_URL = 'https://user.auth.xboxlive.com/user/authenticate'
     XSTS_URL = 'https://xsts.auth.xboxlive.com/xsts/authorize'
-    LOGIN_WITH_XBOX_URL = "https://api.minecraftservices.com/\
-authentication/login_with_xbox"
+    LOGIN_WITH_XBOX_URL = "https://api.minecraftservices.com/" \
+        "authentication/login_with_xbox"
 
     CheckAccount_URL = 'https://api.minecraftservices.com/entitlements/mcstore'
     Profile_URL = 'https://api.minecraftservices.com/minecraft/profile'
@@ -350,15 +347,24 @@ authentication/login_with_xbox"
 
     def __init__(self, access_token=None):
         self.access_token = access_token
-        self.profile = Profile()
+        self.driver = webdriver.Chrome()
 
     def GetoAuth20(self, code='') -> object:
+        UserLoginURL = "https://login.live.com/oauth20_authorize.srf?" \
+        "client_id=00000000402b5328&response_type=code" \
+        "&scope=service%3A%3Auser.auth.xboxlive.com%3A%3AMBI_SSL&redirect_uri=" \
+        "https%3A%2F%2Flogin.live.com%2Foauth20_desktop.srf"
         if code == '':
-            print("Please copy this link to your browser to open:"
-                  "\n%s" % self.UserLoginURL)
-            code = input(
-                "After logging in,"
-                "paste the 'code' field in your browser's address bar here:")
+            print("Opening browser...")
+            self.driver.get(UserLoginURL)
+
+            while 'code=' not in self.driver.current_url:
+                time.sleep(1)
+
+            code = self.driver.current_url.split('code=')[1].split("&")[0]
+            self.driver.quit()
+            print(f"Retrieved code: {code}")
+
         oauth20 = requests.post(
             self.oauth20_URL,
             data={
