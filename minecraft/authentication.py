@@ -358,15 +358,24 @@ class Microsoft_AuthenticationToken(object):
         "&scope=service%3A%3Auser.auth.xboxlive.com%3A%3AMBI_SSL&redirect_uri=" \
         "https%3A%2F%2Flogin.live.com%2Foauth20_desktop.srf"
         if code == '':
-            print("Opening browser...")
-            self.driver.get(UserLoginURL)
+            
+            #Need to do an OS Check here
+            if os.name == "nt":
+                print("Opening browser...")
+                self.driver.get(UserLoginURL)
 
-            while 'code=' not in self.driver.current_url:
-                time.sleep(1)
+                while 'code=' not in self.driver.current_url:
+                    time.sleep(1)
 
-            code = self.driver.current_url.split('code=')[1].split("&")[0]
-            self.driver.quit()
-            print(f"Retrieved code: {code}")
+                code = self.driver.current_url.split('code=')[1].split("&")[0]
+                self.driver.quit()
+                print(f"Retrieved code: {code}")
+            else:
+                print("Please copy this link to your browser to open:"
+                    "\n%s" % self.UserLoginURL)
+                code = input(
+                    "After logging in,"
+                    "paste the 'code' field in your browser's address bar here:")                
 
         oauth20 = requests.post(
             self.oauth20_URL,
