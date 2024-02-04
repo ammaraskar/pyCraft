@@ -14,8 +14,16 @@ from minecraft.networking.packets import Packet, clientbound, serverbound
 def get_options():
     parser = OptionParser()
 
+    parser.add_option("-a", "--authentication-method", dest="auth",
+                      default="mojang",
+                      help="what to use for authentication, "
+                           "allowed values are: microsoft, mojang")
+
     parser.add_option("-u", "--username", dest="username", default=None,
-                      help="username to log in with")
+                      help="User name used for login, "
+                           "if AUTH is microsoft and a persistent archive "
+                           "is detected locally, the persistent login "
+                           "information will be read first")
 
     parser.add_option("-p", "--password", dest="password", default=None,
                       help="password to log in with")
@@ -38,13 +46,15 @@ def get_options():
 
     (options, args) = parser.parse_args()
 
-    if not options.username:
-        options.username = input("Enter your username: ")
+    if options.auth == 'mojang':
 
-    if not options.password and not options.offline:
-        options.password = getpass.getpass("Enter your password (leave "
-                                           "blank for offline mode): ")
-        options.offline = options.offline or (options.password == "")
+        if not options.username:
+            options.username = input("Enter your username: ")
+
+        if not options.password and not options.offline:
+            options.password = getpass.getpass("Enter your password (leave "
+                                               "blank for offline mode): ")
+            options.offline = options.offline or (options.password == "")
 
     if not options.server:
         options.server = input("Enter server host or host:port "
@@ -68,12 +78,27 @@ def main():
         connection = Connection(
             options.address, options.port, username=options.username)
     else:
-        auth_token = authentication.AuthenticationToken()
-        try:
-            auth_token.authenticate(options.username, options.password)
-        except YggdrasilError as e:
-            print(e)
-            sys.exit()
+        if options.auth == "mojang":
+            auth_token = authentication.AuthenticationToken()
+            try:
+                auth_token.authenticate(options.username, options.password)
+            except YggdrasilError as e:
+                print(e)
+                sys.exit()
+        elif options.auth == "microsoft":
+            auth_token = authentication.Microsoft_AuthenticationToken()
+            try:
+                if options.username:
+                    if not auth_token.PersistenceLogoin_r(options.username):
+                        print("Login to {} failed".format(options.username))
+                        sys.exit(1)
+                else:
+                    if not auth_token.authenticate():
+                        sys.exit(2)
+            except YggdrasilError as e:
+                print(e)
+                sys.exit()
+
         print("Logged in as %s..." % auth_token.username)
         connection = Connection(
             options.address, options.port, auth_token=auth_token)
