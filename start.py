@@ -15,7 +15,7 @@ def get_options():
     parser = OptionParser()
 
     parser.add_option("-a", "--authentication-method", dest="auth",
-                      default="microsoft",
+                      default="mojang",
                       help="what to use for authentication, "
                            "allowed values are: microsoft, mojang")
 
